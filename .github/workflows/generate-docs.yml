@@ -1,0 +1,33 @@
+name: Generate Documentation
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  generate-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Install Dependencies for Backend Docs
+      - name: Setup Backend Documentation (Sphinx)
+        if: contains(github.event.head_commit.message, 'backend')
+        run: |
+          sudo apt-get update
+          sudo apt-get install python3 python3-pip -y
+          pip install sphinx
+          cd backend/docs
+          sphinx-build -b html . _build
+
+      # Upload Backend Docs (Optional, e.g., GitHub Pages)
+      - name: Deploy Backend Docs
+        if: success()
+        run: echo "Deploy logic for backend docs (e.g., GitHub Pages, AWS S3, etc.)"

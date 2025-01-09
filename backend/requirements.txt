@@ -1,69 +1,36 @@
+alabaster==1.0.0
 annotated-types==0.7.0
-black==24.8.0
-blinker==1.8.2
-brotlipy @ file:///Users/runner/miniforge3/conda-bld/brotlipy_1666764759924/work
-CacheControl==0.14.0
-cachetools==5.4.0
-certifi==2022.12.7
-cffi @ file:///Users/runner/miniforge3/conda-bld/cffi_1671179893800/work
-charset-normalizer @ file:///home/conda/feedstock_root/build_artifacts/charset-normalizer_1661170624537/work
-click==8.1.7
-colorama @ file:///home/conda/feedstock_root/build_artifacts/colorama_1666700638685/work
-conda==23.1.0
-conda-package-handling @ file:///home/conda/feedstock_root/build_artifacts/conda-package-handling_1669907009957/work
-conda_package_streaming @ file:///home/conda/feedstock_root/build_artifacts/conda-package-streaming_1669733752472/work
-cryptography @ file:///Users/runner/miniforge3/conda-bld/cryptography-split_1679811336455/work
-firebase-admin==6.5.0
-Flask==3.0.3
-Flask-Cors==4.0.1
-Flask-JWT-Extended==4.6.0
-google-ai-generativelanguage==0.6.6
-google-api-core==2.19.1
-google-api-python-client==2.139.0
-google-auth==2.32.0
-google-auth-httplib2==0.2.0
-google-cloud-core==2.4.1
-google-cloud-firestore==2.17.0
-google-cloud-storage==2.18.0
-google-crc32c==1.5.0
-google-generativeai==0.7.2
-google-resumable-media==2.7.1
-googleapis-common-protos==1.63.2
-grpcio==1.65.4
-grpcio-status==1.62.2
-httplib2==0.22.0
-idna @ file:///home/conda/feedstock_root/build_artifacts/idna_1663625384323/work
+babel==2.16.0
+black==24.10.0
+blinker==1.9.0
+certifi==2024.12.14
+charset-normalizer==3.4.1
+click==8.1.8
+docutils==0.21.2
+Flask==3.1.0
+Flask-Cors==5.0.0
+Flask-JWT-Extended==4.7.1
+idna==3.10
+imagesize==1.4.1
 itsdangerous==2.2.0
-Jinja2==3.1.4
-MarkupSafe==2.1.5
-msgpack==1.0.8
+Jinja2==3.1.5
+MarkupSafe==3.0.2
 mypy-extensions==1.0.0
-packaging==24.1
+packaging==24.2
 pathspec==0.12.1
-platformdirs==4.2.2
-pluggy @ file:///home/conda/feedstock_root/build_artifacts/pluggy_1667232663820/work
-proto-plus==1.24.0
-protobuf==4.25.4
-pyasn1==0.6.0
-pyasn1_modules==0.4.0
-pycosat @ file:///Users/runner/miniforge3/conda-bld/pycosat_1666836623787/work
-pycparser @ file:///home/conda/feedstock_root/build_artifacts/pycparser_1636257122734/work
-pydantic==2.8.2
-pydantic_core==2.20.1
-PyJWT==2.9.0
-pyOpenSSL @ file:///home/conda/feedstock_root/build_artifacts/pyopenssl_1679647854081/work
-pyparsing==3.1.2
-PySocks @ file:///home/conda/feedstock_root/build_artifacts/pysocks_1661604839144/work
-python-dotenv==1.0.1
-requests @ file:///home/conda/feedstock_root/build_artifacts/requests_1673863902341/work
-rsa==4.9
-ruamel.yaml @ file:///Users/runner/miniforge3/conda-bld/ruamel.yaml_1678273098088/work
-ruamel.yaml.clib @ file:///Users/runner/miniforge3/conda-bld/ruamel.yaml.clib_1670412881259/work
-tomli==2.0.1
-toolz @ file:///home/conda/feedstock_root/build_artifacts/toolz_1657485559105/work
-tqdm @ file:///home/conda/feedstock_root/build_artifacts/tqdm_1677948868469/work
+platformdirs==4.3.6
+Pygments==2.19.1
+PyJWT==2.10.1
+requests==2.32.3
+snowballstemmer==2.2.0
+Sphinx==8.1.3
+sphinxcontrib-applehelp==2.0.0
+sphinxcontrib-devhelp==2.0.0
+sphinxcontrib-htmlhelp==2.1.0
+sphinxcontrib-jsmath==1.0.1
+sphinxcontrib-qthelp==2.0.0
+sphinxcontrib-serializinghtml==2.0.0
+tomli==2.2.1
 typing_extensions==4.12.2
-uritemplate==4.1.1
-urllib3 @ file:///home/conda/feedstock_root/build_artifacts/urllib3_1678635778344/work
-Werkzeug==3.0.3
-zstandard==0.19.0
+urllib3==2.3.0
+Werkzeug==3.1.3
