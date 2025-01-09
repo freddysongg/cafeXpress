@@ -1,95 +1,69 @@
-# cafeXpress
+# Node.js dependencies
+node_modules/
 
-## Overview
-cafeXpress is an AI-driven platform designed to connect café enthusiasts with the best local coffee shops based on their personal preferences, mood, and past visits. The recommendation engine leverages sentiment analysis from user reviews and integrates with external APIs like Google Places and Yelp Fusion API to suggest new cafés. Users can network with other café-goers, share café hopping itineraries, and rate their favorite spots.
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-## Features
-- **AI-Powered Café Recommendations**: Utilizes NLP to analyze reviews and suggest venues tailored to user preferences.
-- **Personalized Café Hopping Routes**: Generates optimized itineraries for café hopping based on location, time, and user interests.
-- **User Profiles and Networking**: Allows users to connect with like-minded café enthusiasts and share routes or playlists.
-- **Future Expansions**: Plans to integrate loyalty programs with cafés and event scheduling (e.g., café meetups).
+# Build outputs
+dist/
+build/
+.storybook-out/
+storybook-static/
 
-## Tech Stack
-- **Frontend**: React (deployed via Vercel)
-- **Backend**: Node.js and Python (Flask)
-- **Database**: PostgreSQL
-- **APIs**: Google Places API, Yelp Fusion API
+# Cache and temporary files
+*.cache
+.cache-loader/
+.tmp/
 
-## Getting Started
+# Environment variables
+.env
+.env.local
+.env.*.local
 
-### Prerequisites
-- **Node.js**: v14 or higher
-- **Python**: v3.6 or higher
-- **PostgreSQL**: v12 or higher
-- **pip**: for installing Python packages
+# Editor-specific files
+.idea/
+.vscode/
+*.swp
+*.swo
 
-### Installation
+# OS-specific files
+.DS_Store
+Thumbs.db
 
-#### Backend Setup
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/cafexpress.git
-   cd cafexpress/backend
-   ```
-2. Create and activate a virtual environment (optional but recommended):
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows use: .\venv\Scripts\activate
-   ```
-3. Install Python dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. Set up your PostgreSQL database and update the database configuration in your backend settings.
-5. Start the backend server:
-   ```bash
-   python app.py  # or your main entry file
-   ```
+# Python virtual environment
+backend/venv/
 
-#### Frontend Setup
-1. Navigate to the frontend directory:
-   ```bash
-   cd ../frontend
-   ```
-2. Install frontend dependencies:
-   ```bash
-   npm install  # or pnpm install
-   ```
-3. Start the frontend development server:
-   ```bash
-   npm start  # or pnpm start
-   ```
+# Python bytecode files
+backend/__pycache__/
+backend/*.pyc
+backend/*.pyo
+backend/*.pyd
 
-## Usage
-1. Sign up or log in to your user account.
-2. Explore café recommendations based on your preferences.
-3. Create and share your café hopping itineraries.
-4. Rate and review cafés you've visited.
+# Sphinx build files
+backend/docs/_build/
 
-## Contributing
-We welcome contributions! Please follow these steps:
+# Frontend-specific files
+frontend/node_modules/
+frontend/build/
+frontend/public/static/
 
-1. Fork the repository.
-2. Create a new branch:
-   ```bash
-   git checkout -b feature/YourFeature
-   ```
-3. Make your changes and commit them:
-   ```bash
-   git commit -m "Add some feature"
-   ```
-4. Before pushing your changes, ensure you run the linting and formatting tools:
-   ```bash
-   pnpm lint
-   pnpm format
-   ```
-5. Push to the branch:
-   ```bash
-   git push origin feature/YourFeature
-   ```
-6. Create a new Pull Request.
+# Test and coverage files
+coverage/
+*.lcov
+frontend/src/reportWebVitals.js
+frontend/src/setupTests.js
 
-Note: We have linting and formatting protocols in place. Always run `pnpm lint` and `pnpm format` before pushing your changes to ensure consistent code style across the project.
+# Other generated or backup files
+*.bak
+*.tmp
+*.lock
 
-## License
-This project is licensed under the MIT License - see the LICENSE file for details.
+# Git-specific files
+.git/
+
+# Dependencies lock files (if not necessary to commit)
+package-lock.json
+yarn.lock

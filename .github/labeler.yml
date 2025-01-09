@@ -1,0 +1,23 @@
+# Define labels for different parts of the repository
+
+backend:
+  - 'backend/**'
+  - 'backend/*.json'
+  - 'backend/*.py'
+  - 'requirements.txt'
+  - 'setup.cfg'
+
+frontend:
+  - 'frontend/**'
+  - 'frontend/src/**'
+  - 'frontend/public/**'
+  - 'frontend/*.json'
+
+config:
+  - '.eslintrc.json'
+  - '.prettierrc'
+  - '.gitignore'
+
+documentation:
+  - 'README.md'
+  - 'LICENSE'
