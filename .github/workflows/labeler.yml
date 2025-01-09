@@ -1,7 +1,11 @@
 # GitHub Actions workflow for automatically labeling pull requests
 
 name: Labeler
-on: [pull_request_target]
+on: 
+  pull_request_target:
+    branches:
+      - production
+      - development
 
 jobs:
   label:

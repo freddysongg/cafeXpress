@@ -3,10 +3,12 @@ name: Code Formatter and Linter
 on:
   pull_request:
     branches:
-      - main
+      - production
+      - development
   push:
     branches:
-      - main
+      - production
+      - development
 
 jobs:
   format-lint:

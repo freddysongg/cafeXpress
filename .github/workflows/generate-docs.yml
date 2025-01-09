@@ -3,10 +3,12 @@ name: Generate Documentation
 on:
   push:
     branches:
-      - main
+      - production
+      - development
   pull_request:
     branches:
-      - main
+      - production
+      - development
 
 jobs:
   generate-docs:
