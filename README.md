@@ -28,12 +28,12 @@ cafeXpress is an AI-driven platform designed to connect café enthusiasts with t
 #### Backend Setup
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/cafexpress.git
+   git clone https://github.com/freddysongg/cafexpress.git
    cd cafexpress/backend
    ```
 2. Create and activate a virtual environment (optional but recommended):
    ```bash
-   python -m venv venv
+   python3 -m venv venv
    source venv/bin/activate  # On Windows use: .\venv\Scripts\activate
    ```
 3. Install Python dependencies:
@@ -53,11 +53,11 @@ cafeXpress is an AI-driven platform designed to connect café enthusiasts with t
    ```
 2. Install frontend dependencies:
    ```bash
-   npm install  # or pnpm install
+   npm install  
    ```
 3. Start the frontend development server:
    ```bash
-   npm start  # or pnpm start
+   npm start 
    ```
 
 ## Usage
