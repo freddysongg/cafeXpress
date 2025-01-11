@@ -11,7 +11,7 @@ export default defineConfig({
     user: process.env.DB_USER ?? 'postgres',
     password: process.env.DB_PASSWORD ?? 'postgres',
     ssl: {
-      rejectUnauthorized: false,
-    },
-  },
+      rejectUnauthorized: false
+    }
+  }
 });

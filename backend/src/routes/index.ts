@@ -1,9 +1,11 @@
-import { FastifyInstance } from 'fastify';
-import { getAllTest } from '@services/repository';
+import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { testRoutes } from '@routes/test';
 
-export default async function routes(fastify: FastifyInstance) {
-  fastify.get('/', async (_, reply) => {
-    const items = await getAllTest();
-    reply.send(items);
+const routes = async (app: FastifyInstance) => {
+  app.get('/', async (request: FastifyRequest, reply: FastifyReply) => {
+    reply.send({ message: 'Welcome to cafeXpress.' });
   });
-}
+  app.register(testRoutes, { prefix: '/test' });
+};
+
+export default routes;
