@@ -1,9 +1,9 @@
 import { FastifyInstance } from 'fastify';
-import { fetchAllItems } from '@services/drizzle';
+import { getAllUsers } from '@services/repository';
 
 export default async function routes(fastify: FastifyInstance) {
   fastify.get('/', async (_, reply) => {
-    const items = await fetchAllItems();
+    const items = await getAllUsers();
     reply.send(items);
   });
 }
