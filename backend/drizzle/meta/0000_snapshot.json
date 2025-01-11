@@ -1,27 +1,28 @@
 {
-  "id": "cca2436e-367b-45e8-810e-5adb5c17ade9",
+  "id": "293a1c06-a737-473b-9117-299d4d31ca83",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.users": {
-      "name": "users",
+    "public.test": {
+      "name": "test",
       "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "uuid",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
-        "name": {
-          "name": "name",
+        "test1": {
+          "name": "test1",
           "type": "varchar(100)",
           "primaryKey": false,
           "notNull": true
         },
-        "email": {
-          "name": "email",
+        "test2": {
+          "name": "test2",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
@@ -38,10 +39,10 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "users_email_unique": {
-          "name": "users_email_unique",
+        "test_test2_unique": {
+          "name": "test_test2_unique",
           "nullsNotDistinct": false,
-          "columns": ["email"]
+          "columns": ["test2"]
         }
       },
       "policies": {},
