@@ -41,6 +41,7 @@ backend/__pycache__/
 backend/*.pyc
 backend/*.pyo
 backend/*.pyd
+backend/node_modules/
 
 # Sphinx build files
 backend/docs/_build/

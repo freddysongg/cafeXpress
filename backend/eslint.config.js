@@ -9,14 +9,14 @@ export default [
       'package-lock.json', // Lock file
       'package.json', // Package metadata
       '**/docs/*', // Docs directory
-      '**/node_modules/*', // Node_moudles directory
-    ],
+      '**/node_modules/*' // Node_moudles directory
+    ]
   },
   prettier, // Disable formatting rules that conflict with Prettier
   {
     rules: {
       'no-unused-vars': 'warn',
-      'no-console': 'off',
-    },
-  },
+      'no-console': 'off'
+    }
+  }
 ];

@@ -7,20 +7,34 @@
   "license": "ISC",
   "description": "",
   "scripts": {
+    "start": "node src/utils/server.js",
+    "dev": "tsx watch src/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint --config eslint.config.js '**/*.js'",
     "lint:check": "eslint --config eslint.config.js '**/*.js' --max-warnings=0",
     "lint:fix": "eslint --config eslint.config.js '**/*.js' --fix",
     "format": "prettier --write '**/*.{js,json,md,ts}'",
-    "format:check": "prettier --check '**/*.{js,json,md,ts}'"
+    "format:check": "prettier --check '**/*.{js,json,md,ts}'",
+    "migrate": "drizzle-kit migrate",
+    "generate": "drizzle-kit generate",
+    "drop": "drizzle-kit drop"
   },
   "type": "module",
   "dependencies": {
-    "express": "^4.21.0",
+    "aws-sdk": "^2.1692.0",
+    "dotenv": "^16.4.7",
+    "drizzle-orm": "^0.38.3",
+    "fastify": "^5.2.1",
+    "fastify-plugin": "^5.0.1",
     "module": "^1.2.5",
     "require": "^2.4.20"
   },
   "devDependencies": {
+    "@types/cli-color": "^2.0.6",
+    "@types/node": "^22.10.5",
+    "@types/pg": "^8.11.10",
+    "cli-color": "^2.0.4",
+    "drizzle-kit": "^0.30.1",
     "eslint": "^9.17.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.31.0",
@@ -28,6 +42,10 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-react": "^7.37.3",
     "eslint-plugin-react-hooks": "^5.1.0",
-    "prettier": "^3.4.2"
+    "prettier": "^3.4.2",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
   }
 }
