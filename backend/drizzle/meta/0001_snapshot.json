@@ -63,12 +63,8 @@
           "name": "business_insights_cafe_id_cafes_id_fk",
           "tableFrom": "business_insights",
           "tableTo": "cafes",
-          "columnsFrom": [
-            "cafe_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cafe_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -154,12 +150,8 @@
           "name": "cafes_owner_id_users_id_fk",
           "tableFrom": "cafes",
           "tableTo": "users",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -222,12 +214,8 @@
           "name": "preferences_user_id_users_id_fk",
           "tableFrom": "preferences",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -287,12 +275,8 @@
           "name": "reviews_user_id_users_id_fk",
           "tableFrom": "reviews",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -300,12 +284,8 @@
           "name": "reviews_cafe_id_cafes_id_fk",
           "tableFrom": "reviews",
           "tableTo": "cafes",
-          "columnsFrom": [
-            "cafe_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cafe_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -354,9 +334,7 @@
         "test_test2_unique": {
           "name": "test_test2_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "test2"
-          ]
+          "columns": ["test2"]
         }
       },
       "policies": {},
@@ -431,16 +409,12 @@
         "users_username_unique": {
           "name": "users_username_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "username"
-          ]
+          "columns": ["username"]
         },
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},

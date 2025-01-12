@@ -68,7 +68,7 @@ export const preferences = pgTable('preferences', {
     .notNull(),
   favoriteCafes: jsonb('favorite_cafes').default('[]'), // Example: [{"cafe_id": "uuid1"}, {"cafe_id": "uuid2"}]
   dietaryRestrictions: jsonb('dietary_restrictions').default('{}'), // Example: {"vegan": true, "halal": false}
-  ambiance: jsonb('ambiance').default('{}'), // Example: {"quiet": true, "family_friendly": false}
+  ambiance: jsonb('ambiance').default('{}') // Example: {"quiet": true, "family_friendly": false}
 });
 
 // Business Insights Table
