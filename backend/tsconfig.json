@@ -9,7 +9,9 @@
       "@config/*": ["config/*"],
       "@services/*": ["services/*"],
       "@routes/*": ["routes/*"],
-      "@utils/*": ["utils/*"]
+      "@utils/*": ["utils/*"],
+      "@schemas/*": ["schemas/*"],
+      "@types/*": ["types/*"]
     },
     "esModuleInterop": true,
     "skipLibCheck": true,
