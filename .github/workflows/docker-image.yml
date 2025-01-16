@@ -41,7 +41,7 @@ jobs:
 
       - name: Tag Docker image
         run: |
-          docker tag backend_app fsong009/cafexpress:latest
+          docker tag backend_app:latest fsong009/cafexpress:latest
 
       # Push the image to Docker Hub
       - name: Push Docker image to Docker Hub
