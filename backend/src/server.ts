@@ -1,7 +1,7 @@
-import app from './app';
+import app from './app.js';
 import clc from 'cli-color';
 
-const PORT = parseInt(process.env.PORT || '3000');
+const PORT = parseInt(process.env.PORT || '3000', 10);
 
 const asciiArt = `
 ░▒▓██████▓▒░  
@@ -11,7 +11,7 @@ const asciiArt = `
 ░▒▓█▓▒░        
 ░▒▓█▓▒░░▒▓█▓▒░ 
  ░▒▓██████▓▒░  
-  `;
+`;
 
 const start = async () => {
   try {
@@ -19,13 +19,15 @@ const start = async () => {
       port: PORT,
       host: '0.0.0.0'
     });
+
+    const addresses = app.addresses();
     console.log(`
         ${clc.blueBright(asciiArt)}
-      Address: ${app.addresses()[0].address}
-      Port: ${app.addresses()[0].port}
-      `);
+        Address: ${addresses[0].address}
+        Port: ${addresses[0].port}
+    `);
   } catch (error) {
-    console.log(error);
+    console.error(error);
     process.exit(1);
   }
 };
