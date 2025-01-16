@@ -26,7 +26,6 @@ services:
       DB_NAME: railway
       DB_USER: postgres
       DB_PASSWORD: IrVzyXsnkDwpOnyfISyHqxLmrAzGWRBE
-
       GEMINI_API_KEY: AIzaSyANTnFkC5SE2k8mXWxp5EMx2oOv4yyQu7I
       GEMINI_MODEL_VERSION: gemini-1.5-pro
     ports:
