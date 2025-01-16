@@ -37,6 +37,7 @@ jobs:
       # Print environment variables for debugging
       - name: Debug Environment Variables
         run: |
+          echo "DOCKER_USERNAME"=${{ secrets.DOCKER_USERNAME }}
           echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}"
           echo "GEMINI_MODEL_VERSION=${{ secrets.GEMINI_MODEL_VERSION }}"
           echo "PORT=${{ secrets.PORT }}"
