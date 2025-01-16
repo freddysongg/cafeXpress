@@ -28,8 +28,8 @@
     "drizzle-orm": "^0.38.3",
     "fastify": "^5.2.1",
     "fastify-plugin": "^5.0.1",
-    "module": "^1.2.5",
-    "require": "^2.4.20"
+    "module": "^1.1.0",
+    "require": "^0.4.4"
   },
   "devDependencies": {
     "@types/cli-color": "^2.0.6",
