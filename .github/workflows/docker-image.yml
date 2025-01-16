@@ -1,0 +1,42 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches:
+      - "production"
+  pull_request:
+    branches:
+      - "production"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out the code from the repository
+      - uses: actions/checkout@v4
+
+      # Set up Docker Buildx (for multi-platform support)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # Log in to Docker Hub (you can set these secrets in GitHub settings)
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Build the Docker image using Docker Compose
+      - name: Build the Docker image using Docker Compose
+        run: |
+          DOCKER_DEFAULT_PLATFORM=linux/amd64 docker-compose -f docker-compose.yml build
+
+      - name: Tag Docker image
+        run: |
+          docker tag backend_app:latest fsong009/cafexpress:latest
+
+      # Push the image to Docker Hub
+      - name: Push Docker image to Docker Hub
+        run: |
+          docker push fsong009/cafexpress:latest
