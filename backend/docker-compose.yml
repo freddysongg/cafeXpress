@@ -18,16 +18,8 @@ services:
     container_name: backend_app
     image: backend_app:latest
     platform: linux/amd64
-    environment:
-      PORT: ${PORT}  
-      DB_URL: ${DB_URL}  
-      DB_HOST: ${DB_HOST}  
-      DB_PORT: ${DB_PORT}  
-      DB_NAME: ${DB_NAME}  
-      DB_USER: ${DB_USER}  
-      DB_PASSWORD: ${DB_PASSWORD}  
-      GEMINI_API_KEY: ${GEMINI_API_KEY}  
-      GEMINI_MODEL_VERSION: ${GEMINI_MODEL_VERSION}  
+    env_file:
+      .env
     ports:
       - "8000:8000"
     depends_on:
