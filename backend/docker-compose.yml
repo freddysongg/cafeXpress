@@ -15,7 +15,8 @@ services:
 
   backend:
     build: .
-    container_name: backend_app:latest
+    container_name: backend_app
+    image: backend_app:latest
     platform: linux/amd64
     environment:
       DB_HOST: autorack.proxy.rlwy.net
