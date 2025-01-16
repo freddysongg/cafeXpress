@@ -18,8 +18,17 @@ services:
     container_name: backend_app
     image: backend_app:latest
     platform: linux/amd64
-    env_file:
-      - .env
+    environment:
+      PORT: 3000
+      DB_URL:jdbc: postgresql://autorack.proxy.rlwy.net:24642/railway
+      DB_HOST: autorack.proxy.rlwy.net
+      DB_PORT: 24642
+      DB_NAME: railway
+      DB_USER: postgres
+      DB_PASSWORD: IrVzyXsnkDwpOnyfISyHqxLmrAzGWRBE
+
+      GEMINI_API_KEY: AIzaSyANTnFkC5SE2k8mXWxp5EMx2oOv4yyQu7I
+      GEMINI_MODEL_VERSION: gemini-1.5-pro
     ports:
       - "8000:8000"
     depends_on:
