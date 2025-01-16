@@ -42,6 +42,7 @@ backend/*.pyc
 backend/*.pyo
 backend/*.pyd
 backend/node_modules/
+backend/docker.txt
 
 # Sphinx build files
 backend/docs/_build/
