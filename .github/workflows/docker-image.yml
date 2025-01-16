@@ -47,6 +47,15 @@ jobs:
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL_VERSION: ${{ secrets.GEMINI_MODEL_VERSION }}
+          PORT: ${{ secrets.PORT }}
+          DB_URL: ${{ secrets.DB_URL }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DOCKER_DEFAULT_PLATFORM=linux/amd64 docker compose -f backend/docker-compose.yml build
 
       - name: Tag Docker image
