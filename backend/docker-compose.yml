@@ -20,7 +20,7 @@ services:
     platform: linux/amd64
     environment:
       PORT: 3000
-      DB_URL:jdbc: postgresql://autorack.proxy.rlwy.net:24642/railway
+      DB_URL: jdbc:postgresql://autorack.proxy.rlwy.net:24642/railway
       DB_HOST: autorack.proxy.rlwy.net
       DB_PORT: 24642
       DB_NAME: railway
