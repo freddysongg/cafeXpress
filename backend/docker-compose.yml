@@ -3,11 +3,11 @@ services:
   db:
     image: postgres:16
     container_name: postgres_db
+    platform: linux/amd64
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: IrVzyXsnkDwpOnyfISyHqxLmrAzGWRBE
       POSTGRES_DB: railway
-      DOCKER_DEFAULT_PLATFORM: linux/amd64
     ports:
       - "24642:24642"
     volumes:
@@ -22,7 +22,6 @@ services:
       DB_USER: postgres
       DB_PASSWORD: IrVzyXsnkDwpOnyfISyHqxLmrAzGWRBE
       DB_NAME: railway
-      DOCKER_DEFAULT_PLATFORM: linux/amd64
     ports:
       - "8000:8000"
     depends_on:
