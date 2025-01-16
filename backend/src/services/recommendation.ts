@@ -1,6 +1,6 @@
 import { FastifyRequest } from 'fastify';
-import { db } from '@config/db';
-import { cafes, preferences, reviews, users } from '@config/schemas';
+import { db } from '@config/db.js';
+import { cafes, preferences, reviews, users } from '@config/schemas.js';
 import { eq, sql, desc } from 'drizzle-orm';
 
 /**

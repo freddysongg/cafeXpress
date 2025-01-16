@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { getRecommendationsWithGemini } from '@services/recommendation';
+import { getRecommendationsWithGemini } from '@services/recommendation.js';
 
 export const recommendationRoutes = async (app: FastifyInstance) => {
   app.get<{

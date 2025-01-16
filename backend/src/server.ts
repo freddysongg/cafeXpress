@@ -1,4 +1,4 @@
-import app from './app';
+import app from './app.js';
 import clc from 'cli-color';
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
