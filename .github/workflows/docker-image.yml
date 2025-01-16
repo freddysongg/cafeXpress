@@ -7,12 +7,8 @@ on:
   pull_request:
     branches:
       - "production"
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    env:
+      
+env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         GEMINI_MODEL_VERSION: ${{ secrets.GEMINI_MODEL_VERSION }}
         PORT: ${{ secrets.PORT }}
@@ -22,6 +18,10 @@ jobs:
         DB_NAME: ${{ secrets.DB_NAME }}
         DB_USER: ${{ secrets.DB_USER }}
         DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
     steps:
       # Check out the code from the repository
@@ -44,20 +44,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-    
-      # Print environment variables for debugging
-      - name: Debug Environment Variables
-        run: |
-          echo "DOCKER_USERNAME"=${{ secrets.DOCKER_USERNAME }}
-          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}"
-          echo "GEMINI_MODEL_VERSION=${{ secrets.GEMINI_MODEL_VERSION }}"
-          echo "PORT=${{ secrets.PORT }}"
-          echo "DB_URL=${{ secrets.DB_URL }}"
-          echo "DB_HOST=${{ secrets.DB_HOST }}"
-          echo "DB_PORT=${{ secrets.DB_PORT }}"
-          echo "DB_NAME=${{ secrets.DB_NAME }}"
-          echo "DB_USER=${{ secrets.DB_USER }}"
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
 
       # Build the Docker image using Docker Compose
       - name: Build the Docker image using Docker Compose
