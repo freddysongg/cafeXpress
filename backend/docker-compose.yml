@@ -18,11 +18,8 @@ services:
     container_name: backend_app
     image: backend_app:latest
     platform: linux/amd64
-    environment:
-      DB_HOST: autorack.proxy.rlwy.net
-      DB_USER: postgres
-      DB_PASSWORD: IrVzyXsnkDwpOnyfISyHqxLmrAzGWRBE
-      DB_NAME: railway
+    env_file:
+      - .env
     ports:
       - "8000:8000"
     depends_on:
