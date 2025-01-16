@@ -19,7 +19,7 @@ services:
     image: backend_app:latest
     platform: linux/amd64
     environment:
-      PORT: 3000
+      PORT: 8000
       DB_URL: jdbc:postgresql://autorack.proxy.rlwy.net:24642/railway
       DB_HOST: autorack.proxy.rlwy.net
       DB_PORT: 24642
