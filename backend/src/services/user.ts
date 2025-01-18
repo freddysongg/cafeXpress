@@ -1,4 +1,4 @@
-import { FastifyInstance } from 'fastify';
+import { FastifyRequest } from 'fastify';
 import { db } from '@config/db.js'
 import { users } from '@config/schemas';
 import { eq } from 'drizzle-orm';
