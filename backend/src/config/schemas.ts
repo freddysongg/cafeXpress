@@ -1,12 +1,4 @@
-import {
-  pgTable,
-  varchar,
-  timestamp,
-  uuid,
-  text,
-  jsonb,
-  integer
-} from 'drizzle-orm/pg-core';
+import { pgTable, varchar, timestamp, uuid, text, jsonb, integer } from 'drizzle-orm/pg-core';
 
 const defaults = {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -28,7 +20,8 @@ export const users = pgTable('users', {
   email: varchar('email', { length: 100 }).notNull().unique(),
   phone: varchar('phone', { length: 15 }),
   password: text('password').notNull(),
-  description: text('description')
+  description: text('description'),
+  location: jsonb('location').default('{}')
 });
 
 // Cafes Table
@@ -42,8 +35,11 @@ export const cafes = pgTable('cafes', {
   ownerId: uuid('owner_id')
     .references(() => users.id)
     .notNull(),
-  ambiance: jsonb('ambiance').default('{}'), // Example: {"quiet": true, "family_friendly": false}
-  dietaryOptions: jsonb('dietary_options').default('{}') // Example: {"vegan": true, "gluten_free": false}
+  ambiance: jsonb('ambiance').default('{}'),
+  dietaryOptions: jsonb('dietary_options').default('{}'),
+  description: text('description'),
+  semanticEmbedding: jsonb('semantic_embedding'),
+  location: jsonb('location').default('{}')
 });
 
 // Reviews Table
@@ -56,7 +52,11 @@ export const reviews = pgTable('reviews', {
     .references(() => cafes.id)
     .notNull(),
   rating: integer('rating').notNull(),
-  description: text('description')
+  text: text('text').notNull(),
+  description: text('description'),
+  sentimentScore: integer('sentiment_score'),
+  processedAt: timestamp('processed_at'),
+  entities: jsonb('entities').default('[]')
 });
 
 // Preferences Table
@@ -65,9 +65,9 @@ export const preferences = pgTable('preferences', {
   userId: uuid('user_id')
     .references(() => users.id)
     .notNull(),
-  favoriteCafes: jsonb('favorite_cafes').default('[]'), // Example: [{"cafe_id": "uuid1"}, {"cafe_id": "uuid2"}]
-  dietaryRestrictions: jsonb('dietary_restrictions').default('{}'), // Example: {"vegan": true, "halal": false}
-  ambiance: jsonb('ambiance').default('{}') // Example: {"quiet": true, "family_friendly": false}
+  favoriteCafes: jsonb('favorite_cafes').default('[]'),
+  dietaryRestrictions: jsonb('dietary_restrictions').default('{}'),
+  ambiance: jsonb('ambiance').default('{}')
 });
 
 // Business Insights Table
@@ -78,6 +78,6 @@ export const businessInsights = pgTable('business_insights', {
     .notNull(),
   visits: integer('visits').default(0),
   averageRating: integer('average_rating').default(0),
-  peakHours: jsonb('peak_hours').default('{}'), // Example: {"monday": "12:00-14:00", "friday": "18:00-20:00"}
-  sentimentAnalysis: jsonb('sentiment_analysis').default('{}') // Example: {"positive": 60, "negative": 40}
+  peakHours: jsonb('peak_hours').default('{}'),
+  sentimentAnalysis: jsonb('sentiment_analysis').default('{}')
 });

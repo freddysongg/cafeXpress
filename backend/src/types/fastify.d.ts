@@ -1,5 +1,6 @@
 import { HookHandlerDoneFunction } from 'fastify';
 import { z } from 'zod';
+import type { GeminiClient } from '@config/gemini.js';
 
 declare module 'fastify' {
   export interface FastifyInstance {
@@ -14,8 +15,6 @@ declare module 'fastify' {
       querySchema?: z.ZodTypeAny;
       headerSchema?: z.ZodTypeAny;
     }) => (request: FastifyRequest, reply: FastifyReply, done: HookHandlerDoneFunction) => void;
-    geminiClient: {
-      generateRecommendations(input: object): Promise<any>;
-    };
+    gemini: GeminiClient;
   }
 }

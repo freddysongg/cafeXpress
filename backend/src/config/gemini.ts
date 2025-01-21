@@ -1,35 +1,71 @@
-import { FastifyInstance } from 'fastify';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import type { FastifyInstance } from 'fastify';
+import type { GeminiClient } from '@schemas/gemini.js';
 
-export function setupGeminiClient(fastify: FastifyInstance) {
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-  const GEMINI_MODEL_VERSION = process.env.GEMINI_MODEL_VERSION;
+class GeminiClientImpl implements GeminiClient {
+  private genAI: GoogleGenerativeAI;
+  private model: any;
+  private modelVersion: string;
 
-  if (!GEMINI_API_KEY || !GEMINI_MODEL_VERSION) {
-    throw new Error('Gemini API key or model version is missing in environment variables.');
+  constructor(apiKey: string, modelVersion: string) {
+    this.genAI = new GoogleGenerativeAI(apiKey);
+    this.modelVersion = modelVersion;
   }
 
-  fastify.decorate('geminiClient', {
-    async generateRecommendations(input: object) {
-      try {
-        const response = await fastify.inject({
-          method: 'POST',
-          url: `https://api.gemini-platform.com/v1/models/${GEMINI_MODEL_VERSION}:predict`,
-          headers: {
-            Authorization: `Bearer ${GEMINI_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(input)
-        });
+  async initialize() {
+    this.model = await this.genAI.getGenerativeModel({
+      model: this.modelVersion
+    });
+  }
 
-        if (response.statusCode >= 200 && response.statusCode < 300) {
-          return JSON.parse(response.body);
-        } else {
-          throw new Error(`Gemini API Error: ${response.body}`);
-        }
-      } catch (error) {
-        fastify.log.error('Error generating recommendations:', error);
-        throw new Error('Failed to generate recommendations.');
-      }
-    }
-  });
+  getModelVersion(): string {
+    return this.modelVersion;
+  }
+
+  async analyzeText(text: string) {
+    const prompt = `Analyze this text and return JSON with sentiment analysis and entities:
+    ${text}
+    
+    Return JSON in this format:
+    {
+      "sentiment": "positive|neutral|negative",
+      "entities": ["entity1", "entity2"]
+    }`;
+
+    const result = await this.model.generateContent(prompt);
+    const response = await result.response;
+    const json = JSON.parse(response.text());
+
+    return {
+      sentiment: json.sentiment,
+      entities: json.entities
+    };
+  }
+
+  async generateContent(prompt: string) {
+    const result = await this.model.generateContent(prompt);
+    return result.response;
+  }
+
+  async generateEmbedding(text: string) {
+    const result = await this.model.embedContent(text);
+    return result.embedding.values;
+  }
+}
+
+export function setupGeminiClient(app: FastifyInstance) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  const modelVersion = process.env.GEMINI_MODEL_VERSION;
+
+  if (!apiKey) {
+    throw new Error('GEMINI_API_KEY environment variable is required');
+  }
+  if (!modelVersion) {
+    throw new Error('GEMINI_MODEL_VERSION environment variable is required');
+  }
+
+  const client = new GeminiClientImpl(apiKey, modelVersion);
+  client.initialize();
+
+  app.decorate('gemini', client);
 }
