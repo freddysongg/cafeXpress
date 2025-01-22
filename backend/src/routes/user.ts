@@ -27,16 +27,16 @@ export const usersRoutes = async (app: FastifyInstance) => {
         };
     }>('/:userId', async (req, reply) => {
         try {
-        const response = await getUserById(req);
-        reply.send(response);
+            const response = await getUserById(req);
+            reply.send(response);
         } catch (error) {
-        app.log.error('Error fetching user details:', error);
-        reply.status(500).send({ status: 'error', message: 'Internal server error' });
+            app.log.error('Error fetching user details:', error);
+            reply.status(500).send({ status: 'error', message: 'Internal server error' });
         }
     });
 
     //Get all users
-    app.get('/:userId', async (req, reply) => {
+    app.get('/all', async (req, reply) => {
         try {
             const response = await getAllUsers(req);
             reply.send(response);
@@ -74,11 +74,11 @@ export const usersRoutes = async (app: FastifyInstance) => {
         };
     }>('/:userId', async (req, reply) => {
         try {
-        const response = await deleteUser(req);
-        reply.send(response);
+            const response = await deleteUser(req);
+            reply.send(response);
         } catch (error) {
-        app.log.error('Error deleting user:', error);
-        reply.status(500).send({ status: 'error', message: 'Internal server error' });
+            app.log.error('Error deleting user:', error);
+            reply.status(500).send({ status: 'error', message: 'Internal server error' });
         }
     });
 
