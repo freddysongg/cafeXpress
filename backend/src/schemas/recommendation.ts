@@ -14,7 +14,14 @@ export const baseRecommendation = z.object({
       name: z.string(),
       description: z.string(),
       tags: z.array(z.string()).optional(),
-      sentimentScore: z.number().min(-1).max(1).optional()
+      sentimentScore: z
+        .object({
+          positive: z.number().min(0).max(1),
+          negative: z.number().min(0).max(1),
+          neutral: z.number().min(0).max(1),
+          compound: z.number().min(-1).max(1)
+        })
+        .optional()
     })
     .optional()
 });
@@ -73,7 +80,12 @@ export const GeminiResponse = z.object({
 
 export interface GeminiClient {
   analyzeText: (text: string) => Promise<{
-    sentiment: 'positive' | 'neutral' | 'negative';
+    score: {
+      positive: number;
+      negative: number;
+      neutral: number;
+      compound: number;
+    };
     entities: string[];
   }>;
   getModelVersion: () => string;
@@ -130,11 +142,32 @@ export const embeddingGenerationResponse = z.object({
   message: z.string().optional()
 });
 
+// User preferences schema
+export const preferencesSchema = z.object({
+  id: z.string().uuid(),
+  createdAt: z.date().optional(),
+  userId: z.string().uuid().nullable(),
+  favoriteCafes: z.array(z.string().uuid()).nullable(),
+  dietaryRestrictions: z.array(z.string()).nullable(),
+  ambiance: z.array(z.string()).nullable(),
+  semanticEmbedding: z
+    .object({
+      vector: z.array(z.number()),
+      metadata: z.object({
+        type: z.enum(['user', 'preferences', 'cafe']),
+        id: z.string(),
+        createdAt: z.date().optional()
+      })
+    })
+    .nullable()
+});
+
 export interface UserWithLocation {
   id: string;
   username: string;
   description: string | null;
   location: Location;
+  preferencesEmbedding: z.infer<typeof preferencesSchema>['semanticEmbedding'];
 }
 
 export interface Location {
@@ -145,3 +178,4 @@ export interface Location {
 export type PersonalizedRecommendationRequest = z.infer<typeof personalizedRecommendationRequest>;
 export type RecommendationResponse = z.infer<typeof recommendationResponse>;
 export type BaseRecommendation = z.infer<typeof baseRecommendation>;
+export type Preferences = z.infer<typeof preferencesSchema>;

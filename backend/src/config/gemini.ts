@@ -51,6 +51,31 @@ class GeminiClientImpl implements GeminiClient {
     const result = await this.model.embedContent(text);
     return result.embedding.values;
   }
+
+  async generateEmbeddings(texts: string[]) {
+    const results = await Promise.all(texts.map((text) => this.model.embedContent(text)));
+    return results.map((result) => result.embedding.values);
+  }
+
+  async analyzeSentiment(text: string) {
+    const prompt = `Analyze the sentiment of this text and return a score between -1 (negative) and 1 (positive):
+    ${text}
+    
+    Return JSON in this format:
+    {
+      "score": number
+    }`;
+
+    const result = await this.model.generateContent(prompt);
+    const response = await result.response;
+    const json = JSON.parse(response.text());
+    return { score: json.score };
+  }
+
+  async batchAnalyzeSentiment(texts: string[]) {
+    const results = await Promise.all(texts.map((text) => this.analyzeSentiment(text)));
+    return results;
+  }
 }
 
 export function setupGeminiClient(app: FastifyInstance) {

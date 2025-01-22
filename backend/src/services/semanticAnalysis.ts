@@ -3,7 +3,9 @@ import { reviews } from '@config/schemas.js';
 import type { GeminiClient } from '@schemas/gemini.js';
 import { setTimeout } from 'timers/promises';
 import { sql, eq } from 'drizzle-orm';
-import { ReviewAnalysis } from '@schemas/semantic';
+import type { ReviewAnalysis } from '@schemas/semantic.js';
+
+type SentimentLabel = 'positive' | 'negative' | 'neutral';
 
 const BATCH_SIZE = 50;
 const PROCESSING_INTERVAL = 60 * 60 * 1000; // 1 hour
@@ -21,12 +23,32 @@ export class SemanticAnalysisService {
 
     for (const review of reviews) {
       try {
-        const analysis = await this.gemini.analyzeText(review.text);
+        const { sentiment, entities } = await this.gemini.analyzeText(review.text);
+        // Transform Gemini sentiment scores to match database schema
+        const compoundScore = sentiment.compound;
+        const sentimentLabel: SentimentLabel =
+          compoundScore >= 0.7 ? 'positive' : compoundScore <= 0.3 ? 'negative' : 'neutral';
+
+        const sentimentScore = {
+          positive: sentiment.positive,
+          negative: sentiment.negative,
+          neutral: sentiment.neutral,
+          compound: sentiment.compound
+        };
+
         results.push({
           id: review.id,
           text: review.text,
-          sentiment: analysis.sentiment,
-          entities: analysis.entities
+          content: review.text,
+          sentiment: sentimentLabel,
+          sentimentScore,
+          entities: Array.isArray(entities)
+            ? entities.map((entity) => ({
+                name: entity,
+                type: 'keyword',
+                salience: 1.0
+              }))
+            : undefined
         });
       } catch (error) {
         console.error(`Failed to analyze review ${review.id}:`, error);
@@ -64,8 +86,7 @@ export class SemanticAnalysisService {
       await db
         .update(reviews)
         .set({
-          sentimentScore:
-            analysis.sentiment === 'positive' ? 1 : analysis.sentiment === 'negative' ? -1 : 0,
+          sentimentScore: analysis.sentimentScore,
           entities: analysis.entities,
           processedAt: new Date()
         })
