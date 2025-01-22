@@ -34,20 +34,20 @@ export async function createCafe(req: FastifyRequest): Promise<CafeResponse> {
         name: cafes.name,
         city: cafes.city,
         state: cafes.state,
-        createdAt: cafes.createdAt,
+        createdAt: cafes.createdAt
       });
 
     return {
       status: 'success',
       message: 'Cafe created successfully',
-      data: newCafe,
+      data: newCafe
     };
   } catch (error) {
     const err = error as Error;
     console.error('Error creating cafe:', err.message);
     return {
       status: 'error',
-      message: err.message,
+      message: err.message
     };
   }
 }
@@ -55,7 +55,9 @@ export async function createCafe(req: FastifyRequest): Promise<CafeResponse> {
 /**
  * Get Cafe by ID
  */
-export async function getCafeById(req: FastifyRequest<{ Params: { cafeId: string } }>): Promise<CafeResponse> {
+export async function getCafeById(
+  req: FastifyRequest<{ Params: { cafeId: string } }>
+): Promise<CafeResponse> {
   try {
     const cafeId = req.params.cafeId;
 
@@ -70,7 +72,7 @@ export async function getCafeById(req: FastifyRequest<{ Params: { cafeId: string
         zipCode: cafes.zipCode,
         ambiance: cafes.ambiance,
         dietaryOptions: cafes.dietaryOptions,
-        createdAt: cafes.createdAt,
+        createdAt: cafes.createdAt
       })
       .from(cafes)
       .where(eq(cafes.id, cafeId))
@@ -79,21 +81,21 @@ export async function getCafeById(req: FastifyRequest<{ Params: { cafeId: string
     if (!cafe.length) {
       return {
         status: 'error',
-        message: 'Cafe not found.',
+        message: 'Cafe not found.'
       };
     }
 
     return {
       status: 'success',
       message: 'Cafe data retrieved',
-      data: cafe[0],
+      data: cafe[0]
     };
   } catch (error) {
     const err = error as Error;
     console.error('Error fetching cafe details:', err.message);
     return {
       status: 'error',
-      message: err.message,
+      message: err.message
     };
   }
 }
@@ -111,21 +113,21 @@ export async function getAllCafes(req: FastifyRequest): Promise<CafeResponse> {
         city: cafes.city,
         state: cafes.state,
         zipCode: cafes.zipCode,
-        createdAt: cafes.createdAt,
+        createdAt: cafes.createdAt
       })
       .from(cafes);
 
     return {
       status: 'success',
       message: 'Cafes data retrieved',
-      data: cafesList,
+      data: cafesList
     };
   } catch (error) {
     const err = error as Error;
     console.error('Error fetching cafes:', err.message);
     return {
       status: 'error',
-      message: err.message,
+      message: err.message
     };
   }
 }
@@ -134,7 +136,18 @@ export async function getAllCafes(req: FastifyRequest): Promise<CafeResponse> {
  * Update Cafe
  */
 export async function updateCafe(
-  req: FastifyRequest<{ Params: { cafeId: string }; Body: Partial<{ name: string; address: string; city: string; state: string; zipCode: string; ambiance: object; dietaryOptions: object }> }>
+  req: FastifyRequest<{
+    Params: { cafeId: string };
+    Body: Partial<{
+      name: string;
+      address: string;
+      city: string;
+      state: string;
+      zipCode: string;
+      ambiance: object;
+      dietaryOptions: object;
+    }>;
+  }>
 ): Promise<CafeResponse> {
   try {
     const cafeId = req.params.cafeId;
@@ -150,27 +163,27 @@ export async function updateCafe(
         name: cafes.name,
         city: cafes.city,
         state: cafes.state,
-        zipCode: cafes.zipCode,
+        zipCode: cafes.zipCode
       });
 
     if (!updatedCafe.length) {
       return {
         status: 'error',
-        message: 'Cafe not found.',
+        message: 'Cafe not found.'
       };
     }
 
     return {
       status: 'success',
       message: 'Cafe updated successfully',
-      data: updatedCafe[0],
+      data: updatedCafe[0]
     };
   } catch (error) {
     const err = error as Error;
     console.error('Error updating cafe:', err.message);
     return {
       status: 'error',
-      message: err.message,
+      message: err.message
     };
   }
 }
@@ -178,39 +191,38 @@ export async function updateCafe(
 /**
  * Delete Cafe by ID
  */
-export async function deleteCafe(req: FastifyRequest<{ Params: { cafeId: string } }>): Promise<CafeResponse> {
+export async function deleteCafe(
+  req: FastifyRequest<{ Params: { cafeId: string } }>
+): Promise<CafeResponse> {
   try {
     const cafeId = req.params.cafeId;
 
     // Delete cafe
-    const deletedCafe = await db
-      .delete(cafes)
-      .where(eq(cafes.id, cafeId))
-      .returning({
-        id: cafes.id,
-        name: cafes.name,
-        city: cafes.city,
-        state: cafes.state,
-      });
+    const deletedCafe = await db.delete(cafes).where(eq(cafes.id, cafeId)).returning({
+      id: cafes.id,
+      name: cafes.name,
+      city: cafes.city,
+      state: cafes.state
+    });
 
     if (!deletedCafe.length) {
       return {
         status: 'error',
-        message: 'Cafe not found.',
+        message: 'Cafe not found.'
       };
     }
 
     return {
       status: 'success',
       message: 'Cafe deleted successfully',
-      data: deletedCafe[0],
+      data: deletedCafe[0]
     };
   } catch (error) {
     const err = error as Error;
     console.error('Error deleting cafe:', err.message);
     return {
       status: 'error',
-      message: err.message,
+      message: err.message
     };
   }
 }

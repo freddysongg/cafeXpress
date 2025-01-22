@@ -1,5 +1,5 @@
 import { FastifyRequest } from 'fastify';
-import { db } from '@config/db.js'
+import { db } from '@config/db.js';
 import { users } from '@config/schemas';
 import { eq } from 'drizzle-orm';
 
@@ -10,7 +10,7 @@ type UserResponse = {
 };
 
 /**
- * Create User 
+ * Create User
  */
 
 export async function createUser(req: FastifyRequest): Promise<UserResponse> {
@@ -30,7 +30,7 @@ export async function createUser(req: FastifyRequest): Promise<UserResponse> {
       .insert(users)
       .values({ username, email, firstName, lastName, phone, password, description })
       .returning({
-        id: users.id, 
+        id: users.id,
         username: users.username,
         email: users.email,
         createdAt: users.createdAt
@@ -50,11 +50,12 @@ export async function createUser(req: FastifyRequest): Promise<UserResponse> {
   }
 }
 
-
 /**
  * Get User Details by ID
  */
-export async function getUserById(req: FastifyRequest<{ Params: { userId: string } }>): Promise<UserResponse> {
+export async function getUserById(
+  req: FastifyRequest<{ Params: { userId: string } }>
+): Promise<UserResponse> {
   try {
     const userId = req.params.userId;
 
@@ -131,7 +132,10 @@ export async function getAllUsers(req: FastifyRequest): Promise<UserResponse> {
  * Update User Details
  */
 export async function updateUser(
-  req: FastifyRequest<{ Params: { userId: string }; Body: Partial<{ username: string; email: string; description: string }> }>
+  req: FastifyRequest<{
+    Params: { userId: string };
+    Body: Partial<{ username: string; email: string; description: string }>;
+  }>
 ): Promise<UserResponse> {
   try {
     const userId = req.params.userId;
@@ -181,14 +185,11 @@ export async function deleteUser(
     const userId = req.params.userId;
 
     // Delete user
-    const deletedUser = await db
-      .delete(users)
-      .where(eq(users.id, userId))
-      .returning({
-        id: users.id,
-        username: users.username,
-        email: users.email
-      });
+    const deletedUser = await db.delete(users).where(eq(users.id, userId)).returning({
+      id: users.id,
+      username: users.username,
+      email: users.email
+    });
 
     if (!deletedUser.length) {
       return {

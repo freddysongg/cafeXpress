@@ -59,7 +59,9 @@ export async function createBusinessInsight(req: FastifyRequest): Promise<Busine
 /**
  * Get Business Insight by Cafe ID
  */
-export async function getBusinessInsightByCafeId(req: FastifyRequest<{ Params: { cafeId: string } }>): Promise<BusinessInsightResponse> {
+export async function getBusinessInsightByCafeId(
+  req: FastifyRequest<{ Params: { cafeId: string } }>
+): Promise<BusinessInsightResponse> {
   try {
     const { cafeId } = req.params;
 
@@ -101,7 +103,9 @@ export async function getBusinessInsightByCafeId(req: FastifyRequest<{ Params: {
 /**
  * Get All Business Insights
  */
-export async function getAllBusinessInsights(req: FastifyRequest): Promise<BusinessInsightResponse> {
+export async function getAllBusinessInsights(
+  req: FastifyRequest
+): Promise<BusinessInsightResponse> {
   try {
     // Fetch all business insights
     const insights = await db
@@ -134,7 +138,15 @@ export async function getAllBusinessInsights(req: FastifyRequest): Promise<Busin
  * Update Business Insight
  */
 export async function updateBusinessInsight(
-  req: FastifyRequest<{ Params: { cafeId: string }; Body: Partial<{ visits: number; averageRating: number; peakHours: object; sentimentAnalysis: object }> }>
+  req: FastifyRequest<{
+    Params: { cafeId: string };
+    Body: Partial<{
+      visits: number;
+      averageRating: number;
+      peakHours: object;
+      sentimentAnalysis: object;
+    }>;
+  }>
 ): Promise<BusinessInsightResponse> {
   try {
     const { cafeId } = req.params;

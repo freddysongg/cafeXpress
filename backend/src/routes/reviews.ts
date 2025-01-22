@@ -8,7 +8,6 @@ import {
 } from '@services/reviews';
 
 export const reviewsRoutes = async (app: FastifyInstance) => {
-  
   // Create review
   app.post('/', async (req, reply) => {
     try {
@@ -83,5 +82,4 @@ export const reviewsRoutes = async (app: FastifyInstance) => {
       reply.status(500).send({ status: 'error', message: 'Internal server error' });
     }
   });
-
 };

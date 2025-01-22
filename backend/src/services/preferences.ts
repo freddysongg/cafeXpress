@@ -30,20 +30,20 @@ export async function createPreferences(req: FastifyRequest): Promise<Preference
         userId: preferences.userId,
         favoriteCafes: preferences.favoriteCafes,
         dietaryRestrictions: preferences.dietaryRestrictions,
-        ambiance: preferences.ambiance,
+        ambiance: preferences.ambiance
       });
 
     return {
       status: 'success',
       message: 'Preferences created successfully',
-      data: newPreferences,
+      data: newPreferences
     };
   } catch (error) {
     const err = error as Error;
     console.error('Error creating preferences:', err.message);
     return {
       status: 'error',
-      message: err.message,
+      message: err.message
     };
   }
 }
@@ -62,7 +62,7 @@ export async function getPreferencesByUserId(
       .select({
         favoriteCafes: preferences.favoriteCafes,
         dietaryRestrictions: preferences.dietaryRestrictions,
-        ambiance: preferences.ambiance,
+        ambiance: preferences.ambiance
       })
       .from(preferences)
       .where(eq(preferences.userId, userId))
@@ -71,21 +71,21 @@ export async function getPreferencesByUserId(
     if (!userPreferences.length) {
       return {
         status: 'error',
-        message: 'Preferences not found.',
+        message: 'Preferences not found.'
       };
     }
 
     return {
       status: 'success',
       message: 'Preferences retrieved successfully',
-      data: userPreferences[0],
+      data: userPreferences[0]
     };
   } catch (error) {
     const err = error as Error;
     console.error('Error fetching preferences:', err.message);
     return {
       status: 'error',
-      message: err.message,
+      message: err.message
     };
   }
 }
@@ -102,21 +102,21 @@ export async function getAllPreferences(req: FastifyRequest): Promise<Preference
         userId: preferences.userId,
         favoriteCafes: preferences.favoriteCafes,
         dietaryRestrictions: preferences.dietaryRestrictions,
-        ambiance: preferences.ambiance,
+        ambiance: preferences.ambiance
       })
       .from(preferences);
 
     return {
       status: 'success',
       message: 'Preferences data retrieved',
-      data: preferencesList,
+      data: preferencesList
     };
   } catch (error) {
     const err = error as Error;
     console.error('Error fetching preferences:', err.message);
     return {
       status: 'error',
-      message: err.message,
+      message: err.message
     };
   }
 }
@@ -125,7 +125,10 @@ export async function getAllPreferences(req: FastifyRequest): Promise<Preference
  * Update Preferences for a User
  */
 export async function updatePreferences(
-  req: FastifyRequest<{ Params: { userId: string }; Body: Partial<{ favoriteCafes: any; dietaryRestrictions: any; ambiance: any }> }>
+  req: FastifyRequest<{
+    Params: { userId: string };
+    Body: Partial<{ favoriteCafes: any; dietaryRestrictions: any; ambiance: any }>;
+  }>
 ): Promise<PreferencesResponse> {
   try {
     const userId = req.params.userId;
@@ -141,27 +144,27 @@ export async function updatePreferences(
         userId: preferences.userId,
         favoriteCafes: preferences.favoriteCafes,
         dietaryRestrictions: preferences.dietaryRestrictions,
-        ambiance: preferences.ambiance,
+        ambiance: preferences.ambiance
       });
 
     if (!updatedPreferences.length) {
       return {
         status: 'error',
-        message: 'Preferences not found.',
+        message: 'Preferences not found.'
       };
     }
 
     return {
       status: 'success',
       message: 'Preferences updated successfully',
-      data: updatedPreferences[0],
+      data: updatedPreferences[0]
     };
   } catch (error) {
     const err = error as Error;
     console.error('Error updating preferences:', err.message);
     return {
       status: 'error',
-      message: err.message,
+      message: err.message
     };
   }
 }
@@ -184,27 +187,27 @@ export async function deletePreferences(
         userId: preferences.userId,
         favoriteCafes: preferences.favoriteCafes,
         dietaryRestrictions: preferences.dietaryRestrictions,
-        ambiance: preferences.ambiance,
+        ambiance: preferences.ambiance
       });
 
     if (!deletedPreferences.length) {
       return {
         status: 'error',
-        message: 'Preferences not found.',
+        message: 'Preferences not found.'
       };
     }
 
     return {
       status: 'success',
       message: 'Preferences deleted successfully',
-      data: deletedPreferences[0],
+      data: deletedPreferences[0]
     };
   } catch (error) {
     const err = error as Error;
     console.error('Error deleting preferences:', err.message);
     return {
       status: 'error',
-      message: err.message,
+      message: err.message
     };
   }
 }

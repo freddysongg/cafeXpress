@@ -22,11 +22,7 @@ export async function createReview(req: FastifyRequest): Promise<ReviewResponse>
     };
 
     // Check if user exists
-    const userExists = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
+    const userExists = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
     if (!userExists.length) {
       return {
@@ -36,11 +32,7 @@ export async function createReview(req: FastifyRequest): Promise<ReviewResponse>
     }
 
     // Check if cafe exists
-    const cafeExists = await db
-      .select()
-      .from(cafes)
-      .where(eq(cafes.id, cafeId))
-      .limit(1);
+    const cafeExists = await db.select().from(cafes).where(eq(cafes.id, cafeId)).limit(1);
 
     if (!cafeExists.length) {
       return {
@@ -85,16 +77,14 @@ export async function createReview(req: FastifyRequest): Promise<ReviewResponse>
 /**
  * Get Review Details by ID
  */
-export async function getReviewById(req: FastifyRequest<{ Params: { reviewId: string } }>): Promise<ReviewResponse> {
+export async function getReviewById(
+  req: FastifyRequest<{ Params: { reviewId: string } }>
+): Promise<ReviewResponse> {
   try {
     const reviewId = req.params.reviewId;
 
     // Fetch review details
-    const review = await db
-      .select()
-      .from(reviews)
-      .where(eq(reviews.id, reviewId))
-      .limit(1);
+    const review = await db.select().from(reviews).where(eq(reviews.id, reviewId)).limit(1);
 
     if (!review.length) {
       return {
@@ -121,15 +111,14 @@ export async function getReviewById(req: FastifyRequest<{ Params: { reviewId: st
 /**
  * Get All Reviews for a Cafe
  */
-export async function getReviewsByCafeId(req: FastifyRequest<{ Params: { cafeId: string } }>): Promise<ReviewResponse> {
+export async function getReviewsByCafeId(
+  req: FastifyRequest<{ Params: { cafeId: string } }>
+): Promise<ReviewResponse> {
   try {
     const cafeId = req.params.cafeId;
 
     // Fetch all reviews for the specified cafe
-    const reviewsList = await db
-      .select()
-      .from(reviews)
-      .where(eq(reviews.cafeId, cafeId));
+    const reviewsList = await db.select().from(reviews).where(eq(reviews.cafeId, cafeId));
 
     return {
       status: 'success',
@@ -150,7 +139,10 @@ export async function getReviewsByCafeId(req: FastifyRequest<{ Params: { cafeId:
  * Update Review Details
  */
 export async function updateReview(
-  req: FastifyRequest<{ Params: { reviewId: string }; Body: Partial<{ rating: number; description: string }> }>
+  req: FastifyRequest<{
+    Params: { reviewId: string };
+    Body: Partial<{ rating: number; description: string }>;
+  }>
 ): Promise<ReviewResponse> {
   try {
     const reviewId = req.params.reviewId;
@@ -193,19 +185,18 @@ export async function updateReview(
 /**
  * Delete a Review by ID
  */
-export async function deleteReview(req: FastifyRequest<{ Params: { reviewId: string } }>): Promise<ReviewResponse> {
+export async function deleteReview(
+  req: FastifyRequest<{ Params: { reviewId: string } }>
+): Promise<ReviewResponse> {
   try {
     const reviewId = req.params.reviewId;
 
     // Delete review
-    const deletedReview = await db
-      .delete(reviews)
-      .where(eq(reviews.id, reviewId))
-      .returning({
-        id: reviews.id,
-        rating: reviews.rating,
-        description: reviews.description
-      });
+    const deletedReview = await db.delete(reviews).where(eq(reviews.id, reviewId)).returning({
+      id: reviews.id,
+      rating: reviews.rating,
+      description: reviews.description
+    });
 
     if (!deletedReview.length) {
       return {
