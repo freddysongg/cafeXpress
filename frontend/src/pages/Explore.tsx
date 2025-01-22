@@ -33,7 +33,8 @@ const CAFES = [
 const Explore = () => {
   return (
     <div className="min-h-screen pb-20">
-      <div className="sticky top-0 bg-background z-10 p-6 border-b">
+      <div className="sticky top-0 bg-background z-10 p-6 border-b"
+        style={{ backgroundColor: '#DFAF94' }}>
         <h1 className="text-2xl font-bold mb-4">Explore Cafés</h1>
         <div className="relative">
           <Input 
@@ -45,9 +46,12 @@ const Explore = () => {
       </div>
       
       <div className="p-6 grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {CAFES.map((cafe) => (
+        {/* will insert map here; maybe have for desktop show the cafes on the map on the right side; then for mobile have something you can 
+            scroll up on to see the restuarants on the bottom */}
+
+        {/* {CAFES.map((cafe) => (
           <CafeCard key={cafe.name} {...cafe} />
-        ))}
+        ))} */}
       </div>
       
       <Navbar />
