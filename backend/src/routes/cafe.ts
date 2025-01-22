@@ -16,11 +16,11 @@ export const cafesRoutes = async (app: FastifyInstance) => {
             city: string;
             state: string;
             zipCode: string;
-            ownerId: string;
+            ownerId?: string;
             ambiance?: object;
             dietaryOptions?: object;
         };
-    }>('/:cafeId', async (req, reply) => {
+    }>('/', async (req, reply) => {
         try {
             const response = await createCafe(req);
             reply.send(response);

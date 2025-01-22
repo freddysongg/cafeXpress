@@ -42,7 +42,8 @@ export const cafes = pgTable('cafes', {
   zipCode: varchar('zip_code', { length: 10 }).notNull(),
   ownerId: uuid('owner_id')
     .references(() => users.id)
-    .notNull(),
+    .notNull()
+    .defaultRandom(),
   ambiance: jsonb('ambiance').default('{}'), // Example: {"quiet": true, "family_friendly": false}
   dietaryOptions: jsonb('dietary_options').default('{}') // Example: {"vegan": true, "gluten_free": false}
 });

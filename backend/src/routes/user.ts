@@ -10,7 +10,7 @@ import { Param } from 'drizzle-orm';
 
 export const usersRoutes = async (app: FastifyInstance) => {
     //Create user
-    app.post('/:userId', async (req, reply) => {
+    app.post('/', async (req, reply) => {
         try {
             const response = await createUser(req);
             reply.send(response);
