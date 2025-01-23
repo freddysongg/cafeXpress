@@ -12,7 +12,7 @@ export const usersRoutes = async (app: FastifyInstance) => {
     //Create user
     app.post('/', async (req, reply) => {
         try {
-            const response = await createUser(req);
+            const response = await createUser(req,reply);
             reply.send(response);
         } catch (error) {
             app.log.error('Error creating user:', error);
@@ -27,7 +27,7 @@ export const usersRoutes = async (app: FastifyInstance) => {
         };
     }>('/:userId', async (req, reply) => {
         try {
-            const response = await getUserById(req);
+            const response = await getUserById(req,reply);
             reply.send(response);
         } catch (error) {
             app.log.error('Error fetching user details:', error);
@@ -38,7 +38,7 @@ export const usersRoutes = async (app: FastifyInstance) => {
     //Get all users
     app.get('/all', async (req, reply) => {
         try {
-            const response = await getAllUsers(req);
+            const response = await getAllUsers(req,reply);
             reply.send(response);
         } catch (error) {
             app.log.error('Error fetching users:', error);
@@ -47,7 +47,7 @@ export const usersRoutes = async (app: FastifyInstance) => {
     });
 
     //Update user
-    app.patch<{
+    app.put<{
         Params: {
             userId: string;
         };
@@ -59,7 +59,7 @@ export const usersRoutes = async (app: FastifyInstance) => {
         }>;
     }> ('/:userId', async (req, reply) => {
         try {
-            const response = await updateUser(req);
+            const response = await updateUser(req,reply);
             reply.send(response);
         } catch (error) {
             app.log.error('Error updating user', error);
@@ -74,7 +74,7 @@ export const usersRoutes = async (app: FastifyInstance) => {
         };
     }>('/:userId', async (req, reply) => {
         try {
-            const response = await deleteUser(req);
+            const response = await deleteUser(req,reply);
             reply.send(response);
         } catch (error) {
             app.log.error('Error deleting user:', error);

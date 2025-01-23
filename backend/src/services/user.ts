@@ -1,19 +1,13 @@
-import { FastifyRequest } from 'fastify';
-import { db } from '@config/db.js'
+import { FastifyRequest, FastifyReply } from 'fastify';
+import { db } from '@config/db.js';
 import { users } from '@config/schemas';
 import { eq } from 'drizzle-orm';
 
-type UserResponse = {
-  status: 'success' | 'error';
-  message: string;
-  data?: any;
-};
 
 /**
- * Create User 
+ * Create User
  */
-
-export async function createUser(req: FastifyRequest): Promise<UserResponse> {
+export async function createUser(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
     const { username, email, firstName, lastName, phone, password, description } = req.body as {
       username: string;
@@ -30,31 +24,31 @@ export async function createUser(req: FastifyRequest): Promise<UserResponse> {
       .insert(users)
       .values({ username, email, firstName, lastName, phone, password, description })
       .returning({
-        id: users.id, 
+        id: users.id,
         username: users.username,
         email: users.email,
         createdAt: users.createdAt
       });
-    return {
+
+    reply.send({
       status: 'success',
       message: 'User created successfully',
       data: newUser
-    };
+    });
   } catch (error) {
     const err = error as Error;
     console.error('Error creating user:', err.message);
-    return {
+    reply.status(500).send({
       status: 'error',
       message: err.message
-    };
+    });
   }
 }
-
 
 /**
  * Get User Details by ID
  */
-export async function getUserById(req: FastifyRequest<{ Params: { userId: string } }>): Promise<UserResponse> {
+export async function getUserById(req: FastifyRequest<{ Params: { userId: string } }>, reply: FastifyReply): Promise<void> {
   try {
     const userId = req.params.userId;
 
@@ -71,13 +65,14 @@ export async function getUserById(req: FastifyRequest<{ Params: { userId: string
       .limit(1);
 
     if (!user.length) {
-      return {
+      reply.status(404).send({
         status: 'error',
         message: 'User not found.'
-      };
+      });
+      return;
     }
 
-    return {
+    reply.send({
       status: 'success',
       message: 'User data retrieved',
       data: {
@@ -86,21 +81,21 @@ export async function getUserById(req: FastifyRequest<{ Params: { userId: string
         description: user[0].description,
         createdAt: user[0].createdAt
       }
-    };
+    });
   } catch (error) {
     const err = error as Error;
     console.error('Error fetching user details:', err.message);
-    return {
+    reply.status(500).send({
       status: 'error',
       message: err.message
-    };
+    });
   }
 }
 
 /**
  * Get All Users
  */
-export async function getAllUsers(req: FastifyRequest): Promise<UserResponse> {
+export async function getAllUsers(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
     // Fetch all users
     const usersList = await db
@@ -112,18 +107,18 @@ export async function getAllUsers(req: FastifyRequest): Promise<UserResponse> {
       })
       .from(users);
 
-    return {
+    reply.send({
       status: 'success',
       message: 'Users data retrieved',
       data: usersList
-    };
+    });
   } catch (error) {
     const err = error as Error;
     console.error('Error fetching users:', err.message);
-    return {
+    reply.status(500).send({
       status: 'error',
       message: err.message
-    };
+    });
   }
 }
 
@@ -131,8 +126,9 @@ export async function getAllUsers(req: FastifyRequest): Promise<UserResponse> {
  * Update User Details
  */
 export async function updateUser(
-  req: FastifyRequest<{ Params: { userId: string }; Body: Partial<{ username: string; email: string; description: string }> }>
-): Promise<UserResponse> {
+  req: FastifyRequest<{ Params: { userId: string }; Body: Partial<{ username: string; email: string; description: string }> }>,
+  reply: FastifyReply
+): Promise<void> {
   try {
     const userId = req.params.userId;
     const { username, email, description } = req.body;
@@ -150,24 +146,25 @@ export async function updateUser(
       });
 
     if (!updatedUser.length) {
-      return {
+      reply.status(404).send({
         status: 'error',
         message: 'User not found.'
-      };
+      });
+      return;
     }
 
-    return {
+    reply.send({
       status: 'success',
       message: 'User updated successfully',
       data: updatedUser[0]
-    };
+    });
   } catch (error) {
     const err = error as Error;
     console.error('Error updating user:', err.message);
-    return {
+    reply.status(500).send({
       status: 'error',
       message: err.message
-    };
+    });
   }
 }
 
@@ -175,8 +172,9 @@ export async function updateUser(
  * Delete a User by ID
  */
 export async function deleteUser(
-  req: FastifyRequest<{ Params: { userId: string } }>
-): Promise<UserResponse> {
+  req: FastifyRequest<{ Params: { userId: string } }>,
+  reply: FastifyReply
+): Promise<void> {
   try {
     const userId = req.params.userId;
 
@@ -191,23 +189,24 @@ export async function deleteUser(
       });
 
     if (!deletedUser.length) {
-      return {
+      reply.status(404).send({
         status: 'error',
         message: 'User not found.'
-      };
+      });
+      return;
     }
 
-    return {
+    reply.send({
       status: 'success',
       message: 'User deleted successfully',
       data: deletedUser[0]
-    };
+    });
   } catch (error) {
     const err = error as Error;
     console.error('Error deleting user:', err.message);
-    return {
+    reply.status(500).send({
       status: 'error',
       message: err.message
-    };
+    });
   }
 }

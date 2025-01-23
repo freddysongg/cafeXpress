@@ -1,18 +1,12 @@
-import { FastifyRequest } from 'fastify';
+import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '@config/db.js';
 import { reviews, users, cafes } from '@config/schemas';
 import { eq } from 'drizzle-orm';
 
-type ReviewResponse = {
-  status: 'success' | 'error';
-  message: string;
-  data?: any;
-};
-
 /**
  * Create Review
  */
-export async function createReview(req: FastifyRequest): Promise<ReviewResponse> {
+export async function createReview(req: FastifyRequest, reply: FastifyReply): Promise<FastifyReply> {
   try {
     const { userId, cafeId, rating, description } = req.body as {
       userId: string;
@@ -29,10 +23,10 @@ export async function createReview(req: FastifyRequest): Promise<ReviewResponse>
       .limit(1);
 
     if (!userExists.length) {
-      return {
+      return reply.status(404).send({
         status: 'error',
         message: 'User not found.'
-      };
+      });
     }
 
     // Check if cafe exists
@@ -43,10 +37,10 @@ export async function createReview(req: FastifyRequest): Promise<ReviewResponse>
       .limit(1);
 
     if (!cafeExists.length) {
-      return {
+      return reply.status(404).send({
         status: 'error',
         message: 'Cafe not found.'
-      };
+      });
     }
 
     // Create review
@@ -67,25 +61,25 @@ export async function createReview(req: FastifyRequest): Promise<ReviewResponse>
         createdAt: reviews.createdAt
       });
 
-    return {
+    return reply.status(201).send({
       status: 'success',
       message: 'Review created successfully',
       data: newReview
-    };
+    });
   } catch (error) {
     const err = error as Error;
     console.error('Error creating review:', err.message);
-    return {
+    return reply.status(500).send({
       status: 'error',
       message: err.message
-    };
+    });
   }
 }
 
 /**
  * Get Review Details by ID
  */
-export async function getReviewById(req: FastifyRequest<{ Params: { reviewId: string } }>): Promise<ReviewResponse> {
+export async function getReviewById(req: FastifyRequest<{ Params: { reviewId: string } }>, reply: FastifyReply): Promise<FastifyReply> {
   try {
     const reviewId = req.params.reviewId;
 
@@ -97,31 +91,31 @@ export async function getReviewById(req: FastifyRequest<{ Params: { reviewId: st
       .limit(1);
 
     if (!review.length) {
-      return {
+      return reply.status(404).send({
         status: 'error',
         message: 'Review not found.'
-      };
+      });
     }
 
-    return {
+    return reply.status(200).send({
       status: 'success',
       message: 'Review data retrieved',
       data: review[0]
-    };
+    });
   } catch (error) {
     const err = error as Error;
     console.error('Error fetching review details:', err.message);
-    return {
+    return reply.status(500).send({
       status: 'error',
       message: err.message
-    };
+    });
   }
 }
 
 /**
  * Get All Reviews for a Cafe
  */
-export async function getReviewsByCafeId(req: FastifyRequest<{ Params: { cafeId: string } }>): Promise<ReviewResponse> {
+export async function getReviewsByCafeId(req: FastifyRequest<{ Params: { cafeId: string } }>, reply: FastifyReply): Promise<FastifyReply> {
   try {
     const cafeId = req.params.cafeId;
 
@@ -131,18 +125,18 @@ export async function getReviewsByCafeId(req: FastifyRequest<{ Params: { cafeId:
       .from(reviews)
       .where(eq(reviews.cafeId, cafeId));
 
-    return {
+    return reply.status(200).send({
       status: 'success',
       message: 'Reviews retrieved successfully',
       data: reviewsList
-    };
+    });
   } catch (error) {
     const err = error as Error;
     console.error('Error fetching reviews for cafe:', err.message);
-    return {
+    return reply.status(500).send({
       status: 'error',
       message: err.message
-    };
+    });
   }
 }
 
@@ -150,8 +144,9 @@ export async function getReviewsByCafeId(req: FastifyRequest<{ Params: { cafeId:
  * Update Review Details
  */
 export async function updateReview(
-  req: FastifyRequest<{ Params: { reviewId: string }; Body: Partial<{ rating: number; description: string }> }>
-): Promise<ReviewResponse> {
+  req: FastifyRequest<{ Params: { reviewId: string }; Body: Partial<{ rating: number; description: string }> }>,
+  reply: FastifyReply
+): Promise<FastifyReply> {
   try {
     const reviewId = req.params.reviewId;
     const { rating, description } = req.body;
@@ -169,31 +164,31 @@ export async function updateReview(
       });
 
     if (!updatedReview.length) {
-      return {
+      return reply.status(404).send({
         status: 'error',
         message: 'Review not found.'
-      };
+      });
     }
 
-    return {
+    return reply.status(200).send({
       status: 'success',
       message: 'Review updated successfully',
       data: updatedReview[0]
-    };
+    });
   } catch (error) {
     const err = error as Error;
     console.error('Error updating review:', err.message);
-    return {
+    return reply.status(500).send({
       status: 'error',
       message: err.message
-    };
+    });
   }
 }
 
 /**
  * Delete a Review by ID
  */
-export async function deleteReview(req: FastifyRequest<{ Params: { reviewId: string } }>): Promise<ReviewResponse> {
+export async function deleteReview(req: FastifyRequest<{ Params: { reviewId: string } }>, reply: FastifyReply): Promise<FastifyReply> {
   try {
     const reviewId = req.params.reviewId;
 
@@ -208,23 +203,23 @@ export async function deleteReview(req: FastifyRequest<{ Params: { reviewId: str
       });
 
     if (!deletedReview.length) {
-      return {
+      return reply.status(404).send({
         status: 'error',
         message: 'Review not found.'
-      };
+      });
     }
 
-    return {
+    return reply.status(200).send({
       status: 'success',
       message: 'Review deleted successfully',
       data: deletedReview[0]
-    };
+    });
   } catch (error) {
     const err = error as Error;
     console.error('Error deleting review:', err.message);
-    return {
+    return reply.status(500).send({
       status: 'error',
       message: err.message
-    };
+    });
   }
 }

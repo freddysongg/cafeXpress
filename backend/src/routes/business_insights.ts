@@ -11,7 +11,7 @@ export const businessInsightsRoutes = async (app: FastifyInstance) => {
     // Create business insight
     app.post('/', async (req, reply) => {
         try {
-            const response = await createBusinessInsight(req);
+            const response = await createBusinessInsight(req,reply);
             reply.send(response);
         } catch (error) {
             app.log.error('Error creating business insight:', error);
@@ -26,7 +26,7 @@ export const businessInsightsRoutes = async (app: FastifyInstance) => {
         };
     }>('/:cafeId', async (req, reply) => {
         try {
-            const response = await getBusinessInsightByCafeId(req);
+            const response = await getBusinessInsightByCafeId(req,reply);
             reply.send(response);
         } catch (error) {
             app.log.error('Error fetching business insight by cafe ID:', error);
@@ -37,7 +37,7 @@ export const businessInsightsRoutes = async (app: FastifyInstance) => {
     // Get all business insights
     app.get('/all', async (req, reply) => {
         try {
-            const response = await getAllBusinessInsights(req);
+            const response = await getAllBusinessInsights(req,reply);
             reply.send(response);
         } catch (error) {
             app.log.error('Error fetching all business insights:', error);
@@ -46,7 +46,7 @@ export const businessInsightsRoutes = async (app: FastifyInstance) => {
     });
 
     // Update business insight
-    app.patch<{
+    app.put<{
         Params: {
             cafeId: string;
         };
@@ -58,7 +58,7 @@ export const businessInsightsRoutes = async (app: FastifyInstance) => {
         }>;
     }>('/:cafeId', async (req, reply) => {
         try {
-            const response = await updateBusinessInsight(req);
+            const response = await updateBusinessInsight(req,reply);
             reply.send(response);
         } catch (error) {
             app.log.error('Error updating business insight', error);
@@ -73,7 +73,7 @@ export const businessInsightsRoutes = async (app: FastifyInstance) => {
         };
     }>('/:cafeId', async (req, reply) => {
         try {
-            const response = await deleteBusinessInsight(req);
+            const response = await deleteBusinessInsight(req,reply);
             reply.send(response);
         } catch (error) {
             app.log.error('Error deleting business insight:', error);

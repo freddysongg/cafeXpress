@@ -1,18 +1,15 @@
-import { FastifyRequest } from 'fastify';
+import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '@config/db.js';
 import { cafes } from '@config/schemas';
 import { eq } from 'drizzle-orm';
 
-type CafeResponse = {
-  status: 'success' | 'error';
-  message: string;
-  data?: any;
-};
-
 /**
  * Create Cafe
  */
-export async function createCafe(req: FastifyRequest): Promise<CafeResponse> {
+export async function createCafe(
+  req: FastifyRequest,
+  reply: FastifyReply
+): Promise<void> {
   try {
     const { name, address, city, state, zipCode, ownerId, ambiance, dietaryOptions } = req.body as {
       name: string;
@@ -37,25 +34,28 @@ export async function createCafe(req: FastifyRequest): Promise<CafeResponse> {
         createdAt: cafes.createdAt,
       });
 
-    return {
+    reply.status(200).send({
       status: 'success',
       message: 'Cafe created successfully',
       data: newCafe,
-    };
+    });
   } catch (error) {
     const err = error as Error;
     console.error('Error creating cafe:', err.message);
-    return {
+    reply.status(500).send({
       status: 'error',
       message: err.message,
-    };
+    });
   }
 }
 
 /**
  * Get Cafe by ID
  */
-export async function getCafeById(req: FastifyRequest<{ Params: { cafeId: string } }>): Promise<CafeResponse> {
+export async function getCafeById(
+  req: FastifyRequest<{ Params: { cafeId: string } }>,
+  reply: FastifyReply
+): Promise<void> {
   try {
     const cafeId = req.params.cafeId;
 
@@ -77,31 +77,35 @@ export async function getCafeById(req: FastifyRequest<{ Params: { cafeId: string
       .limit(1);
 
     if (!cafe.length) {
-      return {
+      reply.status(404).send({
         status: 'error',
         message: 'Cafe not found.',
-      };
+      });
+      return;
     }
 
-    return {
+    reply.status(200).send({
       status: 'success',
       message: 'Cafe data retrieved',
       data: cafe[0],
-    };
+    });
   } catch (error) {
     const err = error as Error;
     console.error('Error fetching cafe details:', err.message);
-    return {
+    reply.status(500).send({
       status: 'error',
       message: err.message,
-    };
+    });
   }
 }
 
 /**
  * Get All Cafes
  */
-export async function getAllCafes(req: FastifyRequest): Promise<CafeResponse> {
+export async function getAllCafes(
+  req: FastifyRequest,
+  reply: FastifyReply
+): Promise<void> {
   try {
     // Fetch all cafes
     const cafesList = await db
@@ -115,18 +119,18 @@ export async function getAllCafes(req: FastifyRequest): Promise<CafeResponse> {
       })
       .from(cafes);
 
-    return {
+    reply.status(200).send({
       status: 'success',
       message: 'Cafes data retrieved',
       data: cafesList,
-    };
+    });
   } catch (error) {
     const err = error as Error;
     console.error('Error fetching cafes:', err.message);
-    return {
+    reply.status(500).send({
       status: 'error',
       message: err.message,
-    };
+    });
   }
 }
 
@@ -134,8 +138,9 @@ export async function getAllCafes(req: FastifyRequest): Promise<CafeResponse> {
  * Update Cafe
  */
 export async function updateCafe(
-  req: FastifyRequest<{ Params: { cafeId: string }; Body: Partial<{ name: string; address: string; city: string; state: string; zipCode: string; ambiance: object; dietaryOptions: object }> }>
-): Promise<CafeResponse> {
+  req: FastifyRequest<{ Params: { cafeId: string }; Body: Partial<{ name: string; address: string; city: string; state: string; zipCode: string; ambiance: object; dietaryOptions: object }> }>,
+  reply: FastifyReply
+): Promise<void> {
   try {
     const cafeId = req.params.cafeId;
     const { name, address, city, state, zipCode, ambiance, dietaryOptions } = req.body;
@@ -154,31 +159,35 @@ export async function updateCafe(
       });
 
     if (!updatedCafe.length) {
-      return {
+      reply.status(404).send({
         status: 'error',
         message: 'Cafe not found.',
-      };
+      });
+      return;
     }
 
-    return {
+    reply.status(200).send({
       status: 'success',
       message: 'Cafe updated successfully',
       data: updatedCafe[0],
-    };
+    });
   } catch (error) {
     const err = error as Error;
     console.error('Error updating cafe:', err.message);
-    return {
+    reply.status(500).send({
       status: 'error',
       message: err.message,
-    };
+    });
   }
 }
 
 /**
  * Delete Cafe by ID
  */
-export async function deleteCafe(req: FastifyRequest<{ Params: { cafeId: string } }>): Promise<CafeResponse> {
+export async function deleteCafe(
+  req: FastifyRequest<{ Params: { cafeId: string } }>,
+  reply: FastifyReply
+): Promise<void> {
   try {
     const cafeId = req.params.cafeId;
 
@@ -194,23 +203,24 @@ export async function deleteCafe(req: FastifyRequest<{ Params: { cafeId: string 
       });
 
     if (!deletedCafe.length) {
-      return {
+      reply.status(404).send({
         status: 'error',
         message: 'Cafe not found.',
-      };
+      });
+      return;
     }
 
-    return {
+    reply.status(200).send({
       status: 'success',
       message: 'Cafe deleted successfully',
       data: deletedCafe[0],
-    };
+    });
   } catch (error) {
     const err = error as Error;
     console.error('Error deleting cafe:', err.message);
-    return {
+    reply.status(500).send({
       status: 'error',
       message: err.message,
-    };
+    });
   }
 }

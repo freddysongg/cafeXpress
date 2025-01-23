@@ -1,18 +1,12 @@
-import { FastifyRequest } from 'fastify';
+import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '@config/db.js';
 import { preferences } from '@config/schemas';
 import { eq } from 'drizzle-orm';
 
-type PreferencesResponse = {
-  status: 'success' | 'error';
-  message: string;
-  data?: any;
-};
-
 /**
  * Create Preferences for a User
  */
-export async function createPreferences(req: FastifyRequest): Promise<PreferencesResponse> {
+export async function createPreferences(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
     const { userId, favoriteCafes, dietaryRestrictions, ambiance } = req.body as {
       userId: string;
@@ -33,18 +27,18 @@ export async function createPreferences(req: FastifyRequest): Promise<Preference
         ambiance: preferences.ambiance,
       });
 
-    return {
+    return reply.status(200).send({
       status: 'success',
       message: 'Preferences created successfully',
       data: newPreferences,
-    };
+    });
   } catch (error) {
     const err = error as Error;
     console.error('Error creating preferences:', err.message);
-    return {
+    return reply.status(500).send({
       status: 'error',
       message: err.message,
-    };
+    });
   }
 }
 
@@ -52,8 +46,9 @@ export async function createPreferences(req: FastifyRequest): Promise<Preference
  * Get Preferences by User ID
  */
 export async function getPreferencesByUserId(
-  req: FastifyRequest<{ Params: { userId: string } }>
-): Promise<PreferencesResponse> {
+  req: FastifyRequest<{ Params: { userId: string } }>,
+  reply: FastifyReply
+): Promise<void> {
   try {
     const userId = req.params.userId;
 
@@ -69,31 +64,31 @@ export async function getPreferencesByUserId(
       .limit(1);
 
     if (!userPreferences.length) {
-      return {
+      return reply.status(404).send({
         status: 'error',
         message: 'Preferences not found.',
-      };
+      });
     }
 
-    return {
+    return reply.status(200).send({
       status: 'success',
       message: 'Preferences retrieved successfully',
       data: userPreferences[0],
-    };
+    });
   } catch (error) {
     const err = error as Error;
     console.error('Error fetching preferences:', err.message);
-    return {
+    return reply.status(500).send({
       status: 'error',
       message: err.message,
-    };
+    });
   }
 }
 
 /**
  * Get All Preferences
  */
-export async function getAllPreferences(req: FastifyRequest): Promise<PreferencesResponse> {
+export async function getAllPreferences(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
     // Fetch all preferences
     const preferencesList = await db
@@ -106,18 +101,18 @@ export async function getAllPreferences(req: FastifyRequest): Promise<Preference
       })
       .from(preferences);
 
-    return {
+    return reply.status(200).send({
       status: 'success',
       message: 'Preferences data retrieved',
       data: preferencesList,
-    };
+    });
   } catch (error) {
     const err = error as Error;
     console.error('Error fetching preferences:', err.message);
-    return {
+    return reply.status(500).send({
       status: 'error',
       message: err.message,
-    };
+    });
   }
 }
 
@@ -125,8 +120,9 @@ export async function getAllPreferences(req: FastifyRequest): Promise<Preference
  * Update Preferences for a User
  */
 export async function updatePreferences(
-  req: FastifyRequest<{ Params: { userId: string }; Body: Partial<{ favoriteCafes: any; dietaryRestrictions: any; ambiance: any }> }>
-): Promise<PreferencesResponse> {
+  req: FastifyRequest<{ Params: { userId: string }; Body: Partial<{ favoriteCafes: any; dietaryRestrictions: any; ambiance: any }> }>,
+  reply: FastifyReply
+): Promise<void> {
   try {
     const userId = req.params.userId;
     const { favoriteCafes, dietaryRestrictions, ambiance } = req.body;
@@ -145,24 +141,24 @@ export async function updatePreferences(
       });
 
     if (!updatedPreferences.length) {
-      return {
+      return reply.status(404).send({
         status: 'error',
         message: 'Preferences not found.',
-      };
+      });
     }
 
-    return {
+    return reply.status(200).send({
       status: 'success',
       message: 'Preferences updated successfully',
       data: updatedPreferences[0],
-    };
+    });
   } catch (error) {
     const err = error as Error;
     console.error('Error updating preferences:', err.message);
-    return {
+    return reply.status(500).send({
       status: 'error',
       message: err.message,
-    };
+    });
   }
 }
 
@@ -170,8 +166,9 @@ export async function updatePreferences(
  * Delete Preferences by User ID
  */
 export async function deletePreferences(
-  req: FastifyRequest<{ Params: { userId: string } }>
-): Promise<PreferencesResponse> {
+  req: FastifyRequest<{ Params: { userId: string } }>,
+  reply: FastifyReply
+): Promise<void> {
   try {
     const userId = req.params.userId;
 
@@ -188,23 +185,23 @@ export async function deletePreferences(
       });
 
     if (!deletedPreferences.length) {
-      return {
+      return reply.status(404).send({
         status: 'error',
         message: 'Preferences not found.',
-      };
+      });
     }
 
-    return {
+    return reply.status(200).send({
       status: 'success',
       message: 'Preferences deleted successfully',
       data: deletedPreferences[0],
-    };
+    });
   } catch (error) {
     const err = error as Error;
     console.error('Error deleting preferences:', err.message);
-    return {
+    return reply.status(500).send({
       status: 'error',
       message: err.message,
-    };
+    });
   }
 }

@@ -11,7 +11,7 @@ export const preferencesRoutes = async (app: FastifyInstance) => {
     // Create preferences
     app.post('/', async (req, reply) => {
         try {
-            const response = await createPreferences(req);
+            const response = await createPreferences(req,reply);
             reply.send(response);
         } catch (error) {
             app.log.error('Error creating preferences:', error);
@@ -26,7 +26,7 @@ export const preferencesRoutes = async (app: FastifyInstance) => {
         };
     }>('/:userId', async (req, reply) => {
         try {
-            const response = await getPreferencesByUserId(req);
+            const response = await getPreferencesByUserId(req,reply);
             reply.send(response);
         } catch (error) {
             app.log.error('Error fetching preferences:', error);
@@ -37,7 +37,7 @@ export const preferencesRoutes = async (app: FastifyInstance) => {
     // Get all preferences
     app.get('/all', async (req, reply) => {
         try {
-            const response = await getAllPreferences(req);
+            const response = await getAllPreferences(req,reply);
             reply.send(response);
         } catch (error) {
             app.log.error('Error fetching preferences:', error);
@@ -46,7 +46,7 @@ export const preferencesRoutes = async (app: FastifyInstance) => {
     });
 
     // Update preferences for a user
-    app.patch<{
+    app.put<{
         Params: {
             userId: string;
         };
@@ -57,7 +57,7 @@ export const preferencesRoutes = async (app: FastifyInstance) => {
         }>;
     }>('/:userId', async (req, reply) => {
         try {
-            const response = await updatePreferences(req);
+            const response = await updatePreferences(req,reply);
             reply.send(response);
         } catch (error) {
             app.log.error('Error updating preferences:', error);
@@ -72,7 +72,7 @@ export const preferencesRoutes = async (app: FastifyInstance) => {
         };
     }>('/:userId', async (req, reply) => {
         try {
-            const response = await deletePreferences(req);
+            const response = await deletePreferences(req,reply);
             reply.send(response);
         } catch (error) {
             app.log.error('Error deleting preferences:', error);

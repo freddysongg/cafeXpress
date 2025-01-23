@@ -12,7 +12,7 @@ export const reviewsRoutes = async (app: FastifyInstance) => {
   // Create review
   app.post('/', async (req, reply) => {
     try {
-      const response = await createReview(req);
+      const response = await createReview(req,reply);
       reply.send(response);
     } catch (error) {
       app.log.error('Error creating review:', error);
@@ -27,7 +27,7 @@ export const reviewsRoutes = async (app: FastifyInstance) => {
     };
   }>('/:reviewId', async (req, reply) => {
     try {
-      const response = await getReviewById(req);
+      const response = await getReviewById(req,reply);
       reply.send(response);
     } catch (error) {
       app.log.error('Error fetching review details:', error);
@@ -42,7 +42,7 @@ export const reviewsRoutes = async (app: FastifyInstance) => {
     };
   }>('/:cafeId/all', async (req, reply) => {
     try {
-      const response = await getReviewsByCafeId(req);
+      const response = await getReviewsByCafeId(req,reply);
       reply.send(response);
     } catch (error) {
       app.log.error('Error fetching reviews for cafe:', error);
@@ -51,7 +51,7 @@ export const reviewsRoutes = async (app: FastifyInstance) => {
   });
 
   // Update review
-  app.patch<{
+  app.put<{
     Params: {
       reviewId: string;
     };
@@ -61,7 +61,7 @@ export const reviewsRoutes = async (app: FastifyInstance) => {
     }>;
   }>('/:reviewId', async (req, reply) => {
     try {
-      const response = await updateReview(req);
+      const response = await updateReview(req,reply);
       reply.send(response);
     } catch (error) {
       app.log.error('Error updating review:', error);
@@ -76,7 +76,7 @@ export const reviewsRoutes = async (app: FastifyInstance) => {
     };
   }>('/:reviewId', async (req, reply) => {
     try {
-      const response = await deleteReview(req);
+      const response = await deleteReview(req,reply);
       reply.send(response);
     } catch (error) {
       app.log.error('Error deleting review:', error);
