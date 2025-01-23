@@ -1,5 +1,5 @@
 import React from "react";
-import { User, Menu, Coffee } from "lucide-react";
+import { Menu, Coffee } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 const Navbar = () => {

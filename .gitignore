@@ -43,6 +43,7 @@ backend/*.pyo
 backend/*.pyd
 backend/node_modules/
 backend/docker.txt
+backend/dist/
 
 # Sphinx build files
 backend/docs/_build/
@@ -51,6 +52,7 @@ backend/docs/_build/
 frontend/node_modules/
 frontend/build/
 frontend/public/static/
+frontend/dist/
 
 # Test and coverage files
 coverage/

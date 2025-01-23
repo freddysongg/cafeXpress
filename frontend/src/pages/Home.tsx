@@ -1,5 +1,4 @@
-import React from "react";
-import { Search, Coffee, Heart, MapPin } from "lucide-react";
+import { Coffee, Heart, MapPin } from "lucide-react";
 import SearchBar from "../components/SearchBar";
 
 function Home() {
@@ -43,6 +42,7 @@ function CategoryCard({
   title,
   count,
 }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   icon: any;
   title: string;
   count: string;

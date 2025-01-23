@@ -1,6 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader } from "@googlemaps/js-api-loader";
-import { Star, Clock, MapPin } from "lucide-react";
 import CafeCard from "../components/CafeCard";
 
 const DUMMY_CAFES = [
@@ -44,7 +43,7 @@ const DUMMY_CAFES = [
 
 function Explore() {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [, setMap] = useState<google.maps.Map | null>(null);
 
   useEffect(() => {
     const initMap = async () => {
