@@ -7,7 +7,7 @@ import type { GeminiClient } from '@schemas/gemini.js';
 import { RecommendationCache } from '@services/cache.js';
 import { SemanticSearchService } from '@services/semanticSearch.js';
 import { EmbeddingSchema } from '@schemas/semantic.js';
-import type { ISemanticSearchService } from '@services/semanticSearch.js';
+import type { ISemanticSearchService } from '@schemas/semantic.js';
 import type { Embedding } from '@schemas/semantic.js';
 import {
   RecommendationResponse,

@@ -45,7 +45,13 @@ export async function createReview(
         userId,
         cafeId,
         rating,
-        description
+        text: description || '', // Use description as text if provided
+        sentimentScore: {
+          positive: 0,
+          negative: 0,
+          neutral: 1,
+          compound: 0
+        }
       })
       .returning({
         id: reviews.id,

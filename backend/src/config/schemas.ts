@@ -1,9 +1,14 @@
-import { pgTable, uuid, text, jsonb, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, jsonb, timestamp, varchar } from 'drizzle-orm/pg-core';
 import { EmbeddingSchema } from '@schemas/semantic.js';
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   username: text('username').notNull(),
+  email: text('email').notNull(),
+  firstName: text('first_name'),
+  lastName: text('last_name'),
+  phone: text('phone'),
+  password: text('password').notNull(),
   description: text('description'),
   location: jsonb('location').$type<Location>(),
   preferencesEmbedding: jsonb('preferences_embedding').$type<{
@@ -51,7 +56,8 @@ export const reviews = pgTable('reviews', {
   id: uuid('id').primaryKey().defaultRandom(),
   cafeId: uuid('cafe_id').references(() => cafes.id),
   userId: uuid('user_id').references(() => users.id),
-  rating: text('rating').notNull(),
+  rating: jsonb('rating').$type<number>().notNull(),
+  description: text('description'),
   comment: text('comment'),
   text: text('text').notNull(), // Required text field for raw review text
   sentimentScore: jsonb('sentiment_score')

@@ -2,32 +2,17 @@ import type { FastifyRequest } from 'fastify';
 import { db } from '@config/db.js';
 import { cafes, reviews } from '@config/schemas.js';
 import type { GeminiClient } from '@schemas/gemini.js';
-import type { SearchResponse, GeminiResponse, SearchResult, Embedding } from '@schemas/semantic.js';
+import type {
+  SearchResponse,
+  GeminiResponse,
+  SearchResult,
+  Embedding,
+  SentimentScore,
+  SentimentResult,
+  ISemanticSearchService
+} from '@schemas/semantic.js';
 import { eq, sql, desc } from 'drizzle-orm';
 import { RecommendationCache, DEFAULT_CACHE_CONFIG } from '@services/cache.js';
-
-interface SentimentScore {
-  positive: number;
-  negative: number;
-  neutral: number;
-  compound: number;
-}
-
-interface SentimentResult {
-  score: SentimentScore;
-}
-
-export interface ISemanticSearchService {
-  initialize(): Promise<void>;
-  generateEmbedding(params: {
-    type: 'user' | 'preferences' | 'cafe';
-    id: string;
-    text: string;
-  }): Promise<Embedding>;
-  calculateSimilarity(embedding1: Embedding, embedding2: Embedding): Promise<number>;
-  calculateSemanticScore(embedding1: Embedding, embedding2: Embedding): Promise<number>;
-  searchCafes(req: FastifyRequest<{ Querystring: { query: string } }>): Promise<SearchResponse>;
-}
 
 class InMemoryVectorStore {
   private vectors: { id: string; embedding: Embedding; metadata: any }[] = [];
@@ -42,8 +27,8 @@ class InMemoryVectorStore {
         ...vector,
         score: this.cosineSimilarity(queryEmbedding, vector.embedding)
       }))
-      .filter((result) => result.score >= threshold)
-      .sort((a, b) => b.score - a.score)
+      .filter((result: { score: number }) => result.score >= threshold)
+      .sort((a: { score: number }, b: { score: number }) => b.score - a.score)
       .slice(0, k);
 
     return results;

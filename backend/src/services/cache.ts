@@ -1,4 +1,4 @@
-import { createClient } from 'redis';
+import { createClient, RedisClientType } from 'redis';
 import { GeminiResponse } from '@schemas/recommendation.js';
 import type { z } from 'zod';
 
@@ -12,7 +12,7 @@ interface CacheConfig {
 }
 
 export class RecommendationCache {
-  private client: ReturnType<typeof createClient>;
+  private client: RedisClientType;
   private config: CacheConfig;
 
   constructor(config: CacheConfig) {
@@ -88,7 +88,7 @@ export class RecommendationCache {
         this.config.warmQueries.map(async (query) => {
           const exists = await this.client.exists(query);
           if (!exists) {
-            // ------------------------------- TO DO: fetch actual data from db once it is set up ----------------------------------------------------------
+            // TODO: fetch actual data from db once it is set up
             await this.set(query, {
               recommendations: [],
               generatedAt: new Date().toISOString(),

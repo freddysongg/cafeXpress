@@ -1,3 +1,4 @@
+import { FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
 export type Embedding = {
@@ -151,3 +152,26 @@ export type SemanticSearchService = {
   calculateSimilarity: (request: CalculateSimilarityRequest) => Promise<number>;
   calculateSemanticScore: (embedding1: Embedding, embedding2: Embedding) => Promise<number>;
 };
+
+export interface SentimentScore {
+  positive: number;
+  negative: number;
+  neutral: number;
+  compound: number;
+}
+
+export interface SentimentResult {
+  score: SentimentScore;
+}
+
+export interface ISemanticSearchService {
+  initialize(): Promise<void>;
+  generateEmbedding(params: {
+    type: 'user' | 'preferences' | 'cafe';
+    id: string;
+    text: string;
+  }): Promise<Embedding>;
+  calculateSimilarity(embedding1: Embedding, embedding2: Embedding): Promise<number>;
+  calculateSemanticScore(embedding1: Embedding, embedding2: Embedding): Promise<number>;
+  searchCafes(req: FastifyRequest<{ Querystring: { query: string } }>): Promise<SearchResponse>;
+}
