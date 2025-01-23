@@ -1,60 +1,50 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 48 33% 97%;
-    --foreground: 20 30% 20%;
-    
-    --card: 48 33% 97%;
-    --card-foreground: 20 30% 20%;
-    
-    --popover: 48 33% 97%;
-    --popover-foreground: 20 30% 20%;
-    
-    --primary: 25 33% 33%;
-    --primary-foreground: 48 33% 97%;
-    
-    --secondary: 43 71% 81%;
-    --secondary-foreground: 20 30% 20%;
-    
-    --muted: 43 71% 91%;
-    --muted-foreground: 20 30% 40%;
-    
-    --accent: 82 19% 62%;
-    --accent-foreground: 20 30% 20%;
-    
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 48 33% 97%;
-
-    --border: 20 30% 87%;
-    --input: 20 30% 87%;
-    --ring: 20 30% 47%;
-
-    --radius: 0.75rem;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+.animate-fade-in-delay {
+  opacity: 0;
+  animation: fadeIn 0.6s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+.animate-fade-in-delay-2 {
+  opacity: 0;
+  animation: fadeIn 0.6s ease-out forwards;
+  animation-delay: 0.6s;
+}
+
 @layer base {
-  * {
-    @apply border-border;
-  }
   body {
-    @apply bg-background text-foreground;
-    font-family: 'Inter', sans-serif;
-  }
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display', serif;
+    @apply antialiased;
   }
 }
 
-.hero-gradient {
-  background: linear-gradient(135deg, #6F4E37 0%, #A3B18A 100%);
-}
+@layer components {
+  .btn {
+    @apply px-6 py-2 rounded-full transition-all duration-300;
+  }
 
-.card-hover {
-  @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  .btn-primary {
+    @apply bg-white/10 backdrop-blur-md text-white hover:bg-white/20;
+  }
+
+  .btn-filter {
+    @apply px-4 py-2 bg-white text-coffee-600 rounded-full hover:bg-coffee-50 transition-colors duration-300 whitespace-nowrap border border-coffee-100;
+  }
 }

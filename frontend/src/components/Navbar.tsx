@@ -1,38 +1,74 @@
-import { Coffee, MapPin, UserRound } from "lucide-react";
+import React from "react";
+import { User, Menu, Coffee } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 const Navbar = () => {
   const location = useLocation();
-  
-  const isActive = (path: string) => location.pathname === path;
-  
+  const isExplore = location.pathname === "/explore";
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-background border-t py-2 px-6 flex justify-around items-center z-50">
-      <Link 
-        to="/" 
-        className={`flex flex-col items-center gap-1 ${isActive('/') ? 'text-primary' : 'text-muted-foreground'}`}
-      >
-        <Coffee className="w-6 h-6" />
-        <span className="text-xs">Home</span>
-      </Link>
-      
-      <Link 
-        to="/explore" 
-        className={`flex flex-col items-center gap-1 ${isActive('/explore') ? 'text-primary' : 'text-muted-foreground'}`}
-      >
-        <MapPin className="w-6 h-6" />
-        <span className="text-xs">Explore</span>
-      </Link>
-      
-      <Link 
-        to="/profile" 
-        className={`flex flex-col items-center gap-1 ${isActive('/profile') ? 'text-primary' : 'text-muted-foreground'}`}
-      >
-        <UserRound className="w-6 h-6" />
-        <span className="text-xs">Profile</span>
-      </Link>
+    <nav
+      className={`fixed w-full z-50 ${isExplore ? "bg-coffee-50 shadow-sm" : "bg-transparent"}`}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center py-4">
+          <div className="flex items-center space-x-2">
+            <Coffee
+              className={`w-6 h-6 ${isExplore ? "text-coffee-600" : "text-white"}`}
+            />
+            <Link
+              to="/"
+              className={`text-2xl font-bold ${isExplore ? "text-coffee-800" : "text-white"}`}
+            >
+              CafeXpress
+            </Link>
+          </div>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-8">
+            <NavLink href="/explore" isExplore={isExplore}>
+              Explore
+            </NavLink>
+            <NavLink href="/about" isExplore={isExplore}>
+              About
+            </NavLink>
+            <NavLink href="/help" isExplore={isExplore}>
+              Help
+            </NavLink>
+            <button
+              className={`${isExplore ? "bg-coffee-400 text-white hover:bg-coffee-500" : "bg-white/10 backdrop-blur-md text-white hover:bg-white/20"} px-6 py-2 rounded-full transition-all duration-300`}
+            >
+              Sign In
+            </button>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            className={`md:hidden ${isExplore ? "text-coffee-800" : "text-white"}`}
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+        </div>
+      </div>
     </nav>
   );
 };
+
+const NavLink = ({
+  href,
+  children,
+  isExplore,
+}: {
+  href: string;
+  children: React.ReactNode;
+  isExplore: boolean;
+}) => (
+  <Link
+    to={href}
+    className={`${isExplore ? "text-coffee-600 hover:text-coffee-800" : "text-white/90 hover:text-white"} transition-colors duration-300`}
+  >
+    {children}
+  </Link>
+);
 
 export default Navbar;

@@ -1,62 +1,147 @@
-import CafeCard from "@/components/CafeCard";
-import Navbar from "@/components/Navbar";
-import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { Loader } from "@googlemaps/js-api-loader";
+import { Star, Clock, MapPin } from "lucide-react";
+import CafeCard from "../components/CafeCard";
 
-const CAFES = [
+const DUMMY_CAFES = [
   {
-    name: "The Daily Grind",
-    description: "Artisanal coffee & fresh pastries in a cozy setting",
+    id: 1,
+    name: "The Coffee House",
+    image:
+      "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80",
+    rating: 4.5,
+    reviews: 128,
+    distance: "0.3",
+    address: "123 Coffee Street",
+    isOpen: true,
+    tags: ["Coffee", "Breakfast", "Wifi"],
+  },
+  {
+    id: 2,
+    name: "Brew & Bake",
+    image:
+      "https://images.unsplash.com/photo-1507133750040-4a8f57021571?auto=format&fit=crop&q=80",
     rating: 4.8,
-    image: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?ixlib=rb-1.2.1&auto=format&fit=crop&w=2847&q=80"
+    reviews: 256,
+    distance: "0.7",
+    address: "456 Baker Avenue",
+    isOpen: true,
+    tags: ["Coffee", "Bakery", "Brunch"],
   },
   {
-    name: "Coffee & Clay",
-    description: "Specialty coffee served in handmade ceramic cups",
-    rating: 4.6,
-    image: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?ixlib=rb-1.2.1&auto=format&fit=crop&w=2850&q=80"
+    id: 3,
+    name: "The Tea Garden",
+    image:
+      "https://images.unsplash.com/photo-1594631252845-29fc4cc8cde9?auto=format&fit=crop&q=80",
+    rating: 4.3,
+    reviews: 89,
+    distance: "1.2",
+    address: "789 Tea Lane",
+    isOpen: false,
+    tags: ["Tea", "Pastries", "Quiet"],
   },
-  {
-    name: "Brew & View",
-    description: "Coffee with a view of the city skyline",
-    rating: 4.9,
-    image: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?ixlib=rb-1.2.1&auto=format&fit=crop&w=2857&q=80"
-  },
-  {
-    name: "Bean Scene",
-    description: "Modern café with an industrial vibe",
-    rating: 4.7,
-    image: "https://images.unsplash.com/photo-1559925393-8be0ec4767c8?ixlib=rb-1.2.1&auto=format&fit=crop&w=2851&q=80"
-  }
 ];
 
-const Explore = () => {
+function Explore() {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const [map, setMap] = useState<google.maps.Map | null>(null);
+
+  useEffect(() => {
+    const initMap = async () => {
+      const loader = new Loader({
+        apiKey: "AIzaSyCsQUZzKQn5yfyWqPVep13mRKTGbL86fH0", // Replace with your API key
+        version: "weekly",
+      });
+
+      const google = await loader.load();
+
+      if (mapRef.current) {
+        const newMap = new google.maps.Map(mapRef.current, {
+          center: { lat: 40.7128, lng: -74.006 }, // New York coordinates
+          zoom: 13,
+          styles: [
+            {
+              featureType: "all",
+              elementType: "geometry",
+              stylers: [{ color: "#FAF7F2" }],
+            },
+            {
+              featureType: "water",
+              elementType: "geometry",
+              stylers: [{ color: "#E8D6C0" }],
+            },
+            {
+              featureType: "road",
+              elementType: "geometry",
+              stylers: [{ color: "#D4B494" }],
+            },
+            {
+              featureType: "road.arterial",
+              elementType: "geometry",
+              stylers: [{ color: "#C09268" }],
+            },
+            {
+              featureType: "poi",
+              elementType: "geometry",
+              stylers: [{ color: "#AB703C" }],
+            },
+            {
+              featureType: "transit",
+              elementType: "geometry",
+              stylers: [{ color: "#8B5E2F" }],
+            },
+          ],
+        });
+
+        setMap(newMap);
+
+        // Add markers for each café
+        DUMMY_CAFES.forEach((cafe) => {
+          new google.maps.Marker({
+            position: {
+              lat: 40.7128 + Math.random() * 0.02,
+              lng: -74.006 + Math.random() * 0.02,
+            },
+            map: newMap,
+            title: cafe.name,
+          });
+        });
+      }
+    };
+
+    initMap();
+  }, []);
+
   return (
-    <div className="min-h-screen pb-20">
-      <div className="sticky top-0 bg-background z-10 p-6 border-b"
-        style={{ backgroundColor: '#DFAF94' }}>
-        <h1 className="text-2xl font-bold mb-4">Explore Cafés</h1>
-        <div className="relative">
-          <Input 
-            placeholder="Search by name or location..."
-            className="w-full pl-12"
-          />
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+    <div className="flex h-screen pt-16">
+      {/* Map Section */}
+      <div ref={mapRef} className="w-1/2 h-full" />
+
+      {/* Cafés List Section */}
+      <div className="w-1/2 h-full overflow-y-auto bg-coffee-50 p-6">
+        <div className="max-w-2xl mx-auto">
+          <h2 className="text-2xl font-bold mb-6 text-coffee-800">
+            Nearby Cafés
+          </h2>
+
+          {/* Filters */}
+          <div className="flex gap-4 mb-6 overflow-x-auto pb-2">
+            <button className="btn-filter">Open Now</button>
+            <button className="btn-filter">Top Rated</button>
+            <button className="btn-filter">Distance</button>
+            <button className="btn-filter">Price</button>
+          </div>
+
+          {/* Café Cards */}
+          <div className="space-y-6">
+            {DUMMY_CAFES.map((cafe) => (
+              <CafeCard key={cafe.id} cafe={cafe} />
+            ))}
+          </div>
         </div>
       </div>
-      
-      <div className="p-6 grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {/* will insert map here; maybe have for desktop show the cafes on the map on the right side; then for mobile have something you can 
-            scroll up on to see the restuarants on the bottom */}
-
-        {/* {CAFES.map((cafe) => (
-          <CafeCard key={cafe.name} {...cafe} />
-        ))} */}
-      </div>
-      
-      <Navbar />
     </div>
   );
-};
+}
 
 export default Explore;
