@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { createCafe, getCafeById, getAllCafes, updateCafe, deleteCafe } from '@services/cafe';
-import { CafeSchema, UpdateCafeSchema } from '@schemas/cafe';
+import { createCafe, getCafeById, getAllCafes, updateCafe, deleteCafe } from '@services/cafe.js';
+import { CafeSchema, UpdateCafeSchema } from '@schemas/cafe.js';
 
 export const cafesRoutes = async (app: FastifyInstance) => {
   // Create a new cafe

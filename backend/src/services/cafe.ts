@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '@config/db.js';
-import { cafes } from '@config/schemas';
+import { cafes } from '@config/schemas.js';
 import { eq } from 'drizzle-orm';
 
 /**

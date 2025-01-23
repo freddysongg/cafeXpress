@@ -1,9 +1,9 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { recommendationRoutes } from '@routes/recommendation.js';
-import { usersRoutes } from './user';
-import { cafesRoutes } from './cafe';
-import { reviewsRoutes } from './reviews';
-import { preferencesRoutes } from './preferences';
+import { usersRoutes } from './user.js';
+import { cafesRoutes } from './cafe.js';
+import { reviewsRoutes } from './reviews.js';
+import { preferencesRoutes } from './preferences.js';
 
 const routes = async (app: FastifyInstance) => {
   app.get('/', async (request: FastifyRequest, reply: FastifyReply) => {

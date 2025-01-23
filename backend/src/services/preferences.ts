@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '@config/db.js';
-import { preferences } from '@config/schemas';
+import { preferences } from '@config/schemas.js';
 import { eq } from 'drizzle-orm';
 
 /**

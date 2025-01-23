@@ -1,5 +1,5 @@
-import { Coffee, Heart, MapPin } from "lucide-react";
-import SearchBar from "../components/SearchBar";
+import { Coffee, Heart, MapPin } from 'lucide-react';
+import SearchBar from '../components/SearchBar';
 
 function Home() {
   return (

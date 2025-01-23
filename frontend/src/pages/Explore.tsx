@@ -1,43 +1,43 @@
-import { useEffect, useRef, useState } from "react";
-import { Loader } from "@googlemaps/js-api-loader";
-import CafeCard from "../components/CafeCard";
+import { useEffect, useRef, useState } from 'react';
+import { Loader } from '@googlemaps/js-api-loader';
+import CafeCard from '../components/CafeCard';
 
 const DUMMY_CAFES = [
   {
     id: 1,
-    name: "The Coffee House",
+    name: 'The Coffee House',
     image:
-      "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80",
+      'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80',
     rating: 4.5,
     reviews: 128,
-    distance: "0.3",
-    address: "123 Coffee Street",
+    distance: '0.3',
+    address: '123 Coffee Street',
     isOpen: true,
-    tags: ["Coffee", "Breakfast", "Wifi"],
+    tags: ['Coffee', 'Breakfast', 'Wifi'],
   },
   {
     id: 2,
-    name: "Brew & Bake",
+    name: 'Brew & Bake',
     image:
-      "https://images.unsplash.com/photo-1507133750040-4a8f57021571?auto=format&fit=crop&q=80",
+      'https://images.unsplash.com/photo-1507133750040-4a8f57021571?auto=format&fit=crop&q=80',
     rating: 4.8,
     reviews: 256,
-    distance: "0.7",
-    address: "456 Baker Avenue",
+    distance: '0.7',
+    address: '456 Baker Avenue',
     isOpen: true,
-    tags: ["Coffee", "Bakery", "Brunch"],
+    tags: ['Coffee', 'Bakery', 'Brunch'],
   },
   {
     id: 3,
-    name: "The Tea Garden",
+    name: 'The Tea Garden',
     image:
-      "https://images.unsplash.com/photo-1594631252845-29fc4cc8cde9?auto=format&fit=crop&q=80",
+      'https://images.unsplash.com/photo-1594631252845-29fc4cc8cde9?auto=format&fit=crop&q=80',
     rating: 4.3,
     reviews: 89,
-    distance: "1.2",
-    address: "789 Tea Lane",
+    distance: '1.2',
+    address: '789 Tea Lane',
     isOpen: false,
-    tags: ["Tea", "Pastries", "Quiet"],
+    tags: ['Tea', 'Pastries', 'Quiet'],
   },
 ];
 
@@ -48,8 +48,8 @@ function Explore() {
   useEffect(() => {
     const initMap = async () => {
       const loader = new Loader({
-        apiKey: "AIzaSyCsQUZzKQn5yfyWqPVep13mRKTGbL86fH0", // Replace with your API key
-        version: "weekly",
+        apiKey: 'AIzaSyCsQUZzKQn5yfyWqPVep13mRKTGbL86fH0', // Replace with your API key
+        version: 'weekly',
       });
 
       const google = await loader.load();
@@ -60,34 +60,34 @@ function Explore() {
           zoom: 13,
           styles: [
             {
-              featureType: "all",
-              elementType: "geometry",
-              stylers: [{ color: "#FAF7F2" }],
+              featureType: 'all',
+              elementType: 'geometry',
+              stylers: [{ color: '#FAF7F2' }],
             },
             {
-              featureType: "water",
-              elementType: "geometry",
-              stylers: [{ color: "#E8D6C0" }],
+              featureType: 'water',
+              elementType: 'geometry',
+              stylers: [{ color: '#E8D6C0' }],
             },
             {
-              featureType: "road",
-              elementType: "geometry",
-              stylers: [{ color: "#D4B494" }],
+              featureType: 'road',
+              elementType: 'geometry',
+              stylers: [{ color: '#D4B494' }],
             },
             {
-              featureType: "road.arterial",
-              elementType: "geometry",
-              stylers: [{ color: "#C09268" }],
+              featureType: 'road.arterial',
+              elementType: 'geometry',
+              stylers: [{ color: '#C09268' }],
             },
             {
-              featureType: "poi",
-              elementType: "geometry",
-              stylers: [{ color: "#AB703C" }],
+              featureType: 'poi',
+              elementType: 'geometry',
+              stylers: [{ color: '#AB703C' }],
             },
             {
-              featureType: "transit",
-              elementType: "geometry",
-              stylers: [{ color: "#8B5E2F" }],
+              featureType: 'transit',
+              elementType: 'geometry',
+              stylers: [{ color: '#8B5E2F' }],
             },
           ],
         });

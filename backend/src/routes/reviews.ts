@@ -5,7 +5,7 @@ import {
   getReviewsByCafeId,
   updateReview,
   deleteReview
-} from '@services/reviews';
+} from '@services/reviews.js';
 
 export const reviewsRoutes = async (app: FastifyInstance) => {
   // Create review

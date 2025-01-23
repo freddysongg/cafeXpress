@@ -1,5 +1,5 @@
-import React from "react";
-import { Star, Clock, MapPin } from "lucide-react";
+import React from 'react';
+import { Star, Clock, MapPin } from 'lucide-react';
 
 interface CafeProps {
   cafe: {
@@ -25,7 +25,7 @@ const CafeCard: React.FC<CafeProps> = ({ cafe }) => {
             src={cafe.image}
             alt={cafe.name}
             className="w-full h-full object-cover"
-            style={{ height: "160px" }}
+            style={{ height: '160px' }}
           />
         </div>
 
@@ -56,9 +56,9 @@ const CafeCard: React.FC<CafeProps> = ({ cafe }) => {
           <div className="flex items-center mb-3">
             <Clock className="w-4 h-4 mr-1" />
             <span
-              className={`text-sm ${cafe.isOpen ? "text-green-600" : "text-red-500"}`}
+              className={`text-sm ${cafe.isOpen ? 'text-green-600' : 'text-red-500'}`}
             >
-              {cafe.isOpen ? "Open Now" : "Closed"}
+              {cafe.isOpen ? 'Open Now' : 'Closed'}
             </span>
           </div>
 
