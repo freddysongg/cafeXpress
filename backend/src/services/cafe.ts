@@ -31,7 +31,7 @@ export async function createCafe(
         name: cafes.name,
         city: cafes.city,
         state: cafes.state,
-        createdAt: cafes.createdAt,
+        createdAt: cafes.createdAt
       });
 
     reply.status(200).send({
@@ -70,7 +70,7 @@ export async function getCafeById(
         zipCode: cafes.zipCode,
         ambiance: cafes.ambiance,
         dietaryOptions: cafes.dietaryOptions,
-        createdAt: cafes.createdAt,
+        createdAt: cafes.createdAt
       })
       .from(cafes)
       .where(eq(cafes.id, cafeId))
@@ -115,7 +115,7 @@ export async function getAllCafes(
         city: cafes.city,
         state: cafes.state,
         zipCode: cafes.zipCode,
-        createdAt: cafes.createdAt,
+        createdAt: cafes.createdAt
       })
       .from(cafes);
 
@@ -155,7 +155,7 @@ export async function updateCafe(
         name: cafes.name,
         city: cafes.city,
         state: cafes.state,
-        zipCode: cafes.zipCode,
+        zipCode: cafes.zipCode
       });
 
     if (!updatedCafe.length) {
@@ -192,15 +192,12 @@ export async function deleteCafe(
     const cafeId = req.params.cafeId;
 
     // Delete cafe
-    const deletedCafe = await db
-      .delete(cafes)
-      .where(eq(cafes.id, cafeId))
-      .returning({
-        id: cafes.id,
-        name: cafes.name,
-        city: cafes.city,
-        state: cafes.state,
-      });
+    const deletedCafe = await db.delete(cafes).where(eq(cafes.id, cafeId)).returning({
+      id: cafes.id,
+      name: cafes.name,
+      city: cafes.city,
+      state: cafes.state
+    });
 
     if (!deletedCafe.length) {
       reply.status(404).send({

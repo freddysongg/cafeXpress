@@ -1,10 +1,10 @@
 import { FastifyInstance } from 'fastify';
-import { 
-    createBusinessInsight, 
-    getBusinessInsightByCafeId,
-    getAllBusinessInsights,
-    updateBusinessInsight,
-    deleteBusinessInsight,
+import {
+  createBusinessInsight,
+  getBusinessInsightByCafeId,
+  getAllBusinessInsights,
+  updateBusinessInsight,
+  deleteBusinessInsight
 } from '@services/business_insights';
 
 export const businessInsightsRoutes = async (app: FastifyInstance) => {

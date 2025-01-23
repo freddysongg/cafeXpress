@@ -179,14 +179,11 @@ export async function deleteUser(
     const userId = req.params.userId;
 
     // Delete user
-    const deletedUser = await db
-      .delete(users)
-      .where(eq(users.id, userId))
-      .returning({
-        id: users.id,
-        username: users.username,
-        email: users.email
-      });
+    const deletedUser = await db.delete(users).where(eq(users.id, userId)).returning({
+      id: users.id,
+      username: users.username,
+      email: users.email
+    });
 
     if (!deletedUser.length) {
       reply.status(404).send({

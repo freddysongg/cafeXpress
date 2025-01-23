@@ -1,10 +1,10 @@
 import { FastifyInstance } from 'fastify';
-import { 
-    createPreferences,
-    getPreferencesByUserId,
-    getAllPreferences,
-    updatePreferences,
-    deletePreferences
+import {
+  createPreferences,
+  getPreferencesByUserId,
+  getAllPreferences,
+  updatePreferences,
+  deletePreferences
 } from '@services/preferences';
 
 export const preferencesRoutes = async (app: FastifyInstance) => {

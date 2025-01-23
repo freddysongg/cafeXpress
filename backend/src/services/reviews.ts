@@ -16,11 +16,7 @@ export async function createReview(req: FastifyRequest, reply: FastifyReply): Pr
     };
 
     // Check if user exists
-    const userExists = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
+    const userExists = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
     if (!userExists.length) {
       return reply.status(404).send({
@@ -30,11 +26,7 @@ export async function createReview(req: FastifyRequest, reply: FastifyReply): Pr
     }
 
     // Check if cafe exists
-    const cafeExists = await db
-      .select()
-      .from(cafes)
-      .where(eq(cafes.id, cafeId))
-      .limit(1);
+    const cafeExists = await db.select().from(cafes).where(eq(cafes.id, cafeId)).limit(1);
 
     if (!cafeExists.length) {
       return reply.status(404).send({
@@ -84,11 +76,7 @@ export async function getReviewById(req: FastifyRequest<{ Params: { reviewId: st
     const reviewId = req.params.reviewId;
 
     // Fetch review details
-    const review = await db
-      .select()
-      .from(reviews)
-      .where(eq(reviews.id, reviewId))
-      .limit(1);
+    const review = await db.select().from(reviews).where(eq(reviews.id, reviewId)).limit(1);
 
     if (!review.length) {
       return reply.status(404).send({
@@ -120,10 +108,7 @@ export async function getReviewsByCafeId(req: FastifyRequest<{ Params: { cafeId:
     const cafeId = req.params.cafeId;
 
     // Fetch all reviews for the specified cafe
-    const reviewsList = await db
-      .select()
-      .from(reviews)
-      .where(eq(reviews.cafeId, cafeId));
+    const reviewsList = await db.select().from(reviews).where(eq(reviews.cafeId, cafeId));
 
     return reply.status(200).send({
       status: 'success',
@@ -193,14 +178,11 @@ export async function deleteReview(req: FastifyRequest<{ Params: { reviewId: str
     const reviewId = req.params.reviewId;
 
     // Delete review
-    const deletedReview = await db
-      .delete(reviews)
-      .where(eq(reviews.id, reviewId))
-      .returning({
-        id: reviews.id,
-        rating: reviews.rating,
-        description: reviews.description
-      });
+    const deletedReview = await db.delete(reviews).where(eq(reviews.id, reviewId)).returning({
+      id: reviews.id,
+      rating: reviews.rating,
+      description: reviews.description
+    });
 
     if (!deletedReview.length) {
       return reply.status(404).send({

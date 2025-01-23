@@ -24,13 +24,13 @@ export async function createPreferences(req: FastifyRequest, reply: FastifyReply
         userId: preferences.userId,
         favoriteCafes: preferences.favoriteCafes,
         dietaryRestrictions: preferences.dietaryRestrictions,
-        ambiance: preferences.ambiance,
+        ambiance: preferences.ambiance
       });
 
     return reply.status(200).send({
       status: 'success',
       message: 'Preferences created successfully',
-      data: newPreferences,
+      data: newPreferences
     });
   } catch (error) {
     const err = error as Error;
@@ -57,7 +57,7 @@ export async function getPreferencesByUserId(
       .select({
         favoriteCafes: preferences.favoriteCafes,
         dietaryRestrictions: preferences.dietaryRestrictions,
-        ambiance: preferences.ambiance,
+        ambiance: preferences.ambiance
       })
       .from(preferences)
       .where(eq(preferences.userId, userId))
@@ -97,7 +97,7 @@ export async function getAllPreferences(req: FastifyRequest, reply: FastifyReply
         userId: preferences.userId,
         favoriteCafes: preferences.favoriteCafes,
         dietaryRestrictions: preferences.dietaryRestrictions,
-        ambiance: preferences.ambiance,
+        ambiance: preferences.ambiance
       })
       .from(preferences);
 
@@ -137,7 +137,7 @@ export async function updatePreferences(
         userId: preferences.userId,
         favoriteCafes: preferences.favoriteCafes,
         dietaryRestrictions: preferences.dietaryRestrictions,
-        ambiance: preferences.ambiance,
+        ambiance: preferences.ambiance
       });
 
     if (!updatedPreferences.length) {
@@ -181,7 +181,7 @@ export async function deletePreferences(
         userId: preferences.userId,
         favoriteCafes: preferences.favoriteCafes,
         dietaryRestrictions: preferences.dietaryRestrictions,
-        ambiance: preferences.ambiance,
+        ambiance: preferences.ambiance
       });
 
     if (!deletedPreferences.length) {

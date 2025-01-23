@@ -1,11 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { 
-    createUser, 
-    getUserById,
-    getAllUsers,
-    updateUser,
-    deleteUser,
- } from '@services/user';
+import { createUser, getUserById, getAllUsers, updateUser, deleteUser } from '@services/user';
 import { Param } from 'drizzle-orm';
 
 export const usersRoutes = async (app: FastifyInstance) => {
@@ -82,5 +76,18 @@ export const usersRoutes = async (app: FastifyInstance) => {
         }
     });
 
+  // Delete user by ID
+  app.delete<{
+    Params: {
+      userId: string;
+    };
+  }>('/:userId', async (req, reply) => {
+    try {
+      const response = await deleteUser(req,reply);
+      reply.send(response);
+    } catch (error) {
+      app.log.error('Error deleting user:', error);
+      reply.status(500).send({ status: 'error', message: 'Internal server error' });
+    }
+  });
 };
-

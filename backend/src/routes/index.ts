@@ -14,11 +14,11 @@ const routes = async (app: FastifyInstance) => {
   });
   app.register(testRoutes, { prefix: '/test' });
   app.register(recommendationRoutes, { prefix: '/recommendations' });
-  app.register(usersRoutes, {prefix: '/user'});
-  app.register(cafesRoutes, {prefix: '/cafe'});
-  app.register(reviewsRoutes, {prefix: '/review'});
-  app.register(preferencesRoutes, {prefix: '/preference'});
-  app.register(businessInsightsRoutes, {prefix: '/business_insights'})
+  app.register(usersRoutes, { prefix: '/user' });
+  app.register(cafesRoutes, { prefix: '/cafe' });
+  app.register(reviewsRoutes, { prefix: '/review' });
+  app.register(preferencesRoutes, { prefix: '/preference' });
+  app.register(businessInsightsRoutes, { prefix: '/business_insights' });
 };
 
 export default routes;
