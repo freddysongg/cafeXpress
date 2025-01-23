@@ -30,14 +30,21 @@ export const preferences = pgTable('preferences', {
 
 export const cafes = pgTable('cafes', {
   id: uuid('id').primaryKey().defaultRandom(),
+  createdAt: timestamp('created_at').defaultNow(),
   name: text('name').notNull(),
-  address: text('address').notNull(),
-  city: text('city'),
-  state: text('state'),
   description: text('description'),
+  address: text('address').notNull(),
+  city: varchar('city', { length: 50 }).notNull(),
+  state: varchar('state', { length: 50 }).notNull(),
+  zipCode: varchar('zip_code', { length: 10 }).notNull(),
+  ownerId: uuid('owner_id')
+    .references(() => users.id)
+    .notNull()
+    .defaultRandom(),
+  ambiance: jsonb('ambiance').default('{}'), // Example: {"quiet": true, "family_friendly": false}
+  dietaryOptions: jsonb('dietary_options').default('{}'), // Example: {"vegan": true, "gluten_free": false}
   location: jsonb('location').$type<{ type: string; coordinates: number[] }>(),
-  semanticEmbedding: jsonb('semantic_embedding').$type<number[]>(),
-  createdAt: timestamp('created_at').defaultNow()
+  semanticEmbedding: jsonb('semantic_embedding').$type<number[]>()
 });
 
 export const reviews = pgTable('reviews', {

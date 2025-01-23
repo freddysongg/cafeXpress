@@ -34,6 +34,7 @@
     "fastify-plugin": "^5.0.1",
     "langchain": "^0.3.12",
     "module": "^1.1.0",
+    "zod": "^3.24.1",
     "redis": "^4.7.0",
     "require": "^0.4.4"
   },
