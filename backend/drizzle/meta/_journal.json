@@ -15,6 +15,13 @@
       "when": 1736571899907,
       "tag": "0001_common_betty_ross",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1737433917438,
+      "tag": "0002_loving_young_avengers",
+      "breakpoints": true
     }
   ]
 }

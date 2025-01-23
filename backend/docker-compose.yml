@@ -3,11 +3,9 @@ services:
   db:
     image: postgres:16
     container_name: postgres_db
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: IrVzyXsnkDwpOnyfISyHqxLmrAzGWRBE
-      POSTGRES_DB: railway
-      DOCKER_DEFAULT_PLATFORM: linux/amd64
+    platform: linux/amd64
+    env_file:
+      .env
     ports:
       - "24642:24642"
     volumes:
@@ -16,13 +14,10 @@ services:
   backend:
     build: .
     container_name: backend_app
+    image: backend_app:latest
     platform: linux/amd64
-    environment:
-      DB_HOST: autorack.proxy.rlwy.net
-      DB_USER: postgres
-      DB_PASSWORD: IrVzyXsnkDwpOnyfISyHqxLmrAzGWRBE
-      DB_NAME: railway
-      DOCKER_DEFAULT_PLATFORM: linux/amd64
+    env_file:
+      .env
     ports:
       - "8000:8000"
     depends_on:
