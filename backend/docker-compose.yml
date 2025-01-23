@@ -4,10 +4,8 @@ services:
     image: postgres:16
     container_name: postgres_db
     platform: linux/amd64
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: IrVzyXsnkDwpOnyfISyHqxLmrAzGWRBE
-      POSTGRES_DB: railway
+    env_file:
+      .env
     ports:
       - "24642:24642"
     volumes:
