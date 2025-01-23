@@ -6,10 +6,7 @@ import { eq } from 'drizzle-orm';
 /**
  * Create Cafe
  */
-export async function createCafe(
-  req: FastifyRequest,
-  reply: FastifyReply
-): Promise<void> {
+export async function createCafe(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
     const { name, address, city, state, zipCode, ownerId, ambiance, dietaryOptions } = req.body as {
       name: string;
@@ -37,14 +34,14 @@ export async function createCafe(
     reply.status(200).send({
       status: 'success',
       message: 'Cafe created successfully',
-      data: newCafe,
+      data: newCafe
     });
   } catch (error) {
     const err = error as Error;
     console.error('Error creating cafe:', err.message);
     reply.status(500).send({
       status: 'error',
-      message: err.message,
+      message: err.message
     });
   }
 }
@@ -79,7 +76,7 @@ export async function getCafeById(
     if (!cafe.length) {
       reply.status(404).send({
         status: 'error',
-        message: 'Cafe not found.',
+        message: 'Cafe not found.'
       });
       return;
     }
@@ -87,14 +84,14 @@ export async function getCafeById(
     reply.status(200).send({
       status: 'success',
       message: 'Cafe data retrieved',
-      data: cafe[0],
+      data: cafe[0]
     });
   } catch (error) {
     const err = error as Error;
     console.error('Error fetching cafe details:', err.message);
     reply.status(500).send({
       status: 'error',
-      message: err.message,
+      message: err.message
     });
   }
 }
@@ -102,10 +99,7 @@ export async function getCafeById(
 /**
  * Get All Cafes
  */
-export async function getAllCafes(
-  req: FastifyRequest,
-  reply: FastifyReply
-): Promise<void> {
+export async function getAllCafes(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
     // Fetch all cafes
     const cafesList = await db
@@ -122,14 +116,14 @@ export async function getAllCafes(
     reply.status(200).send({
       status: 'success',
       message: 'Cafes data retrieved',
-      data: cafesList,
+      data: cafesList
     });
   } catch (error) {
     const err = error as Error;
     console.error('Error fetching cafes:', err.message);
     reply.status(500).send({
       status: 'error',
-      message: err.message,
+      message: err.message
     });
   }
 }
@@ -138,7 +132,18 @@ export async function getAllCafes(
  * Update Cafe
  */
 export async function updateCafe(
-  req: FastifyRequest<{ Params: { cafeId: string }; Body: Partial<{ name: string; address: string; city: string; state: string; zipCode: string; ambiance: object; dietaryOptions: object }> }>,
+  req: FastifyRequest<{
+    Params: { cafeId: string };
+    Body: Partial<{
+      name: string;
+      address: string;
+      city: string;
+      state: string;
+      zipCode: string;
+      ambiance: object;
+      dietaryOptions: object;
+    }>;
+  }>,
   reply: FastifyReply
 ): Promise<void> {
   try {
@@ -161,7 +166,7 @@ export async function updateCafe(
     if (!updatedCafe.length) {
       reply.status(404).send({
         status: 'error',
-        message: 'Cafe not found.',
+        message: 'Cafe not found.'
       });
       return;
     }
@@ -169,14 +174,14 @@ export async function updateCafe(
     reply.status(200).send({
       status: 'success',
       message: 'Cafe updated successfully',
-      data: updatedCafe[0],
+      data: updatedCafe[0]
     });
   } catch (error) {
     const err = error as Error;
     console.error('Error updating cafe:', err.message);
     reply.status(500).send({
       status: 'error',
-      message: err.message,
+      message: err.message
     });
   }
 }
@@ -202,7 +207,7 @@ export async function deleteCafe(
     if (!deletedCafe.length) {
       reply.status(404).send({
         status: 'error',
-        message: 'Cafe not found.',
+        message: 'Cafe not found.'
       });
       return;
     }
@@ -210,14 +215,14 @@ export async function deleteCafe(
     reply.status(200).send({
       status: 'success',
       message: 'Cafe deleted successfully',
-      data: deletedCafe[0],
+      data: deletedCafe[0]
     });
   } catch (error) {
     const err = error as Error;
     console.error('Error deleting cafe:', err.message);
     reply.status(500).send({
       status: 'error',
-      message: err.message,
+      message: err.message
     });
   }
 }

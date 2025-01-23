@@ -6,7 +6,10 @@ import { eq } from 'drizzle-orm';
 /**
  * Create Business Insight
  */
-export async function createBusinessInsight(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+export async function createBusinessInsight(
+  req: FastifyRequest,
+  reply: FastifyReply
+): Promise<void> {
   try {
     const { cafeId, visits, averageRating, peakHours, sentimentAnalysis } = req.body as {
       cafeId: string;
@@ -53,7 +56,10 @@ export async function createBusinessInsight(req: FastifyRequest, reply: FastifyR
 /**
  * Get Business Insight by Cafe ID
  */
-export async function getBusinessInsightByCafeId(req: FastifyRequest<{ Params: { cafeId: string } }>, reply: FastifyReply): Promise<void> {
+export async function getBusinessInsightByCafeId(
+  req: FastifyRequest<{ Params: { cafeId: string } }>,
+  reply: FastifyReply
+): Promise<void> {
   try {
     const { cafeId } = req.params;
 
@@ -96,7 +102,10 @@ export async function getBusinessInsightByCafeId(req: FastifyRequest<{ Params: {
 /**
  * Get All Business Insights
  */
-export async function getAllBusinessInsights(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+export async function getAllBusinessInsights(
+  req: FastifyRequest,
+  reply: FastifyReply
+): Promise<void> {
   try {
     // Fetch all business insights
     const insights = await db
@@ -129,7 +138,15 @@ export async function getAllBusinessInsights(req: FastifyRequest, reply: Fastify
  * Update Business Insight
  */
 export async function updateBusinessInsight(
-  req: FastifyRequest<{ Params: { cafeId: string }; Body: Partial<{ visits: number; averageRating: number; peakHours: object; sentimentAnalysis: object }> }>, 
+  req: FastifyRequest<{
+    Params: { cafeId: string };
+    Body: Partial<{
+      visits: number;
+      averageRating: number;
+      peakHours: object;
+      sentimentAnalysis: object;
+    }>;
+  }>,
   reply: FastifyReply
 ): Promise<void> {
   try {
@@ -177,7 +194,7 @@ export async function updateBusinessInsight(
  * Delete Business Insight by Cafe ID
  */
 export async function deleteBusinessInsight(
-  req: FastifyRequest<{ Params: { cafeId: string } }>, 
+  req: FastifyRequest<{ Params: { cafeId: string } }>,
   reply: FastifyReply
 ): Promise<void> {
   try {

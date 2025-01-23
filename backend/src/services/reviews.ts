@@ -6,7 +6,10 @@ import { eq } from 'drizzle-orm';
 /**
  * Create Review
  */
-export async function createReview(req: FastifyRequest, reply: FastifyReply): Promise<FastifyReply> {
+export async function createReview(
+  req: FastifyRequest,
+  reply: FastifyReply
+): Promise<FastifyReply> {
   try {
     const { userId, cafeId, rating, description } = req.body as {
       userId: string;
@@ -71,7 +74,10 @@ export async function createReview(req: FastifyRequest, reply: FastifyReply): Pr
 /**
  * Get Review Details by ID
  */
-export async function getReviewById(req: FastifyRequest<{ Params: { reviewId: string } }>, reply: FastifyReply): Promise<FastifyReply> {
+export async function getReviewById(
+  req: FastifyRequest<{ Params: { reviewId: string } }>,
+  reply: FastifyReply
+): Promise<FastifyReply> {
   try {
     const reviewId = req.params.reviewId;
 
@@ -103,7 +109,10 @@ export async function getReviewById(req: FastifyRequest<{ Params: { reviewId: st
 /**
  * Get All Reviews for a Cafe
  */
-export async function getReviewsByCafeId(req: FastifyRequest<{ Params: { cafeId: string } }>, reply: FastifyReply): Promise<FastifyReply> {
+export async function getReviewsByCafeId(
+  req: FastifyRequest<{ Params: { cafeId: string } }>,
+  reply: FastifyReply
+): Promise<FastifyReply> {
   try {
     const cafeId = req.params.cafeId;
 
@@ -129,7 +138,10 @@ export async function getReviewsByCafeId(req: FastifyRequest<{ Params: { cafeId:
  * Update Review Details
  */
 export async function updateReview(
-  req: FastifyRequest<{ Params: { reviewId: string }; Body: Partial<{ rating: number; description: string }> }>,
+  req: FastifyRequest<{
+    Params: { reviewId: string };
+    Body: Partial<{ rating: number; description: string }>;
+  }>,
   reply: FastifyReply
 ): Promise<FastifyReply> {
   try {
@@ -173,7 +185,10 @@ export async function updateReview(
 /**
  * Delete a Review by ID
  */
-export async function deleteReview(req: FastifyRequest<{ Params: { reviewId: string } }>, reply: FastifyReply): Promise<FastifyReply> {
+export async function deleteReview(
+  req: FastifyRequest<{ Params: { reviewId: string } }>,
+  reply: FastifyReply
+): Promise<FastifyReply> {
   try {
     const reviewId = req.params.reviewId;
 

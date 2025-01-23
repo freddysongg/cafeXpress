@@ -37,7 +37,7 @@ export async function createPreferences(req: FastifyRequest, reply: FastifyReply
     console.error('Error creating preferences:', err.message);
     return reply.status(500).send({
       status: 'error',
-      message: err.message,
+      message: err.message
     });
   }
 }
@@ -66,21 +66,21 @@ export async function getPreferencesByUserId(
     if (!userPreferences.length) {
       return reply.status(404).send({
         status: 'error',
-        message: 'Preferences not found.',
+        message: 'Preferences not found.'
       });
     }
 
     return reply.status(200).send({
       status: 'success',
       message: 'Preferences retrieved successfully',
-      data: userPreferences[0],
+      data: userPreferences[0]
     });
   } catch (error) {
     const err = error as Error;
     console.error('Error fetching preferences:', err.message);
     return reply.status(500).send({
       status: 'error',
-      message: err.message,
+      message: err.message
     });
   }
 }
@@ -104,14 +104,14 @@ export async function getAllPreferences(req: FastifyRequest, reply: FastifyReply
     return reply.status(200).send({
       status: 'success',
       message: 'Preferences data retrieved',
-      data: preferencesList,
+      data: preferencesList
     });
   } catch (error) {
     const err = error as Error;
     console.error('Error fetching preferences:', err.message);
     return reply.status(500).send({
       status: 'error',
-      message: err.message,
+      message: err.message
     });
   }
 }
@@ -120,7 +120,10 @@ export async function getAllPreferences(req: FastifyRequest, reply: FastifyReply
  * Update Preferences for a User
  */
 export async function updatePreferences(
-  req: FastifyRequest<{ Params: { userId: string }; Body: Partial<{ favoriteCafes: any; dietaryRestrictions: any; ambiance: any }> }>,
+  req: FastifyRequest<{
+    Params: { userId: string };
+    Body: Partial<{ favoriteCafes: any; dietaryRestrictions: any; ambiance: any }>;
+  }>,
   reply: FastifyReply
 ): Promise<void> {
   try {
@@ -143,21 +146,21 @@ export async function updatePreferences(
     if (!updatedPreferences.length) {
       return reply.status(404).send({
         status: 'error',
-        message: 'Preferences not found.',
+        message: 'Preferences not found.'
       });
     }
 
     return reply.status(200).send({
       status: 'success',
       message: 'Preferences updated successfully',
-      data: updatedPreferences[0],
+      data: updatedPreferences[0]
     });
   } catch (error) {
     const err = error as Error;
     console.error('Error updating preferences:', err.message);
     return reply.status(500).send({
       status: 'error',
-      message: err.message,
+      message: err.message
     });
   }
 }
@@ -187,21 +190,21 @@ export async function deletePreferences(
     if (!deletedPreferences.length) {
       return reply.status(404).send({
         status: 'error',
-        message: 'Preferences not found.',
+        message: 'Preferences not found.'
       });
     }
 
     return reply.status(200).send({
       status: 'success',
       message: 'Preferences deleted successfully',
-      data: deletedPreferences[0],
+      data: deletedPreferences[0]
     });
   } catch (error) {
     const err = error as Error;
     console.error('Error deleting preferences:', err.message);
     return reply.status(500).send({
       status: 'error',
-      message: err.message,
+      message: err.message
     });
   }
 }

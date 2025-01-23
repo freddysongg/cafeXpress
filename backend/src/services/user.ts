@@ -3,7 +3,6 @@ import { db } from '@config/db.js';
 import { users } from '@config/schemas';
 import { eq } from 'drizzle-orm';
 
-
 /**
  * Create User
  */
@@ -48,7 +47,10 @@ export async function createUser(req: FastifyRequest, reply: FastifyReply): Prom
 /**
  * Get User Details by ID
  */
-export async function getUserById(req: FastifyRequest<{ Params: { userId: string } }>, reply: FastifyReply): Promise<void> {
+export async function getUserById(
+  req: FastifyRequest<{ Params: { userId: string } }>,
+  reply: FastifyReply
+): Promise<void> {
   try {
     const userId = req.params.userId;
 
@@ -126,7 +128,10 @@ export async function getAllUsers(req: FastifyRequest, reply: FastifyReply): Pro
  * Update User Details
  */
 export async function updateUser(
-  req: FastifyRequest<{ Params: { userId: string }; Body: Partial<{ username: string; email: string; description: string }> }>,
+  req: FastifyRequest<{
+    Params: { userId: string };
+    Body: Partial<{ username: string; email: string; description: string }>;
+  }>,
   reply: FastifyReply
 ): Promise<void> {
   try {
