@@ -8,21 +8,43 @@ import { eq } from 'drizzle-orm';
  */
 export async function createCafe(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
-    const { name, address, city, state, zipCode, ownerId, ambiance, dietaryOptions } = req.body as {
-      name: string;
-      address: string;
-      city: string;
-      state: string;
-      zipCode: string;
-      ownerId: string;
-      ambiance?: object;
-      dietaryOptions?: object;
-    };
+    const { name, address, city, state, zipCode, ownerId, ambiance, dietaryOptions, keywords } =
+      req.body as {
+        name: string;
+        address: string;
+        city: string;
+        state: string;
+        zipCode: string;
+        ownerId: string;
+        ambiance?: object;
+        dietaryOptions?: object;
+        keywords?: string[];
+      };
 
-    // Create cafe
+    // Create cafe with initial empty semantic embedding
     const [newCafe] = await db
       .insert(cafes)
-      .values({ name, address, city, state, zipCode, ownerId, ambiance, dietaryOptions })
+      .values({
+        name,
+        address,
+        city,
+        state,
+        zipCode,
+        ownerId,
+        ambiance,
+        dietaryOptions,
+        keywords: keywords || [],
+        semanticEmbedding: {
+          vector: [],
+          metadata: {
+            type: 'cafe',
+            id: '',
+            keywords: keywords || [],
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }
+        }
+      })
       .returning({
         id: cafes.id,
         name: cafes.name,
@@ -67,6 +89,8 @@ export async function getCafeById(
         zipCode: cafes.zipCode,
         ambiance: cafes.ambiance,
         dietaryOptions: cafes.dietaryOptions,
+        keywords: cafes.keywords,
+        semanticEmbedding: cafes.semanticEmbedding,
         createdAt: cafes.createdAt
       })
       .from(cafes)
@@ -142,18 +166,38 @@ export async function updateCafe(
       zipCode: string;
       ambiance: object;
       dietaryOptions: object;
+      keywords?: string[];
     }>;
   }>,
   reply: FastifyReply
 ): Promise<void> {
   try {
     const cafeId = req.params.cafeId;
-    const { name, address, city, state, zipCode, ambiance, dietaryOptions } = req.body;
+    const { name, address, city, state, zipCode, ambiance, dietaryOptions, keywords } = req.body;
 
-    // Update cafe details
+    // Update cafe details including semantic embedding metadata
     const updatedCafe = await db
       .update(cafes)
-      .set({ name, address, city, state, zipCode, ambiance, dietaryOptions })
+      .set({
+        name,
+        address,
+        city,
+        state,
+        zipCode,
+        ambiance,
+        dietaryOptions,
+        keywords,
+        semanticEmbedding: {
+          vector: [],
+          metadata: {
+            type: 'cafe',
+            id: req.params.cafeId,
+            keywords: keywords || [],
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }
+        }
+      })
       .where(eq(cafes.id, cafeId))
       .returning({
         id: cafes.id,

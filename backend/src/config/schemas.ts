@@ -49,7 +49,17 @@ export const cafes = pgTable('cafes', {
   ambiance: jsonb('ambiance').default('{}'), // Example: {"quiet": true, "family_friendly": false}
   dietaryOptions: jsonb('dietary_options').default('{}'), // Example: {"vegan": true, "gluten_free": false}
   location: jsonb('location').$type<{ type: string; coordinates: number[] }>(),
-  semanticEmbedding: jsonb('semantic_embedding').$type<number[]>()
+  semanticEmbedding: jsonb('semantic_embedding').$type<{
+    vector: number[];
+    metadata: {
+      type: 'cafe';
+      id: string;
+      keywords: string[];
+      createdAt: Date;
+      updatedAt: Date;
+    };
+  }>(),
+  keywords: jsonb('keywords').$type<string[]>().default([])
 });
 
 export const reviews = pgTable('reviews', {

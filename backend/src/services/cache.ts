@@ -1,119 +1,65 @@
-import { createClient, RedisClientType } from 'redis';
-import { GeminiResponse } from '@schemas/recommendation.js';
-import type { z } from 'zod';
+import { createClient } from 'redis';
 
-type GeminiResponseType = z.infer<typeof GeminiResponse>;
+const redisClient = createClient({
+  url: process.env.REDIS_URL || 'redis://localhost:6379'
+});
 
-interface CacheConfig {
-  ttl: number; // TTL in seconds
-  maxMemory?: string; // Max memory for Redis in bytes (e.g., '100mb')
-  sentimentTtl?: number; // TTL for sentiment-specific cache entries
-  warmQueries?: string[]; // Common queries to pre-cache
+redisClient.on('error', (err) => {
+  console.error('Redis error:', err);
+});
+
+await redisClient.connect();
+
+export async function getCache<T>(key: string): Promise<T | null> {
+  const value = await redisClient.get(key);
+  return value ? JSON.parse(value) : null;
 }
 
-export class RecommendationCache {
-  private client: RedisClientType;
-  private config: CacheConfig;
-
-  constructor(config: CacheConfig) {
-    this.config = config;
-    this.client = createClient({
-      url: process.env.REDIS_URL,
-      username: process.env.REDIS_USER,
-      password: process.env.REDIS_PASSWORD
-    });
-
-    this.client.on('error', (err) => {
-      console.error('Redis error:', err);
-    });
-
-    this.client.connect();
+export async function setCache<T>(key: string, value: T, ttl?: number): Promise<void> {
+  const stringValue = JSON.stringify(value);
+  if (ttl) {
+    await redisClient.set(key, stringValue, { EX: ttl });
+  } else {
+    await redisClient.set(key, stringValue);
   }
+}
 
-  async get(key: string): Promise<GeminiResponseType | null> {
-    try {
-      const cached = await this.client.get(key);
-      if (!cached) return null;
-      return JSON.parse(cached);
-    } catch (err) {
-      console.error('Redis get error:', err);
-      return null;
-    }
-  }
-
-  async set(key: string, response: GeminiResponseType, sentiment?: string): Promise<void> {
-    try {
-      const cacheKey = sentiment ? `${key}:${sentiment}` : key;
-      const ttl = sentiment ? this.config.sentimentTtl || this.config.ttl : this.config.ttl;
-
-      await this.client.set(cacheKey, JSON.stringify(response), {
-        EX: ttl
-      });
-
-      // Store metadata about the cache entry
-      await this.client.hSet(`metadata:${cacheKey}`, {
-        generatedAt: new Date().toISOString(),
-        sentiment: sentiment || 'neutral',
-        query: key,
-        modelVersion: response.modelVersion
-      });
-    } catch (err) {
-      console.error('Redis set error:', err);
-    }
-  }
-
-  async invalidate(key: string, sentiment?: string): Promise<void> {
-    try {
-      const cacheKey = sentiment ? `${key}:${sentiment}` : key;
-      await this.client.del(cacheKey);
-      await this.client.del(`metadata:${cacheKey}`);
-
-      // Invalidate all sentiment variations if no specific sentiment provided
-      if (!sentiment) {
-        const keys = await this.client.keys(`${key}:*`);
-        await Promise.all(keys.map((k) => this.client.del(k)));
-        await Promise.all(keys.map((k) => this.client.del(`metadata:${k}`)));
-      }
-    } catch (err) {
-      console.error('Redis delete error:', err);
-    }
-  }
-
-  async warmCache(): Promise<void> {
-    if (!this.config.warmQueries?.length) return;
-
-    try {
-      // Warm cache with common queries
-      await Promise.all(
-        this.config.warmQueries.map(async (query) => {
-          const exists = await this.client.exists(query);
-          if (!exists) {
-            // TODO: fetch actual data from db once it is set up
-            await this.set(query, {
-              recommendations: [],
-              generatedAt: new Date().toISOString(),
-              modelVersion: '1.0.0'
-            });
-          }
-        })
-      );
-    } catch (err) {
-      console.error('Cache warming error:', err);
-    }
-  }
-
-  async close(): Promise<void> {
-    try {
-      await this.client.quit();
-    } catch (err) {
-      console.error('Redis close error:', err);
-    }
-  }
+export interface CacheConfig {
+  ttl: number;
+  prefix: string;
+  maxSize?: number;
+  staleWhileRevalidate?: number;
 }
 
 export const DEFAULT_CACHE_CONFIG: CacheConfig = {
-  ttl: 600, // 10 minutes
-  sentimentTtl: 3600, // 1 hour for sentiment-specific entries
-  maxMemory: '100mb',
-  warmQueries: ['coffee', 'vegan', 'quiet', 'outdoor seating', 'wifi']
+  ttl: 60 * 60 * 24 * 7, // 1 week
+  prefix: 'semantic:',
+  maxSize: 1000,
+  staleWhileRevalidate: 60 * 60 // 1 hour
 };
+
+export class RecommendationCache {
+  private prefix: string;
+  private config: CacheConfig;
+
+  constructor(config: Partial<CacheConfig> = {}) {
+    this.config = { ...DEFAULT_CACHE_CONFIG, ...config };
+    this.prefix = this.config.prefix;
+  }
+
+  async get<T>(key: string): Promise<T | null> {
+    return getCache<T>(`${this.prefix}${key}`);
+  }
+
+  async set<T>(key: string, value: T, ttl?: number): Promise<void> {
+    return setCache<T>(`${this.prefix}${key}`, value, ttl);
+  }
+
+  async clear(key: string): Promise<void> {
+    return clearCache(`${this.prefix}${key}`);
+  }
+}
+
+export async function clearCache(key: string): Promise<void> {
+  await redisClient.del(key);
+}

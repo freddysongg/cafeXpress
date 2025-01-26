@@ -38,7 +38,12 @@ const RATE_LIMIT = {
   embeddingDelay: 2000
 };
 
-const cache = new RecommendationCache(CACHE_CONFIG);
+const cache = new RecommendationCache({
+  ttl: CACHE_CONFIG.ttl,
+  prefix: 'recommendation:',
+  maxSize: CACHE_CONFIG.maxSize,
+  staleWhileRevalidate: CACHE_CONFIG.staleWhileRevalidate
+});
 let lastRequestTime = 0;
 
 let semanticSearchService: ISemanticSearchService;
@@ -261,6 +266,32 @@ async function fetchCafesData(
   return typedResults;
 }
 
+interface CachedSentiment {
+  recommendations: Array<{
+    id: string;
+    cafeId: string;
+    name: string;
+    description: string;
+    score: number;
+    reason: string;
+    confidenceScore: number;
+    metadata: {
+      name: string;
+      description: string;
+      sentimentScore: {
+        positive: number;
+        negative: number;
+        neutral: number;
+        compound: number;
+      };
+      semanticScore: number;
+      tags: string[];
+    };
+  }>;
+  generatedAt: string;
+  modelVersion: string;
+}
+
 async function analyzeCafeSentiment(
   geminiClient: GeminiClient,
   cafe: {
@@ -275,12 +306,16 @@ async function analyzeCafeSentiment(
   },
   preferences: z.infer<typeof preferencesSchema>
 ) {
-  const preferencesEmbedding = preferences.semanticEmbedding;
+  const _preferencesEmbedding = preferences.semanticEmbedding;
   const sentimentCacheKey = `sentiment:${cafe.id}`;
-  const cachedSentiment = await cache.get(sentimentCacheKey);
+  const cachedSentiment = await cache.get<CachedSentiment>(sentimentCacheKey);
 
   if (cachedSentiment) {
-    return { ...cafe, ...cachedSentiment };
+    return {
+      ...cafe,
+      sentiment: cachedSentiment.recommendations[0].metadata.sentimentScore,
+      semanticScore: cachedSentiment.recommendations[0].metadata.semanticScore
+    };
   }
 
   const text = `${cafe.name}: ${cafe.address}. ${cafe.description || ''}`;
@@ -360,13 +395,13 @@ export async function getRecommendations(
   request: z.infer<typeof personalizedRecommendationRequest>
 ): Promise<RecommendationResponse> {
   // Validate request against schema
-  const parsedRequest = personalizedRecommendationRequest.parse(request);
+  const _parsedRequest = personalizedRecommendationRequest.parse(request);
   if (!semanticSearchService) {
     throw new Error('SemanticSearchService not initialized');
   }
 
   const cacheKey = `recommendations:${request.userId}`;
-  const cached = await cache.get(cacheKey);
+  const cached = await cache.get<CachedSentiment>(cacheKey);
 
   if (cached) {
     return {

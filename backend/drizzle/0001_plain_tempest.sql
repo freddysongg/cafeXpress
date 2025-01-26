@@ -1,0 +1,1 @@
+ALTER TABLE "cafes" ADD COLUMN "keywords" jsonb DEFAULT '[]'::jsonb;

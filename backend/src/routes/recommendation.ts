@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { FastifyInstance } from 'fastify';
 import { getRecommendations } from '@services/recommendation.js';
 import { validateUUID } from '@utils/validation.js';
