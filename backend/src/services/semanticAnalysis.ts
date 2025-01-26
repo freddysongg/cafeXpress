@@ -7,6 +7,11 @@ const CACHE_PREFIX = 'semantic:keywords:';
 
 export class SemanticAnalysisService {
   private keywordEmbeddings: Map<string, number[]> = new Map();
+  private threshold: number;
+
+  constructor(threshold = 0.75) {
+    this.threshold = threshold;
+  }
 
   async initialize() {
     await this.getKeywordEmbeddings();
@@ -41,7 +46,7 @@ export class SemanticAnalysisService {
     }
   }
 
-  async analyzeInput(input: string, threshold = 0.75) {
+  async analyzeInput(input: string) {
     const inputEmbedding = await getEmbedding(input);
 
     // Compare against all keyword embeddings
@@ -49,7 +54,7 @@ export class SemanticAnalysisService {
 
     for (const [keyword, embedding] of this.keywordEmbeddings.entries()) {
       const similarity = cosineSimilarity(inputEmbedding, embedding);
-      if (similarity >= threshold) {
+      if (similarity >= this.threshold) {
         matches.push({ keyword, similarity });
       }
     }
@@ -64,8 +69,8 @@ export class SemanticAnalysisService {
     };
   }
 
-  async findMatchingCafes(input: string, cafes: any[], threshold = 0.75) {
-    const analysis = await this.analyzeInput(input, threshold);
+  async findMatchingCafes(input: string, cafes: any[]) {
+    const analysis = await this.analyzeInput(input);
 
     return cafes
       .map((cafe) => {

@@ -1,18 +1,20 @@
-import { createClient } from 'redis';
+import { getRedisClient } from '@config/redis.js';
+import { CacheConfig, DEFAULT_CACHE_CONFIG } from '@schemas/cache.js';
 
-const redisClient = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379'
-});
-
-redisClient.on('error', (err) => {
-  console.error('Redis error:', err);
-});
-
-await redisClient.connect();
+const redisClient = await getRedisClient();
 
 export async function getCache<T>(key: string): Promise<T | null> {
-  const value = await redisClient.get(key);
-  return value ? JSON.parse(value) : null;
+  try {
+    const value = await redisClient.get(key);
+    if (!value) {
+      console.log(`Cache miss for key: ${key}`);
+      return null;
+    }
+    return JSON.parse(value);
+  } catch (error) {
+    console.error(`Cache read error for key: ${key}`, error);
+    throw error;
+  }
 }
 
 export async function setCache<T>(key: string, value: T, ttl?: number): Promise<void> {
@@ -23,20 +25,6 @@ export async function setCache<T>(key: string, value: T, ttl?: number): Promise<
     await redisClient.set(key, stringValue);
   }
 }
-
-export interface CacheConfig {
-  ttl: number;
-  prefix: string;
-  maxSize?: number;
-  staleWhileRevalidate?: number;
-}
-
-export const DEFAULT_CACHE_CONFIG: CacheConfig = {
-  ttl: 60 * 60 * 24 * 7, // 1 week
-  prefix: 'semantic:',
-  maxSize: 1000,
-  staleWhileRevalidate: 60 * 60 // 1 hour
-};
 
 export class RecommendationCache {
   private prefix: string;

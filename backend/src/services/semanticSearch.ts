@@ -10,26 +10,10 @@ import type {
   SentimentResult,
   ISemanticSearchService
 } from '@schemas/semantic.js';
-
-interface GeminiResponse {
-  recommendations: {
-    id: string;
-    cafeId: string;
-    name: string;
-    description: string;
-    score: number;
-    reason: string;
-    confidenceScore: number;
-    metadata: {
-      name: string;
-      description: string;
-    };
-  }[];
-  generatedAt: string;
-  modelVersion: string;
-}
+import type { GeminiResponse } from '@schemas/gemini.js';
 import { eq, sql, desc } from 'drizzle-orm';
-import { RecommendationCache, DEFAULT_CACHE_CONFIG } from '@services/cache.js';
+import { RecommendationCache } from '@services/cache.js';
+import { DEFAULT_CACHE_CONFIG } from '@schemas/cache.js';
 
 class InMemoryVectorStore {
   private vectors: { id: string; embedding: Embedding; metadata: any }[] = [];
