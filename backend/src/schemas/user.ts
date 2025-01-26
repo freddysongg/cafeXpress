@@ -1,6 +1,6 @@
 export interface Location {
-  lat?: number;
-  lon?: number;
+  type: 'Point';
+  coordinates: [number, number];
 }
 
 export interface PreferencesEmbedding {
