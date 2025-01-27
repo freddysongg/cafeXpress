@@ -7,12 +7,21 @@ import {
   deleteReview
 } from '@services/reviews.js';
 
+import { ReviewBody } from '@schemas/reviews';
+
+interface ReviewParams {
+  reviewId: string;
+}
+
+interface CafeParams {
+  cafeId: string;
+}
+
 export const reviewsRoutes = async (app: FastifyInstance) => {
   // Create review
-  app.post('/', async (req, reply) => {
+  app.post<{ Body: ReviewBody }>('/', async (req, reply) => {
     try {
-      const response = await createReview(req, reply);
-      reply.send(response);
+      await createReview(req, reply); // No need to resend response; handled in service
     } catch (error) {
       app.log.error('Error creating review:', error);
       reply.status(500).send({ status: 'error', message: 'Internal server error' });
@@ -20,14 +29,9 @@ export const reviewsRoutes = async (app: FastifyInstance) => {
   });
 
   // Get review details by ID
-  app.get<{
-    Params: {
-      reviewId: string;
-    };
-  }>('/:reviewId', async (req, reply) => {
+  app.get<{ Params: ReviewParams }>('/:reviewId', async (req, reply) => {
     try {
-      const response = await getReviewById(req, reply);
-      reply.send(response);
+      await getReviewById(req, reply);
     } catch (error) {
       app.log.error('Error fetching review details:', error);
       reply.status(500).send({ status: 'error', message: 'Internal server error' });
@@ -35,14 +39,9 @@ export const reviewsRoutes = async (app: FastifyInstance) => {
   });
 
   // Get all reviews for a cafe
-  app.get<{
-    Params: {
-      cafeId: string;
-    };
-  }>('/:cafeId/all', async (req, reply) => {
+  app.get<{ Params: CafeParams }>('/:cafeId/all', async (req, reply) => {
     try {
-      const response = await getReviewsByCafeId(req, reply);
-      reply.send(response);
+      await getReviewsByCafeId(req, reply);
     } catch (error) {
       app.log.error('Error fetching reviews for cafe:', error);
       reply.status(500).send({ status: 'error', message: 'Internal server error' });
@@ -50,18 +49,9 @@ export const reviewsRoutes = async (app: FastifyInstance) => {
   });
 
   // Update review
-  app.put<{
-    Params: {
-      reviewId: string;
-    };
-    Body: Partial<{
-      rating: number;
-      description: string;
-    }>;
-  }>('/:reviewId', async (req, reply) => {
+  app.put<{ Params: ReviewParams; Body: Partial<ReviewBody> }>('/:reviewId', async (req, reply) => {
     try {
-      const response = await updateReview(req, reply);
-      reply.send(response);
+      await updateReview(req, reply);
     } catch (error) {
       app.log.error('Error updating review:', error);
       reply.status(500).send({ status: 'error', message: 'Internal server error' });
@@ -69,14 +59,9 @@ export const reviewsRoutes = async (app: FastifyInstance) => {
   });
 
   // Delete review by ID
-  app.delete<{
-    Params: {
-      reviewId: string;
-    };
-  }>('/:reviewId', async (req, reply) => {
+  app.delete<{ Params: ReviewParams }>('/:reviewId', async (req, reply) => {
     try {
-      const response = await deleteReview(req, reply);
-      reply.send(response);
+      await deleteReview(req, reply);
     } catch (error) {
       app.log.error('Error deleting review:', error);
       reply.status(500).send({ status: 'error', message: 'Internal server error' });

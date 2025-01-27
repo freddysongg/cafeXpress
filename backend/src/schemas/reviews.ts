@@ -1,44 +1,18 @@
-import { FastifySchema } from 'fastify';
-
-export interface CreateReviewBody {
-  cafeId: string;
+export interface ReviewBody {
   userId: string;
+  cafeId: string;
   rating: number;
   text: string;
-  description?: string;
-  comment?: string;
+  sentimentScore: {
+    positive: number;
+    negative: number;
+    neutral: number;
+    compound: number;
+  };
+  entities?: Array<{
+    name: string;
+    type: string;
+    salience: number;
+    sentiment?: 'positive' | 'negative' | 'neutral';
+  }>;
 }
-
-export interface UpdateReviewBody {
-  rating?: number;
-  text?: string;
-  description?: string;
-  comment?: string;
-}
-
-export const createReviewSchema: FastifySchema = {
-  body: {
-    type: 'object',
-    required: ['cafeId', 'userId', 'rating', 'text'],
-    properties: {
-      cafeId: { type: 'string' },
-      userId: { type: 'string' },
-      rating: { type: 'number', minimum: 1, maximum: 5 },
-      text: { type: 'string', minLength: 10 },
-      description: { type: 'string' },
-      comment: { type: 'string' }
-    }
-  }
-};
-
-export const updateReviewSchema: FastifySchema = {
-  body: {
-    type: 'object',
-    properties: {
-      rating: { type: 'number', minimum: 1, maximum: 5 },
-      text: { type: 'string', minLength: 10 },
-      description: { type: 'string' },
-      comment: { type: 'string' }
-    }
-  }
-};
