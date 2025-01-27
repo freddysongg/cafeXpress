@@ -1,20 +1,19 @@
-import { z } from 'zod';
+// Schema for Cafe Params
+export interface CafeParams {
+  cafeId: string;
+}
 
-// Define the schema for a cafe
-export const CafeSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  address: z.string().min(1, 'Address is required'),
-  city: z.string().min(1, 'City is required'),
-  state: z.string().min(2, 'State is required'),
-  zipCode: z.string().regex(/^\d{5}(-\d{4})?$/, 'Invalid ZIP code'),
-  ownerId: z.string().optional(),
-  ambiance: z.record(z.string(), z.boolean()).optional(), // Object with string keys/values
-  dietaryOptions: z.record(z.string(), z.boolean()).optional()
-});
-
-// Define the schema for updating a cafe (all fields optional)
-export const UpdateCafeSchema = CafeSchema.partial();
-
-// Export types
-export type Cafe = z.infer<typeof CafeSchema>;
-export type UpdateCafe = z.infer<typeof UpdateCafeSchema>;
+// Schema for Cafe Body
+export interface CafeBody {
+  name: string;
+  description?: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  ownerId: string;
+  ambiance?: object;
+  dietaryOptions?: object;
+  location?: { type: string; coordinates: number[] };
+  semanticEmbedding?: number[];
+}
