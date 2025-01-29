@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { createUser, getUserById, getAllUsers, updateUser, deleteUser } from '@services/user.js';
+import { authenticate } from 'middleware/authentication';
 
 export const usersRoutes = async (app: FastifyInstance) => {
   //Create user
@@ -18,7 +19,7 @@ export const usersRoutes = async (app: FastifyInstance) => {
     Params: {
       userId: string;
     };
-  }>('/:userId', async (req, reply) => {
+  }>('/:userId', { preHandler: authenticate }, async (req, reply) => {
     try {
       const response = await getUserById(req, reply);
       reply.send(response);
@@ -50,7 +51,7 @@ export const usersRoutes = async (app: FastifyInstance) => {
       email: string;
       description: string;
     }>;
-  }>('/:userId', async (req, reply) => {
+  }>('/:userId', { preHandler: authenticate }, async (req, reply) => {
     try {
       const response = await updateUser(req, reply);
       reply.send(response);
@@ -65,7 +66,7 @@ export const usersRoutes = async (app: FastifyInstance) => {
     Params: {
       userId: string;
     };
-  }>('/:userId', async (req, reply) => {
+  }>('/:userId', { preHandler: authenticate }, async (req, reply) => {
     try {
       const response = await deleteUser(req, reply);
       reply.send(response);

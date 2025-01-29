@@ -16,7 +16,8 @@
     },
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "strict": true
+    "strict": true,
+    "typeRoots": ["./node_modules/@types", "./types"]
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "types/**/*"]
 }

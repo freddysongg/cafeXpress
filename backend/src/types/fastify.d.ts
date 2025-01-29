@@ -46,6 +46,9 @@ import { z } from 'zod';
 import type { GeminiClient } from '@config/gemini.js';
 
 declare module 'fastify' {
+  export interface FastifyRequest {
+    user: User;
+  }
   export interface FastifyInstance {
     authenticate: <RouteGeneric extends RouteGenericInterface = RouteGenericInterface>(
       request: FastifyRequest<RouteGeneric> & { user: User },
