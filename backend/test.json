@@ -36,7 +36,12 @@
       "phone": "818-234-8586",
       "password": "dominiquesucks",
       "description": "loves matcha and boba"
-    }
+    },
+    {
+      "username": "TestDummy1",
+      "email": "TestDummy1@gmail.com",
+      "password": "TestPass1"
+  }
   ],
   "cafes": [
     {
