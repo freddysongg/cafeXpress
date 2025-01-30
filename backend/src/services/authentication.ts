@@ -1,8 +1,8 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '@config/db.js';
-import { users } from '@config/schemas';
+import { users } from '@config/schemas.js';
 import { eq } from 'drizzle-orm';
-import { RegisterBody, LoginBody } from '@schemas/authentication';
+import { RegisterBody, LoginBody } from '@schemas/authentication.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
@@ -14,7 +14,7 @@ export async function registerUser(
   reply: FastifyReply
 ): Promise<FastifyReply> {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, firstName, lastName, password } = req.body;
 
     // Check if user already exists
     const userExists = await db.select().from(users).where(eq(users.email, email)).limit(1);
@@ -34,12 +34,16 @@ export async function registerUser(
       .insert(users)
       .values({
         username,
+        firstName,
+        lastName,
         email,
         password: hashedPassword
       })
       .returning({
         id: users.id,
         email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
         createdAt: users.createdAt
       });
 

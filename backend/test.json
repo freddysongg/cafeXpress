@@ -11,36 +11,32 @@
   ],
   "users": [
     {
-      "username": "john_doe",
-      "firstName": "John",
-      "lastName": "Doe",
-      "email": "john.doe@example.com",
-      "phone": "123-456-7890",
-      "password": "password123",
-      "description": "Regular user who enjoys coffee."
-    },
-    {
-      "username": "jane_smith",
-      "firstName": "Jane",
-      "lastName": "Smith",
-      "email": "jane.smith@example.com",
-      "phone": "987-654-3210",
-      "password": "password456",
-      "description": "Coffee enthusiast and blogger."
-    },
-    {
-      "username": "mermaidmay4444",
-      "firstName": "Dominique",
-      "lastName": "Masequesmay",
-      "email": "dominique.masequesmay@gmail.com",
-      "phone": "818-234-8586",
-      "password": "dominiquesucks",
-      "description": "loves matcha and boba"
-    },
-    {
       "username": "TestDummy1",
+      "firstName": "Test1",
+      "lastName": "Dummy1",
       "email": "TestDummy1@gmail.com",
       "password": "TestPass1"
+    },
+    {
+      "username": "TestDummy2",
+      "firstName": "Test2",
+      "lastName": "Dummy2",
+      "email": "TestDummy2@gmail.com",
+      "password": "TestPass2"
+    },
+    {
+      "username": "SampleUser3",
+      "firstName": "Sample3",
+      "lastName": "User3",
+      "email": "SampleUser3@example.com",
+      "password": "SamplePass3"
+    },
+    {
+      "username": "UserTest4",
+      "firstName": "User4",
+      "lastName": "Test4",
+      "email": "UserTest4@mail.com",
+      "password": "UserPass4"
     }
   ],
   "cafes": [

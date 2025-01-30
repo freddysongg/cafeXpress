@@ -16,3 +16,11 @@ export interface ReviewBody {
     sentiment?: 'positive' | 'negative' | 'neutral';
   }>;
 }
+
+export interface ReviewParams {
+  reviewId: string;
+}
+
+export interface CafeParams {
+  cafeId: string;
+}

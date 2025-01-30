@@ -2,7 +2,8 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '@config/db.js';
 import { cafes } from '@config/schemas.js';
 import { eq } from 'drizzle-orm';
-import { CafeParams, CafeBody } from '../schemas/cafe'; // Import the schemas
+import { CafeParams, CafeBody, CafeSchema } from '@schemas/cafe.js';
+import { sql } from 'drizzle-orm';
 
 /**
  * Create Cafe
@@ -12,35 +13,23 @@ export async function createCafe(
   reply: FastifyReply
 ): Promise<void> {
   try {
-    const {
-      name,
-      description,
-      address,
-      city,
-      state,
-      zipCode,
-      ownerId,
-      ambiance,
-      dietaryOptions,
-      location,
-      semanticEmbedding
-    } = req.body;
+    const data = CafeSchema.parse(req.body);
 
     // Create cafe
     const [newCafe] = await db
       .insert(cafes)
       .values({
-        name,
-        description,
-        address,
-        city,
-        state,
-        zipCode,
-        ownerId,
-        ambiance,
-        dietaryOptions,
-        location,
-        semanticEmbedding
+        name: data.name,
+        description: data.description,
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zipCode,
+        ownerId: data.ownerId,
+        ambiance: data.ambiance,
+        dietaryOptions: data.dietaryOptions,
+        location: sql<Location>`${data.location}`,
+        semanticEmbedding: data.semanticEmbedding
       })
       .returning({
         id: cafes.id,

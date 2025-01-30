@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { createUser, getUserById, getAllUsers, updateUser, deleteUser } from '@services/user.js';
-import { authenticate } from 'middleware/authentication';
+import { authenticate } from 'middleware/authentication.js';
 
 export const usersRoutes = async (app: FastifyInstance) => {
   //Create user

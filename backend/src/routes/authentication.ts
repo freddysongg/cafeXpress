@@ -1,7 +1,7 @@
 // routes/auth.ts
 import { FastifyInstance } from 'fastify';
 import { registerUser, loginUser } from '@services/authentication.js';
-import { RegisterBody, LoginBody } from '@schemas/authentication';
+import { RegisterBody, LoginBody } from '@schemas/authentication.js';
 
 export const authenticationRoutes = async (app: FastifyInstance) => {
   // Register a new user

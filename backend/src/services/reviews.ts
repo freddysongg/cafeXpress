@@ -2,19 +2,18 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '@config/db.js';
 import { reviews, users, cafes } from '@config/schemas.js';
 import { eq } from 'drizzle-orm';
-import { ReviewBody } from '@schemas/reviews'; // Import the ReviewBody interface
+import { ReviewBody } from '@schemas/reviews.js';
 
 /**
  * Create Review
  */
 export async function createReview(
-  req: FastifyRequest<{ Body: ReviewBody }>, // Use the ReviewBody interface
+  req: FastifyRequest<{ Body: ReviewBody }>,
   reply: FastifyReply
 ): Promise<FastifyReply> {
   try {
     const { userId, cafeId, rating, text, sentimentScore, entities } = req.body;
 
-    // Check if user exists
     const userExists = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
     if (!userExists.length) {
@@ -24,7 +23,6 @@ export async function createReview(
       });
     }
 
-    // Check if cafe exists
     const cafeExists = await db.select().from(cafes).where(eq(cafes.id, cafeId)).limit(1);
 
     if (!cafeExists.length) {
@@ -34,7 +32,6 @@ export async function createReview(
       });
     }
 
-    // Create review
     const [newReview] = await db
       .insert(reviews)
       .values({
@@ -44,7 +41,7 @@ export async function createReview(
         text,
         sentimentScore,
         entities,
-        processedAt: new Date() // Set processedAt to the current timestamp
+        processedAt: new Date()
       })
       .returning({
         id: reviews.id,
@@ -83,7 +80,6 @@ export async function getReviewById(
   try {
     const { reviewId } = req.params;
 
-    // Fetch review by ID
     const [review] = await db.select().from(reviews).where(eq(reviews.id, reviewId)).limit(1);
 
     if (!review) {
@@ -117,7 +113,6 @@ export async function getReviewsByCafeId(
   try {
     const { cafeId } = req.params;
 
-    // Fetch reviews for the cafe
     const reviewsList = await db.select().from(reviews).where(eq(reviews.cafeId, cafeId));
 
     return reply.status(200).send({
@@ -145,7 +140,6 @@ export async function updateReview(
     const { reviewId } = req.params;
     const updateData = req.body;
 
-    // Check if review exists
     const [existingReview] = await db
       .select()
       .from(reviews)
@@ -159,7 +153,6 @@ export async function updateReview(
       });
     }
 
-    // Update review
     const [updatedReview] = await db
       .update(reviews)
       .set(updateData)
@@ -191,7 +184,6 @@ export async function deleteReview(
   try {
     const { reviewId } = req.params;
 
-    // Check if review exists
     const [existingReview] = await db
       .select()
       .from(reviews)
@@ -205,7 +197,6 @@ export async function deleteReview(
       });
     }
 
-    // Delete review
     await db.delete(reviews).where(eq(reviews.id, reviewId));
 
     return reply.status(200).send({

@@ -3,7 +3,7 @@ import { sql } from 'drizzle-orm';
 import { db } from '@config/db.js';
 import { users } from '@config/schemas.js';
 import { eq } from 'drizzle-orm';
-import { UserBody } from '@schemas/user.js'; // Import the types
+import { UserBody } from '@schemas/user.js';
 
 /**
  * Create User
@@ -20,7 +20,7 @@ export async function createUser(req: FastifyRequest, reply: FastifyReply): Prom
       description,
       location,
       preferencesEmbedding
-    } = req.body as UserBody; // Use the imported type
+    } = req.body as UserBody;
 
     // Create user
     const [newUser] = await db

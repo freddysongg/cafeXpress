@@ -7,15 +7,7 @@ import {
   deleteReview
 } from '@services/reviews.js';
 
-import { ReviewBody } from '@schemas/reviews';
-
-interface ReviewParams {
-  reviewId: string;
-}
-
-interface CafeParams {
-  cafeId: string;
-}
+import { ReviewBody, ReviewParams, CafeParams } from '@schemas/reviews.js';
 
 export const reviewsRoutes = async (app: FastifyInstance) => {
   // Create review
