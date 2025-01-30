@@ -21,15 +21,15 @@ export interface CafeBody {
 
 // Define the schema for the request body
 export const CafeSchema = z.object({
-  name: z.string().min(1, { message: 'Name is required' }),
+  name: z.string(),
   description: z.string().optional(),
-  address: z.string().min(1, { message: 'Address is required' }),
-  city: z.string().min(1, { message: 'City is required' }),
-  state: z.string().min(1, { message: 'State is required' }),
-  zipCode: z.string().regex(/^\d{5}(-\d{4})?$/, { message: 'Invalid ZIP code' }),
-  ownerId: z.string().min(1, { message: 'Owner ID is required' }),
-  ambiance: z.string().optional(),
-  dietaryOptions: z.array(z.string()).optional(),
+  address: z.string(),
+  city: z.string(),
+  state: z.string(),
+  zipCode: z.string(),
+  ownerId: z.string(),
+  ambiance: z.record(z.boolean()).optional(), // Allow ambiance to be an object
+  dietaryOptions: z.record(z.boolean()).optional(), // Allow dietaryOptions to be an object
   location: z.object({
     latitude: z.number(),
     longitude: z.number()

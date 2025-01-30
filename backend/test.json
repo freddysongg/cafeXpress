@@ -41,12 +41,13 @@
   ],
   "cafes": [
     {
-      "name": "The Cozy Cafe",
-      "address": "123 Cozy St.",
-      "city": "Coffeeville",
-      "state": "CA",
-      "zipCode": "12345",
-      "ownerId": "user-uuid-1",
+      "name": "Coffee Corner",
+      "description": "A cozy coffee shop in the heart of the city",
+      "address": "123 Main St",
+      "city": "New York",
+      "state": "NY",
+      "zipCode": "10001",
+      "ownerId": "7f71986b-c3fb-44c4-ab66-5c314285103c",
       "ambiance": {
         "quiet": true,
         "family_friendly": false
@@ -54,15 +55,21 @@
       "dietaryOptions": {
         "vegan": true,
         "gluten_free": false
-      }
+      },
+      "location": {
+        "latitude": 40.73061,
+        "longitude": -73.935242
+      },
+      "semanticEmbedding": [0.1, 0.2, 0.3, 0.4]
     },
     {
-      "name": "Brewed Awakening",
-      "address": "456 Wake Rd.",
-      "city": "Brewtown",
+      "name": "Sunrise Cafe",
+      "description": "A bright and cheerful spot for breakfast and coffee",
+      "address": "456 Elm St",
+      "city": "Los Angeles",
       "state": "CA",
-      "zipCode": "67890",
-      "ownerId": "user-uuid-2",
+      "zipCode": "90001",
+      "ownerId": "b5157fa3-8475-49d3-9a46-5982b13e24c2",
       "ambiance": {
         "quiet": false,
         "family_friendly": true
@@ -70,7 +77,56 @@
       "dietaryOptions": {
         "vegan": false,
         "gluten_free": true
-      }
+      },
+      "location": {
+        "latitude": 34.0522,
+        "longitude": -118.2437
+      },
+      "semanticEmbedding": [0.5, 0.6, 0.7, 0.8]
+    },
+    {
+      "name": "Mountain Brew",
+      "description": "A rustic cafe nestled in the mountains, perfect for nature lovers",
+      "address": "789 Pine St",
+      "city": "Denver",
+      "state": "CO",
+      "zipCode": "80202",
+      "ownerId": "18a2391b-a7b0-42e6-87b6-e31bfb4149cd",
+      "ambiance": {
+        "quiet": true,
+        "family_friendly": false
+      },
+      "dietaryOptions": {
+        "vegan": true,
+        "gluten_free": true
+      },
+      "location": {
+        "latitude": 39.7392,
+        "longitude": -104.9903
+      },
+      "semanticEmbedding": [0.3, 0.4, 0.5, 0.6]
+    },
+    {
+      "name": "Urban Grind",
+      "description": "A modern cafe in the heart of the city, ideal for remote workers",
+      "address": "101 Oak St",
+      "city": "Chicago",
+      "state": "IL",
+      "zipCode": "60601",
+      "ownerId": "73741b84-65e3-4b81-83e7-27f8a69b21b9",
+      "ambiance": {
+        "quiet": false,
+        "family_friendly": true
+      },
+      "dietaryOptions": {
+        "vegan": false,
+        "gluten_free": false
+      },
+      "location": {
+        "latitude": 41.8781,
+        "longitude": -87.6298
+      },
+      "semanticEmbedding": [0.7, 0.8, 0.9, 1.0]
     }
   ],
   "reviews": [

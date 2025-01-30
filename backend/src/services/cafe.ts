@@ -8,10 +8,7 @@ import { sql } from 'drizzle-orm';
 /**
  * Create Cafe
  */
-export async function createCafe(
-  req: FastifyRequest<{ Body: CafeBody }>,
-  reply: FastifyReply
-): Promise<void> {
+export async function createCafe(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
     const data = CafeSchema.parse(req.body);
 
