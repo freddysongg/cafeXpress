@@ -12,7 +12,7 @@ export async function createCafe(req: FastifyRequest, reply: FastifyReply): Prom
   try {
     const data = CafeSchema.parse(req.body);
 
-    // Create cafe
+    // Create cafe with initial empty semantic embedding
     const [newCafe] = await db
       .insert(cafes)
       .values({
@@ -159,7 +159,7 @@ export async function updateCafe(
       semanticEmbedding
     } = req.body;
 
-    // Update cafe details
+    // Update cafe details including semantic embedding metadata
     const updatedCafe = await db
       .update(cafes)
       .set({
