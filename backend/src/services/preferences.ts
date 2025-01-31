@@ -1,30 +1,35 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
+import { PreferencesSchema, CreatePreferencesSchema } from '@schemas/preferences.js';
+import { sql } from 'drizzle-orm';
 import { db } from '@config/db.js';
 import { preferences } from '@config/schemas.js';
 import { eq } from 'drizzle-orm';
 
-/**
- * Create Preferences for a User
- */
 export async function createPreferences(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
-    const { userId, favoriteCafes, dietaryRestrictions, ambiance } = req.body as {
-      userId: string;
-      favoriteCafes: any; // Assuming it's an array of objects
-      dietaryRestrictions: any; // Assuming it's an object
-      ambiance: any; // Assuming it's an object
-    };
+    const data: PreferencesSchema = CreatePreferencesSchema.parse(req.body);
 
-    // Create preferences
+    const semanticEmbedding = data.semanticEmbedding
+      ? sql`${JSON.stringify(data.semanticEmbedding)}`
+      : null;
+
     const [newPreferences] = await db
       .insert(preferences)
-      .values({ userId, favoriteCafes, dietaryRestrictions, ambiance })
+      .values({
+        userId: data.userId,
+        favoriteCafes: data.favoriteCafes,
+        dietaryRestrictions: data.dietaryRestrictions,
+        ambiance: data.ambiance,
+        semanticEmbedding
+      })
       .returning({
         id: preferences.id,
         userId: preferences.userId,
         favoriteCafes: preferences.favoriteCafes,
         dietaryRestrictions: preferences.dietaryRestrictions,
-        ambiance: preferences.ambiance
+        ambiance: preferences.ambiance,
+        semanticEmbedding: preferences.semanticEmbedding,
+        createdAt: preferences.createdAt
       });
 
     return reply.status(200).send({
@@ -52,12 +57,13 @@ export async function getPreferencesByUserId(
   try {
     const userId = req.params.userId;
 
-    // Fetch preferences
     const userPreferences = await db
       .select({
         favoriteCafes: preferences.favoriteCafes,
         dietaryRestrictions: preferences.dietaryRestrictions,
-        ambiance: preferences.ambiance
+        ambiance: preferences.ambiance,
+        semanticEmbedding: preferences.semanticEmbedding,
+        createdAt: preferences.createdAt
       })
       .from(preferences)
       .where(eq(preferences.userId, userId))
@@ -90,14 +96,15 @@ export async function getPreferencesByUserId(
  */
 export async function getAllPreferences(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
-    // Fetch all preferences
     const preferencesList = await db
       .select({
         id: preferences.id,
         userId: preferences.userId,
         favoriteCafes: preferences.favoriteCafes,
         dietaryRestrictions: preferences.dietaryRestrictions,
-        ambiance: preferences.ambiance
+        ambiance: preferences.ambiance,
+        semanticEmbedding: preferences.semanticEmbedding,
+        createdAt: preferences.createdAt
       })
       .from(preferences);
 
@@ -122,25 +129,31 @@ export async function getAllPreferences(req: FastifyRequest, reply: FastifyReply
 export async function updatePreferences(
   req: FastifyRequest<{
     Params: { userId: string };
-    Body: Partial<{ favoriteCafes: any; dietaryRestrictions: any; ambiance: any }>;
+    Body: Partial<{
+      favoriteCafes: string[];
+      dietaryRestrictions: string[];
+      ambiance: string[];
+      semanticEmbedding: typeof preferences.semanticEmbedding;
+    }>;
   }>,
   reply: FastifyReply
 ): Promise<void> {
   try {
     const userId = req.params.userId;
-    const { favoriteCafes, dietaryRestrictions, ambiance } = req.body;
+    const { favoriteCafes, dietaryRestrictions, ambiance, semanticEmbedding } = req.body;
 
-    // Update preferences
     const updatedPreferences = await db
       .update(preferences)
-      .set({ favoriteCafes, dietaryRestrictions, ambiance })
+      .set({ favoriteCafes, dietaryRestrictions, ambiance, semanticEmbedding })
       .where(eq(preferences.userId, userId))
       .returning({
         id: preferences.id,
         userId: preferences.userId,
         favoriteCafes: preferences.favoriteCafes,
         dietaryRestrictions: preferences.dietaryRestrictions,
-        ambiance: preferences.ambiance
+        ambiance: preferences.ambiance,
+        semanticEmbedding: preferences.semanticEmbedding,
+        createdAt: preferences.createdAt
       });
 
     if (!updatedPreferences.length) {
@@ -175,7 +188,6 @@ export async function deletePreferences(
   try {
     const userId = req.params.userId;
 
-    // Delete preferences
     const deletedPreferences = await db
       .delete(preferences)
       .where(eq(preferences.userId, userId))
@@ -184,7 +196,9 @@ export async function deletePreferences(
         userId: preferences.userId,
         favoriteCafes: preferences.favoriteCafes,
         dietaryRestrictions: preferences.dietaryRestrictions,
-        ambiance: preferences.ambiance
+        ambiance: preferences.ambiance,
+        semanticEmbedding: preferences.semanticEmbedding,
+        createdAt: preferences.createdAt
       });
 
     if (!deletedPreferences.length) {

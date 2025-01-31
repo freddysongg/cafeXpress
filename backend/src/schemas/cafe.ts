@@ -1,20 +1,41 @@
 import { z } from 'zod';
 
-// Define the schema for a cafe
+export interface CafeParams {
+  cafeId: string;
+}
+
+// Schema for Cafe Body
+export interface CafeBody {
+  name: string;
+  description?: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  ownerId: string;
+  ambiance?: object;
+  dietaryOptions?: object;
+  location?: { type: string; coordinates: number[] };
+  semanticEmbedding?: number[];
+}
+
+// Define the schema for the request body
 export const CafeSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  address: z.string().min(1, 'Address is required'),
-  city: z.string().min(1, 'City is required'),
-  state: z.string().min(2, 'State is required'),
-  zipCode: z.string().regex(/^\d{5}(-\d{4})?$/, 'Invalid ZIP code'),
-  ownerId: z.string().optional(),
-  ambiance: z.record(z.string(), z.boolean()).optional(), // Object with string keys/values
-  dietaryOptions: z.record(z.string(), z.boolean()).optional()
+  name: z.string(),
+  description: z.string().optional(),
+  address: z.string(),
+  city: z.string(),
+  state: z.string(),
+  zipCode: z.string(),
+  ownerId: z.string(),
+  ambiance: z.record(z.boolean()).optional(), // Allow ambiance to be an object
+  dietaryOptions: z.record(z.boolean()).optional(), // Allow dietaryOptions to be an object
+  location: z.object({
+    latitude: z.number(),
+    longitude: z.number()
+  }),
+  semanticEmbedding: z.array(z.number()).optional()
 });
 
-// Define the schema for updating a cafe (all fields optional)
-export const UpdateCafeSchema = CafeSchema.partial();
-
-// Export types
+// Infer the TypeScript type from the schema
 export type Cafe = z.infer<typeof CafeSchema>;
-export type UpdateCafe = z.infer<typeof UpdateCafeSchema>;
