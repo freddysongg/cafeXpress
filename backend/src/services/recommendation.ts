@@ -357,7 +357,7 @@ function calculateHybridScore(
   };
 
   // Normalize weights to sum to 1
-  const totalWeight = weights.semantic + weights.rating + weights.sentiment;
+  const totalWeight = Math.max(weights.semantic + weights.rating + weights.sentiment, 0.001);
   const normalizedWeights = {
     semantic: weights.semantic / totalWeight,
     rating: weights.rating / totalWeight,

@@ -157,7 +157,7 @@ export async function updateCafe(
       dietaryOptions,
       location,
       semanticEmbedding
-    } = req.body;
+    } = CafeSchema.parse(req.body);
 
     // Update cafe details including semantic embedding metadata
     const updatedCafe = await db
@@ -171,8 +171,24 @@ export async function updateCafe(
         zipCode,
         ambiance,
         dietaryOptions,
-        location,
-        semanticEmbedding
+        location: location
+          ? sql`ST_GeomFromGeoJSON(${JSON.stringify({
+              type: 'Point',
+              coordinates: location.coordinates
+            })})`
+          : null,
+        semanticEmbedding: semanticEmbedding
+          ? {
+              vector: semanticEmbedding.vector,
+              metadata: {
+                type: 'cafe',
+                id: semanticEmbedding.metadata.id,
+                keywords: semanticEmbedding.metadata.keywords,
+                createdAt: new Date(semanticEmbedding.metadata.createdAt),
+                updatedAt: new Date()
+              }
+            }
+          : null
       })
       .where(eq(cafes.id, cafeId))
       .returning({

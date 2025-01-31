@@ -15,8 +15,20 @@ export interface CafeBody {
   ownerId: string;
   ambiance?: object;
   dietaryOptions?: object;
-  location?: { type: string; coordinates: number[] };
-  semanticEmbedding?: number[];
+  location?: {
+    type: 'Point';
+    coordinates: [number, number];
+  };
+  semanticEmbedding?: {
+    vector: number[];
+    metadata: {
+      type: 'cafe';
+      id: string;
+      keywords: string[];
+      createdAt: Date;
+      updatedAt: Date;
+    };
+  };
 }
 
 // Define the schema for the request body
@@ -28,13 +40,29 @@ export const CafeSchema = z.object({
   state: z.string(),
   zipCode: z.string(),
   ownerId: z.string(),
-  ambiance: z.record(z.boolean()).optional(), // Allow ambiance to be an object
-  dietaryOptions: z.record(z.boolean()).optional(), // Allow dietaryOptions to be an object
-  location: z.object({
-    latitude: z.number(),
-    longitude: z.number()
-  }),
-  semanticEmbedding: z.array(z.number()).optional()
+  ambiance: z.record(z.boolean()).optional(),
+  dietaryOptions: z.record(z.boolean()).optional(),
+  location: z
+    .object({
+      latitude: z.number(),
+      longitude: z.number()
+    })
+    .transform(({ latitude, longitude }) => ({
+      type: 'Point' as const,
+      coordinates: [longitude, latitude] as [number, number]
+    })),
+  semanticEmbedding: z
+    .object({
+      vector: z.array(z.number()),
+      metadata: z.object({
+        type: z.literal('cafe'),
+        id: z.string(),
+        keywords: z.array(z.string()),
+        createdAt: z.date(),
+        updatedAt: z.date()
+      })
+    })
+    .optional()
 });
 
 // Infer the TypeScript type from the schema
