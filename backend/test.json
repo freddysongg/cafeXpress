@@ -47,7 +47,6 @@
       "city": "New York",
       "state": "NY",
       "zipCode": "10001",
-      "ownerId": "7f71986b-c3fb-44c4-ab66-5c314285103c",
       "ambiance": {
         "quiet": true,
         "family_friendly": false
@@ -69,7 +68,6 @@
       "city": "Los Angeles",
       "state": "CA",
       "zipCode": "90001",
-      "ownerId": "b5157fa3-8475-49d3-9a46-5982b13e24c2",
       "ambiance": {
         "quiet": false,
         "family_friendly": true
@@ -91,7 +89,6 @@
       "city": "Denver",
       "state": "CO",
       "zipCode": "80202",
-      "ownerId": "18a2391b-a7b0-42e6-87b6-e31bfb4149cd",
       "ambiance": {
         "quiet": true,
         "family_friendly": false
@@ -113,7 +110,6 @@
       "city": "Chicago",
       "state": "IL",
       "zipCode": "60601",
-      "ownerId": "73741b84-65e3-4b81-83e7-27f8a69b21b9",
       "ambiance": {
         "quiet": false,
         "family_friendly": true
