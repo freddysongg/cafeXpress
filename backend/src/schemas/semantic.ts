@@ -11,6 +11,7 @@ export type Embedding = {
 };
 
 export const EmbeddingSchema = z.object({
+  version: z.string().default('1.0'),
   vector: z.array(z.number()),
   metadata: z.object({
     type: z.enum(['user', 'preferences', 'cafe']),

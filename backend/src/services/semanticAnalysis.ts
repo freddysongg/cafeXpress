@@ -1,106 +1,93 @@
-import { db } from '@config/db.js';
-import { reviews } from '@config/schemas.js';
-import type { GeminiClient } from '@schemas/gemini.js';
-import { setTimeout } from 'timers/promises';
-import { sql, eq } from 'drizzle-orm';
-import type { ReviewAnalysis } from '@schemas/semantic.js';
+import { PREDEFINED_KEYWORDS } from '@config/keywords.js';
+import { getEmbedding } from '@services/gemini.js';
+import { cosineSimilarity } from '@utils/math.js';
+import { getCache, setCache } from '@services/cache.js';
 
-type SentimentLabel = 'positive' | 'negative' | 'neutral';
-
-const BATCH_SIZE = 50;
-const PROCESSING_INTERVAL = 60 * 60 * 1000; // 1 hour
+const CACHE_PREFIX = 'semantic:keywords:';
 
 export class SemanticAnalysisService {
-  private gemini: GeminiClient;
-  private processingInterval: NodeJS.Timeout | null = null;
+  private keywordEmbeddings: Map<string, number[]> = new Map();
+  private threshold: number;
 
-  constructor(geminiClient: GeminiClient) {
-    this.gemini = geminiClient;
+  constructor(threshold = 0.75) {
+    this.threshold = threshold;
   }
 
-  async analyzeReviewBatch(reviews: { id: string; text: string }[]) {
-    const results: ReviewAnalysis[] = [];
+  async initialize() {
+    await this.getKeywordEmbeddings();
+  }
 
-    for (const review of reviews) {
-      try {
-        const { sentiment, entities } = await this.gemini.analyzeText(review.text);
-        // Transform Gemini sentiment scores to match database schema
-        const compoundScore = sentiment.compound;
-        const sentimentLabel: SentimentLabel =
-          compoundScore >= 0.7 ? 'positive' : compoundScore <= 0.3 ? 'negative' : 'neutral';
+  private async getKeywordEmbeddings() {
+    // Get all unique keywords
+    const keywords = [
+      ...new Set([
+        ...PREDEFINED_KEYWORDS.ambiance,
+        ...PREDEFINED_KEYWORDS.dietary,
+        ...PREDEFINED_KEYWORDS.features,
+        ...PREDEFINED_KEYWORDS.coffee
+      ])
+    ];
 
-        const sentimentScore = {
-          positive: sentiment.positive,
-          negative: sentiment.negative,
-          neutral: sentiment.neutral,
-          compound: sentiment.compound
-        };
+    // Load or generate embeddings
+    for (const keyword of keywords) {
+      const cacheKey = `${CACHE_PREFIX}${keyword}`;
+      let embedding = await getCache<number[]>(cacheKey);
 
-        results.push({
-          id: review.id,
-          text: review.text,
-          content: review.text,
-          sentiment: sentimentLabel,
-          sentimentScore,
-          entities: Array.isArray(entities)
-            ? entities.map((entity) => ({
-                name: entity,
-                type: 'keyword',
-                salience: 1.0
-              }))
-            : undefined
-        });
-      } catch (error) {
-        console.error(`Failed to analyze review ${review.id}:`, error);
+      if (!embedding) {
+        embedding = await getEmbedding(keyword);
+        await setCache(cacheKey, embedding, 60 * 60 * 24 * 7); // Cache for 1 week
+      }
+
+      if (embedding) {
+        this.keywordEmbeddings.set(keyword, embedding);
+      } else {
+        console.warn(`Failed to get embedding for keyword: ${keyword}`);
+      }
+    }
+  }
+
+  async analyzeInput(input: string) {
+    const inputEmbedding = await getEmbedding(input);
+
+    // Compare against all keyword embeddings
+    const matches: { keyword: string; similarity: number }[] = [];
+
+    for (const [keyword, embedding] of this.keywordEmbeddings.entries()) {
+      const similarity = cosineSimilarity(inputEmbedding, embedding);
+      if (similarity >= this.threshold) {
+        matches.push({ keyword, similarity });
       }
     }
 
-    return results;
+    // Sort by highest similarity
+    matches.sort((a, b) => b.similarity - a.similarity);
+
+    return {
+      input,
+      matches,
+      matchedKeywords: matches.map((m) => m.keyword)
+    };
   }
 
-  async processReviews() {
-    let offset = 0;
-    while (true) {
-      const reviewBatch = await db
-        .select({
-          id: reviews.id,
-          text: reviews.text
-        })
-        .from(reviews)
-        .where(sql`${reviews.processedAt} IS NULL`)
-        .limit(BATCH_SIZE)
-        .offset(offset);
+  async findMatchingCafes(input: string, cafes: any[]) {
+    const analysis = await this.analyzeInput(input);
 
-      if (reviewBatch.length === 0) break;
+    return cafes
+      .map((cafe) => {
+        const cafeKeywords = cafe.keywords || [];
+        const matchedCount = analysis.matchedKeywords.filter((k) =>
+          cafeKeywords.includes(k)
+        ).length;
 
-      const analyzed = await this.analyzeReviewBatch(reviewBatch);
-      await this.updateReviews(analyzed);
-
-      offset += BATCH_SIZE;
-      await setTimeout(1000); // Rate limit
-    }
-  }
-
-  async updateReviews(analyzed: ReviewAnalysis[]) {
-    for (const analysis of analyzed) {
-      await db
-        .update(reviews)
-        .set({
-          sentimentScore: analysis.sentimentScore,
-          entities: analysis.entities,
-          processedAt: new Date()
-        })
-        .where(eq(reviews.id, analysis.id));
-    }
-  }
-
-  startPeriodicProcessing() {
-    this.processingInterval = setInterval(() => this.processReviews(), PROCESSING_INTERVAL);
-  }
-
-  stopPeriodicProcessing() {
-    if (this.processingInterval) {
-      clearInterval(this.processingInterval);
-    }
+        return {
+          ...cafe,
+          matchedKeywords: analysis.matchedKeywords.filter((k) => cafeKeywords.includes(k)),
+          matchScore: matchedCount / analysis.matchedKeywords.length
+        };
+      })
+      .filter((cafe) => cafe.matchScore > 0)
+      .sort((a, b) => b.matchScore - a.matchScore);
   }
 }
+
+export const semanticAnalysisService = new SemanticAnalysisService();

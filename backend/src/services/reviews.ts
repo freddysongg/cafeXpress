@@ -2,23 +2,18 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '@config/db.js';
 import { reviews, users, cafes } from '@config/schemas.js';
 import { eq } from 'drizzle-orm';
+import { ReviewBody } from '@schemas/reviews.js';
 
 /**
  * Create Review
  */
 export async function createReview(
-  req: FastifyRequest,
+  req: FastifyRequest<{ Body: ReviewBody }>,
   reply: FastifyReply
 ): Promise<FastifyReply> {
   try {
-    const { userId, cafeId, rating, description } = req.body as {
-      userId: string;
-      cafeId: string;
-      rating: number;
-      description?: string;
-    };
+    const { userId, cafeId, rating, text, sentimentScore, entities } = req.body;
 
-    // Check if user exists
     const userExists = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
     if (!userExists.length) {
@@ -28,7 +23,6 @@ export async function createReview(
       });
     }
 
-    // Check if cafe exists
     const cafeExists = await db.select().from(cafes).where(eq(cafes.id, cafeId)).limit(1);
 
     if (!cafeExists.length) {
@@ -38,27 +32,26 @@ export async function createReview(
       });
     }
 
-    // Create review
     const [newReview] = await db
       .insert(reviews)
       .values({
         userId,
         cafeId,
         rating,
-        text: description || '', // Use description as text if provided
-        sentimentScore: {
-          positive: 0,
-          negative: 0,
-          neutral: 1,
-          compound: 0
-        }
+        text,
+        sentimentScore,
+        entities,
+        processedAt: new Date()
       })
       .returning({
         id: reviews.id,
         userId: reviews.userId,
         cafeId: reviews.cafeId,
         rating: reviews.rating,
-        description: reviews.description,
+        text: reviews.text,
+        sentimentScore: reviews.sentimentScore,
+        entities: reviews.entities,
+        processedAt: reviews.processedAt,
         createdAt: reviews.createdAt
       });
 
@@ -78,19 +71,18 @@ export async function createReview(
 }
 
 /**
- * Get Review Details by ID
+ * Get Review By ID
  */
 export async function getReviewById(
   req: FastifyRequest<{ Params: { reviewId: string } }>,
   reply: FastifyReply
 ): Promise<FastifyReply> {
   try {
-    const reviewId = req.params.reviewId;
+    const { reviewId } = req.params;
 
-    // Fetch review details
-    const review = await db.select().from(reviews).where(eq(reviews.id, reviewId)).limit(1);
+    const [review] = await db.select().from(reviews).where(eq(reviews.id, reviewId)).limit(1);
 
-    if (!review.length) {
+    if (!review) {
       return reply.status(404).send({
         status: 'error',
         message: 'Review not found.'
@@ -99,12 +91,11 @@ export async function getReviewById(
 
     return reply.status(200).send({
       status: 'success',
-      message: 'Review data retrieved',
-      data: review[0]
+      data: review
     });
   } catch (error) {
     const err = error as Error;
-    console.error('Error fetching review details:', err.message);
+    console.error('Error fetching review:', err.message);
     return reply.status(500).send({
       status: 'error',
       message: err.message
@@ -113,26 +104,24 @@ export async function getReviewById(
 }
 
 /**
- * Get All Reviews for a Cafe
+ * Get Reviews By Cafe ID
  */
 export async function getReviewsByCafeId(
   req: FastifyRequest<{ Params: { cafeId: string } }>,
   reply: FastifyReply
 ): Promise<FastifyReply> {
   try {
-    const cafeId = req.params.cafeId;
+    const { cafeId } = req.params;
 
-    // Fetch all reviews for the specified cafe
     const reviewsList = await db.select().from(reviews).where(eq(reviews.cafeId, cafeId));
 
     return reply.status(200).send({
       status: 'success',
-      message: 'Reviews retrieved successfully',
       data: reviewsList
     });
   } catch (error) {
     const err = error as Error;
-    console.error('Error fetching reviews for cafe:', err.message);
+    console.error('Error fetching reviews:', err.message);
     return reply.status(500).send({
       status: 'error',
       message: err.message
@@ -141,42 +130,39 @@ export async function getReviewsByCafeId(
 }
 
 /**
- * Update Review Details
+ * Update Review
  */
 export async function updateReview(
-  req: FastifyRequest<{
-    Params: { reviewId: string };
-    Body: Partial<{ rating: number; description: string }>;
-  }>,
+  req: FastifyRequest<{ Params: { reviewId: string }; Body: Partial<ReviewBody> }>,
   reply: FastifyReply
 ): Promise<FastifyReply> {
   try {
-    const reviewId = req.params.reviewId;
-    const { rating, description } = req.body;
+    const { reviewId } = req.params;
+    const updateData = req.body;
 
-    // Update review
-    const updatedReview = await db
-      .update(reviews)
-      .set({ rating, description })
+    const [existingReview] = await db
+      .select()
+      .from(reviews)
       .where(eq(reviews.id, reviewId))
-      .returning({
-        id: reviews.id,
-        rating: reviews.rating,
-        description: reviews.description,
-        createdAt: reviews.createdAt
-      });
+      .limit(1);
 
-    if (!updatedReview.length) {
+    if (!existingReview) {
       return reply.status(404).send({
         status: 'error',
         message: 'Review not found.'
       });
     }
 
+    const [updatedReview] = await db
+      .update(reviews)
+      .set(updateData)
+      .where(eq(reviews.id, reviewId))
+      .returning();
+
     return reply.status(200).send({
       status: 'success',
       message: 'Review updated successfully',
-      data: updatedReview[0]
+      data: updatedReview
     });
   } catch (error) {
     const err = error as Error;
@@ -189,33 +175,33 @@ export async function updateReview(
 }
 
 /**
- * Delete a Review by ID
+ * Delete Review
  */
 export async function deleteReview(
   req: FastifyRequest<{ Params: { reviewId: string } }>,
   reply: FastifyReply
 ): Promise<FastifyReply> {
   try {
-    const reviewId = req.params.reviewId;
+    const { reviewId } = req.params;
 
-    // Delete review
-    const deletedReview = await db.delete(reviews).where(eq(reviews.id, reviewId)).returning({
-      id: reviews.id,
-      rating: reviews.rating,
-      description: reviews.description
-    });
+    const [existingReview] = await db
+      .select()
+      .from(reviews)
+      .where(eq(reviews.id, reviewId))
+      .limit(1);
 
-    if (!deletedReview.length) {
+    if (!existingReview) {
       return reply.status(404).send({
         status: 'error',
         message: 'Review not found.'
       });
     }
 
+    await db.delete(reviews).where(eq(reviews.id, reviewId));
+
     return reply.status(200).send({
       status: 'success',
-      message: 'Review deleted successfully',
-      data: deletedReview[0]
+      message: 'Review deleted successfully'
     });
   } catch (error) {
     const err = error as Error;

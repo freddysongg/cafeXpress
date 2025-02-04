@@ -1,27 +1,41 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
+import { sql } from 'drizzle-orm';
 import { db } from '@config/db.js';
 import { users } from '@config/schemas.js';
 import { eq } from 'drizzle-orm';
+import { UserBody } from '@schemas/user.js';
 
 /**
  * Create User
  */
 export async function createUser(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
-    const { username, email, firstName, lastName, phone, password, description } = req.body as {
-      username: string;
-      email: string;
-      firstName: string;
-      lastName: string;
-      phone?: string;
-      password: string;
-      description?: string;
-    };
+    const {
+      username,
+      email,
+      firstName,
+      lastName,
+      phone,
+      password,
+      description,
+      location,
+      preferencesEmbedding
+    } = req.body as UserBody;
 
     // Create user
     const [newUser] = await db
       .insert(users)
-      .values({ username, email, firstName, lastName, phone, password, description })
+      .values({
+        username,
+        email,
+        firstName,
+        lastName,
+        phone,
+        password,
+        description,
+        location: location ? sql`${JSON.stringify(location)}` : null,
+        preferencesEmbedding
+      })
       .returning({
         id: users.id,
         username: users.username,
@@ -130,24 +144,32 @@ export async function getAllUsers(req: FastifyRequest, reply: FastifyReply): Pro
 export async function updateUser(
   req: FastifyRequest<{
     Params: { userId: string };
-    Body: Partial<{ username: string; email: string; description: string }>;
+    Body: Partial<UserBody>;
   }>,
   reply: FastifyReply
 ): Promise<void> {
   try {
     const userId = req.params.userId;
-    const { username, email, description } = req.body;
+    const { username, email, description, location, preferencesEmbedding } = req.body;
 
     // Update user
     const updatedUser = await db
       .update(users)
-      .set({ username, email, description })
+      .set({
+        username,
+        email,
+        description,
+        location: location ? sql`${JSON.stringify(location)}` : null,
+        preferencesEmbedding
+      })
       .where(eq(users.id, userId))
       .returning({
         id: users.id,
         username: users.username,
         email: users.email,
-        description: users.description
+        description: users.description,
+        location: users.location,
+        preferencesEmbedding: users.preferencesEmbedding
       });
 
     if (!updatedUser.length) {

@@ -175,6 +175,65 @@ export interface Location {
   coordinates: [number, number];
 }
 
+export const CACHE_CONFIG = {
+  ttl: 30 * 60 * 1000,
+  maxSize: 5000,
+  staleWhileRevalidate: 15 * 60 * 1000,
+  embeddingTtl: 12 * 60 * 60 * 1000,
+  cachePartitions: {
+    recommendations: { ttl: 60 * 60 * 1000, maxSize: 1000 },
+    embeddings: { ttl: 12 * 60 * 60 * 1000, maxSize: 10000 },
+    sentiment: { ttl: 6 * 60 * 60 * 1000, maxSize: 5000 }
+  }
+};
+
+export const RATE_LIMIT = {
+  requestsPerSecond: 5,
+  maxRetries: 3,
+  initialRetryDelay: 1000,
+  backoffFactor: 2,
+  embeddingRetries: 5,
+  embeddingDelay: 2000
+};
+
+export interface SemanticAnalysis {
+  matchedKeywords: Array<{
+    keyword: string;
+    confidence: number;
+    relevance: number;
+    source: 'description' | 'reviews' | 'metadata';
+  }>;
+  overallConfidence: number;
+  processedText: string;
+}
+
+export interface CachedSentiment {
+  recommendations: Array<{
+    id: string;
+    cafeId: string;
+    name: string;
+    description: string;
+    score: number;
+    reason: string;
+    confidenceScore: number;
+    metadata: {
+      semanticAnalysis: SemanticAnalysis;
+      name: string;
+      description: string;
+      sentimentScore: {
+        positive: number;
+        negative: number;
+        neutral: number;
+        compound: number;
+      };
+      semanticScore: number;
+      tags: string[];
+    };
+  }>;
+  generatedAt: string;
+  modelVersion: string;
+}
+
 export type PersonalizedRecommendationRequest = z.infer<typeof personalizedRecommendationRequest>;
 export type RecommendationResponse = z.infer<typeof recommendationResponse>;
 export type BaseRecommendation = z.infer<typeof baseRecommendation>;
