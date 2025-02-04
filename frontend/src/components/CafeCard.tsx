@@ -1,5 +1,6 @@
 import React from 'react';
 import { Star, Clock, MapPin } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface CafeProps {
   cafe: {
@@ -16,8 +17,17 @@ interface CafeProps {
 }
 
 const CafeCard: React.FC<CafeProps> = ({ cafe }) => {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate(`/restaurant/${cafe.id}`);
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden border border-coffee-100">
+    <div 
+      onClick={handleClick}
+      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden border border-coffee-100 cursor-pointer"
+    >
       <div className="flex">
         {/* Café Image */}
         <div className="w-1/3">
@@ -32,17 +42,11 @@ const CafeCard: React.FC<CafeProps> = ({ cafe }) => {
         {/* Café Information */}
         <div className="w-2/3 p-4">
           <div className="flex justify-between items-start mb-2">
-            <h3 className="text-lg font-semibold text-coffee-800">
-              {cafe.name}
-            </h3>
+            <h3 className="text-lg font-semibold text-coffee-800">{cafe.name}</h3>
             <div className="flex items-center">
               <Star className="w-4 h-4 text-coffee-400 fill-current" />
-              <span className="ml-1 text-sm text-coffee-600">
-                {cafe.rating}
-              </span>
-              <span className="ml-1 text-sm text-coffee-400">
-                ({cafe.reviews})
-              </span>
+              <span className="ml-1 text-sm text-coffee-600">{cafe.rating}</span>
+              <span className="ml-1 text-sm text-coffee-400">({cafe.reviews})</span>
             </div>
           </div>
 
@@ -55,9 +59,7 @@ const CafeCard: React.FC<CafeProps> = ({ cafe }) => {
 
           <div className="flex items-center mb-3">
             <Clock className="w-4 h-4 mr-1" />
-            <span
-              className={`text-sm ${cafe.isOpen ? 'text-green-600' : 'text-red-500'}`}
-            >
+            <span className={`text-sm ${cafe.isOpen ? 'text-green-600' : 'text-red-500'}`}>
               {cafe.isOpen ? 'Open Now' : 'Closed'}
             </span>
           </div>

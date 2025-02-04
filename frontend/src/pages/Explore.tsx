@@ -1,3 +1,4 @@
+// AIzaSyCsQUZzKQn5yfyWqPVep13mRKTGbL86fH0
 import { useEffect, useRef, useState } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
 import CafeCard from '../components/CafeCard';
@@ -120,7 +121,7 @@ function Explore() {
       <div className="w-1/2 h-full overflow-y-auto bg-coffee-50 p-6">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-2xl font-bold mb-6 text-coffee-800">
-            Nearby Cafés
+            Results
           </h2>
 
           {/* Filters */}
