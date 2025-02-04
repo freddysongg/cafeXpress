@@ -64,7 +64,7 @@ export async function fetchCafes(
           keywords: cafe.keywords
         })
         .onConflictDoUpdate({
-          target: cafes.id, // Use name as the conflict target (you can change this to a unique field if needed)
+          target: cafes.address, // Use name as the conflict target (you can change this to a unique field if needed)
           set: {
             name: cafe.name,
             description: cafe.description,

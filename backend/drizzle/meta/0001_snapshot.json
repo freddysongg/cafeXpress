@@ -1,6 +1,6 @@
 {
-  "id": "931c0516-18c3-4bea-aeaa-5274eacaf63d",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "4a68caf9-aa4e-42ba-b6d4-ef444a5eb8bb",
+  "prevId": "931c0516-18c3-4bea-aeaa-5274eacaf63d",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -92,26 +92,18 @@
           "default": "'[]'::jsonb"
         }
       },
-      "indexes": {
-        "unique_address": {
-          "name": "unique_address",
-          "columns": [
-            {
-              "expression": "address",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "cafes_address_unique": {
+          "name": "cafes_address_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "address"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
