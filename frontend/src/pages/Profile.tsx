@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Edit3, Camera, Star, Bookmark } from 'lucide-react';
+import { Edit3, Camera, Star, Bookmark } from 'lucide-react';
 
 function Profile() {
   const [activeTab, setActiveTab] = useState<'reviews' | 'collections'>(

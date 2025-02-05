@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import { Star, Clock, Phone, MapPin, Heart, Share2 } from 'lucide-react';
-import { useParams } from 'react-router-dom';
+import { Star, Phone, MapPin, Heart, Share2 } from 'lucide-react';
 
 function Restaurant() {
-  const { id } = useParams();
   const [isFavorite, setIsFavorite] = useState(false);
   const [newReview, setNewReview] = useState('');
   const [rating, setRating] = useState(0);

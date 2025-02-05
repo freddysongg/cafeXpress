@@ -30,6 +30,7 @@ function SignIn() {
           data.message || 'Sign in failed. Please check your credentials.'
         );
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       setError('An error occurred. Please try again later.');
     }
