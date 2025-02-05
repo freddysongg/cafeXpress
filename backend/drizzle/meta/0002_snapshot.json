@@ -1,6 +1,6 @@
 {
-  "id": "1ca5599a-741f-41cd-aee5-073551e757c4",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "0ccbd0a4-e441-4964-bd9f-1f3a9eacca6a",
+  "prevId": "8f9f0058-d36a-40f6-b824-6314c29f0f77",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -95,15 +95,7 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "cafes_address_unique": {
-          "name": "cafes_address_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "address"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

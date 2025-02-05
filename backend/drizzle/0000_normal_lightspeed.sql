@@ -11,7 +11,8 @@ CREATE TABLE "cafes" (
 	"dietary_options" jsonb DEFAULT '{}',
 	"location" jsonb,
 	"semantic_embedding" jsonb,
-	"keywords" jsonb DEFAULT '[]'::jsonb
+	"keywords" jsonb DEFAULT '[]'::jsonb,
+	CONSTRAINT "cafes_address_unique" UNIQUE("address")
 );
 --> statement-breakpoint
 CREATE TABLE "preferences" (
@@ -55,6 +56,4 @@ CREATE TABLE "users" (
 --> statement-breakpoint
 ALTER TABLE "preferences" ADD CONSTRAINT "preferences_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "reviews" ADD CONSTRAINT "reviews_cafe_id_cafes_id_fk" FOREIGN KEY ("cafe_id") REFERENCES "public"."cafes"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "reviews" ADD CONSTRAINT "reviews_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-CREATE UNIQUE INDEX "unique_address" ON "cafes" USING btree ("address");
-ALTER TABLE "cafes" ADD CONSTRAINT "unique_address" UNIQUE (address);
+ALTER TABLE "reviews" ADD CONSTRAINT "reviews_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;

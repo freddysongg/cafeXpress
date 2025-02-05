@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, jsonb, timestamp, varchar, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, jsonb, timestamp, varchar} from 'drizzle-orm/pg-core';
 import { EmbeddingSchema } from '@schemas/semantic.js';
 
 export const users = pgTable('users', {
