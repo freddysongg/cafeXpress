@@ -4,41 +4,54 @@ import { Coffee, Mail, Lock, User } from 'lucide-react';
 
 function SignUp() {
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement sign up logic
-    console.log('Sign up with:', name, email, password);
+    setError('');
+    
+    const userData = { name, username, email, password };
+    
+    try {
+      const response = await fetch('https://your-backend-url.com/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        navigate('/dashboard'); // Redirect user upon successful signup
+      } else {
+        setError(data.message || 'Sign up failed. Please try again.');
+      }
+    } catch (error) {
+      setError('An error occurred. Please try again later.');
+    }
   };
 
   return (
     <div className="min-h-screen bg-coffee-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
         <div className="text-center mb-8">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-coffee-600 hover:text-coffee-700"
-          >
+          <Link to="/" className="inline-flex items-center gap-2 text-coffee-600 hover:text-coffee-700">
             <Coffee className="w-8 h-8" />
             <span className="text-2xl font-bold">CafeXpress</span>
           </Link>
-          <h2 className="mt-6 text-3xl font-bold text-coffee-800">
-            Create an account
-          </h2>
+          <h2 className="mt-6 text-3xl font-bold text-coffee-800">Create an account</h2>
           <p className="mt-2 text-coffee-600">Join CafeXpress today</p>
         </div>
 
+        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-coffee-700"
-            >
-              Full name
-            </label>
+            <label htmlFor="name" className="block text-sm font-medium text-coffee-700">Full name</label>
             <div className="mt-1 relative">
               <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-coffee-400 w-5 h-5" />
               <input
@@ -54,12 +67,23 @@ function SignUp() {
           </div>
 
           <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-coffee-700"
-            >
-              Email address
-            </label>
+            <label htmlFor="username" className="block text-sm font-medium text-coffee-700">Username</label>
+            <div className="mt-1 relative">
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-coffee-400 w-5 h-5" />
+              <input
+                id="username"
+                type="text"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="pl-10 w-full px-4 py-2 border border-coffee-200 rounded-lg focus:ring-2 focus:ring-coffee-400 focus:border-transparent"
+                placeholder="Choose a username"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-coffee-700">Email address</label>
             <div className="mt-1 relative">
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-coffee-400 w-5 h-5" />
               <input
@@ -75,12 +99,7 @@ function SignUp() {
           </div>
 
           <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-coffee-700"
-            >
-              Password
-            </label>
+            <label htmlFor="password" className="block text-sm font-medium text-coffee-700">Password</label>
             <div className="mt-1 relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-coffee-400 w-5 h-5" />
               <input
@@ -95,28 +114,6 @@ function SignUp() {
             </div>
           </div>
 
-          <div className="flex items-center">
-            <input
-              id="terms"
-              type="checkbox"
-              required
-              className="h-4 w-4 text-coffee-500 focus:ring-coffee-400 border-coffee-300 rounded"
-            />
-            <label
-              htmlFor="terms"
-              className="ml-2 block text-sm text-coffee-600"
-            >
-              I agree to the{' '}
-              <a href="#" className="text-coffee-500 hover:text-coffee-600">
-                Terms of Service
-              </a>{' '}
-              and{' '}
-              <a href="#" className="text-coffee-500 hover:text-coffee-600">
-                Privacy Policy
-              </a>
-            </label>
-          </div>
-
           <button
             type="submit"
             className="w-full py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-coffee-500 hover:bg-coffee-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-coffee-400"
@@ -124,18 +121,6 @@ function SignUp() {
             Create account
           </button>
         </form>
-
-        <div className="mt-6 text-center">
-          <p className="text-sm text-coffee-600">
-            Already have an account?{' '}
-            <Link
-              to="/signin"
-              className="font-medium text-coffee-500 hover:text-coffee-600"
-            >
-              Sign in
-            </Link>
-          </p>
-        </div>
       </div>
     </div>
   );
