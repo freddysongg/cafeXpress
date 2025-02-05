@@ -7,7 +7,6 @@ const Navbar = () => {
   const isAuth = location.pathname === '/signin' || location.pathname === '/signup';
   const isHome = location.pathname === '/';
 
-
   // Don't show navbar on auth pages
   if (isAuth) return null;
 

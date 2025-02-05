@@ -15,6 +15,7 @@
   "dependencies": {
     "@googlemaps/js-api-loader": "^1.16.8",
     "@vercel/analytics": "^1.4.1",
+    "i": "^0.3.7",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
