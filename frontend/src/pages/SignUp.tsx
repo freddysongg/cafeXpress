@@ -13,18 +13,18 @@ function SignUp() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
+
     const userData = { name, username, email, password };
-    
+
     try {
       const response = await fetch('http://localhost:8000/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData),
       });
-      
+
       const data = await response.json();
-      
+
       if (response.ok) {
         navigate('/dashboard'); // Redirect user upon successful signup
       } else {
@@ -39,11 +39,16 @@ function SignUp() {
     <div className="min-h-screen bg-coffee-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 text-coffee-600 hover:text-coffee-700">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-coffee-600 hover:text-coffee-700"
+          >
             <Coffee className="w-8 h-8" />
             <span className="text-2xl font-bold">CafeXpress</span>
           </Link>
-          <h2 className="mt-6 text-3xl font-bold text-coffee-800">Create an account</h2>
+          <h2 className="mt-6 text-3xl font-bold text-coffee-800">
+            Create an account
+          </h2>
           <p className="mt-2 text-coffee-600">Join CafeXpress today</p>
         </div>
 
@@ -51,7 +56,12 @@ function SignUp() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-coffee-700">Full name</label>
+            <label
+              htmlFor="name"
+              className="block text-sm font-medium text-coffee-700"
+            >
+              Full name
+            </label>
             <div className="mt-1 relative">
               <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-coffee-400 w-5 h-5" />
               <input
@@ -67,7 +77,12 @@ function SignUp() {
           </div>
 
           <div>
-            <label htmlFor="username" className="block text-sm font-medium text-coffee-700">Username</label>
+            <label
+              htmlFor="username"
+              className="block text-sm font-medium text-coffee-700"
+            >
+              Username
+            </label>
             <div className="mt-1 relative">
               <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-coffee-400 w-5 h-5" />
               <input
@@ -83,7 +98,12 @@ function SignUp() {
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-coffee-700">Email address</label>
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-coffee-700"
+            >
+              Email address
+            </label>
             <div className="mt-1 relative">
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-coffee-400 w-5 h-5" />
               <input
@@ -99,7 +119,12 @@ function SignUp() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-coffee-700">Password</label>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-coffee-700"
+            >
+              Password
+            </label>
             <div className="mt-1 relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-coffee-400 w-5 h-5" />
               <input

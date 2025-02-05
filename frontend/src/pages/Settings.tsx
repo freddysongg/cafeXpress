@@ -25,14 +25,20 @@ function Settings() {
 
         {/* Theme Toggle */}
         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <h2 className="text-xl font-semibold text-coffee-800 mb-4">Appearance</h2>
+          <h2 className="text-xl font-semibold text-coffee-800 mb-4">
+            Appearance
+          </h2>
           <div className="flex items-center justify-between">
             <span className="text-coffee-600">Theme</span>
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
               className="flex items-center gap-2 px-4 py-2 rounded-full bg-coffee-100 hover:bg-coffee-200 transition-colors"
             >
-              {isDarkMode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+              {isDarkMode ? (
+                <Moon className="w-4 h-4" />
+              ) : (
+                <Sun className="w-4 h-4" />
+              )}
               <span>{isDarkMode ? 'Dark' : 'Light'}</span>
             </button>
           </div>
@@ -40,8 +46,10 @@ function Settings() {
 
         {/* Account Settings */}
         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <h2 className="text-xl font-semibold text-coffee-800 mb-4">Account Settings</h2>
-          
+          <h2 className="text-xl font-semibold text-coffee-800 mb-4">
+            Account Settings
+          </h2>
+
           {/* Email Update */}
           <form onSubmit={handleUpdateEmail} className="mb-6">
             <label className="block text-sm font-medium text-coffee-700 mb-2">
@@ -95,7 +103,9 @@ function Settings() {
 
         {/* Notification Settings */}
         <div className="bg-white rounded-xl shadow-sm p-6">
-          <h2 className="text-xl font-semibold text-coffee-800 mb-4">Notifications</h2>
+          <h2 className="text-xl font-semibold text-coffee-800 mb-4">
+            Notifications
+          </h2>
           <div className="flex items-center justify-between">
             <span className="text-coffee-600">Enable Notifications</span>
             <button

@@ -11,22 +11,24 @@ function SignIn() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
+
     const userData = { email, password };
-    
+
     try {
       const response = await fetch('http://localhost:8000/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData),
       });
-      
+
       const data = await response.json();
-      
+
       if (response.ok) {
         navigate('/dashboard'); // Redirect upon successful authentication
       } else {
-        setError(data.message || 'Sign in failed. Please check your credentials.');
+        setError(
+          data.message || 'Sign in failed. Please check your credentials.'
+        );
       }
     } catch (error) {
       setError('An error occurred. Please try again later.');
@@ -37,11 +39,16 @@ function SignIn() {
     <div className="min-h-screen bg-coffee-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 text-coffee-600 hover:text-coffee-700">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-coffee-600 hover:text-coffee-700"
+          >
             <Coffee className="w-8 h-8" />
             <span className="text-2xl font-bold">CafeXpress</span>
           </Link>
-          <h2 className="mt-6 text-3xl font-bold text-coffee-800">Welcome back</h2>
+          <h2 className="mt-6 text-3xl font-bold text-coffee-800">
+            Welcome back
+          </h2>
           <p className="mt-2 text-coffee-600">Sign in to your account</p>
         </div>
 
@@ -49,7 +56,12 @@ function SignIn() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-coffee-700">Email address</label>
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-coffee-700"
+            >
+              Email address
+            </label>
             <div className="mt-1 relative">
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-coffee-400 w-5 h-5" />
               <input
@@ -65,7 +77,12 @@ function SignIn() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-coffee-700">Password</label>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-coffee-700"
+            >
+              Password
+            </label>
             <div className="mt-1 relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-coffee-400 w-5 h-5" />
               <input
@@ -87,11 +104,21 @@ function SignIn() {
                 type="checkbox"
                 className="h-4 w-4 text-coffee-500 focus:ring-coffee-400 border-coffee-300 rounded"
               />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-coffee-600">Remember me</label>
+              <label
+                htmlFor="remember-me"
+                className="ml-2 block text-sm text-coffee-600"
+              >
+                Remember me
+              </label>
             </div>
 
             <div className="text-sm">
-              <a href="#" className="font-medium text-coffee-500 hover:text-coffee-600">Forgot password?</a>
+              <a
+                href="#"
+                className="font-medium text-coffee-500 hover:text-coffee-600"
+              >
+                Forgot password?
+              </a>
             </div>
           </div>
 
@@ -106,7 +133,12 @@ function SignIn() {
         <div className="mt-6 text-center">
           <p className="text-sm text-coffee-600">
             Don't have an account?{' '}
-            <Link to="/signup" className="font-medium text-coffee-500 hover:text-coffee-600">Sign up</Link>
+            <Link
+              to="/signup"
+              className="font-medium text-coffee-500 hover:text-coffee-600"
+            >
+              Sign up
+            </Link>
           </p>
         </div>
       </div>

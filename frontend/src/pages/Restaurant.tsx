@@ -9,35 +9,36 @@ function Restaurant() {
   const [rating, setRating] = useState(0);
 
   const restaurant = {
-    name: "The Coffee House",
+    name: 'The Coffee House',
     rating: 4.5,
     reviews: 128,
-    description: "A cozy café serving artisanal coffee and fresh pastries in the heart of the city.",
-    phone: "(555) 123-4567",
-    address: "123 Coffee Street, San Francisco, CA 94110",
+    description:
+      'A cozy café serving artisanal coffee and fresh pastries in the heart of the city.',
+    phone: '(555) 123-4567',
+    address: '123 Coffee Street, San Francisco, CA 94110',
     images: [
-      "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1507133750040-4a8f57021571?auto=format&fit=crop&q=80",
-      "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&q=80"
+      'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1507133750040-4a8f57021571?auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&q=80',
     ],
-    vibes: ["Cozy", "Quiet", "Modern", "Artsy", "Laptop-friendly"],
-    dietaryOptions: ["Vegan", "Gluten-Free", "Vegetarian"],
+    vibes: ['Cozy', 'Quiet', 'Modern', 'Artsy', 'Laptop-friendly'],
+    dietaryOptions: ['Vegan', 'Gluten-Free', 'Vegetarian'],
     hours: {
-      today: "7:00 AM - 8:00 PM",
+      today: '7:00 AM - 8:00 PM',
       weekly: [
-        { day: "Monday", hours: "7:00 AM - 8:00 PM" },
-        { day: "Tuesday", hours: "7:00 AM - 8:00 PM" },
-        { day: "Wednesday", hours: "7:00 AM - 8:00 PM" },
-        { day: "Thursday", hours: "7:00 AM - 8:00 PM" },
-        { day: "Friday", hours: "7:00 AM - 9:00 PM" },
-        { day: "Saturday", hours: "8:00 AM - 9:00 PM" },
-        { day: "Sunday", hours: "8:00 AM - 7:00 PM" }
-      ]
+        { day: 'Monday', hours: '7:00 AM - 8:00 PM' },
+        { day: 'Tuesday', hours: '7:00 AM - 8:00 PM' },
+        { day: 'Wednesday', hours: '7:00 AM - 8:00 PM' },
+        { day: 'Thursday', hours: '7:00 AM - 8:00 PM' },
+        { day: 'Friday', hours: '7:00 AM - 9:00 PM' },
+        { day: 'Saturday', hours: '8:00 AM - 9:00 PM' },
+        { day: 'Sunday', hours: '8:00 AM - 7:00 PM' },
+      ],
     },
     location: {
       lat: 37.7749,
-      lng: -122.4194
-    }
+      lng: -122.4194,
+    },
   };
 
   const handleSubmitReview = (e: React.FormEvent) => {
@@ -53,12 +54,16 @@ function Restaurant() {
         {/* Header */}
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-coffee-800 mb-2">{restaurant.name}</h1>
+            <h1 className="text-3xl font-bold text-coffee-800 mb-2">
+              {restaurant.name}
+            </h1>
             <div className="flex items-center gap-2">
               <div className="flex items-center">
                 <Star className="w-5 h-5 text-coffee-400 fill-current" />
                 <span className="ml-1 font-semibold">{restaurant.rating}</span>
-                <span className="text-coffee-500 ml-1">({restaurant.reviews} reviews)</span>
+                <span className="text-coffee-500 ml-1">
+                  ({restaurant.reviews} reviews)
+                </span>
               </div>
               <span className="text-coffee-400">•</span>
               <span className="text-coffee-600">{restaurant.hours.today}</span>
@@ -68,10 +73,14 @@ function Restaurant() {
             <button
               onClick={() => setIsFavorite(!isFavorite)}
               className={`p-2 rounded-full ${
-                isFavorite ? 'bg-coffee-100 text-coffee-600' : 'bg-white text-coffee-400'
+                isFavorite
+                  ? 'bg-coffee-100 text-coffee-600'
+                  : 'bg-white text-coffee-400'
               } hover:bg-coffee-100 transition-colors`}
             >
-              <Heart className={`w-6 h-6 ${isFavorite ? 'fill-current' : ''}`} />
+              <Heart
+                className={`w-6 h-6 ${isFavorite ? 'fill-current' : ''}`}
+              />
             </button>
             <button className="p-2 rounded-full bg-white text-coffee-400 hover:bg-coffee-100 transition-colors">
               <Share2 className="w-6 h-6" />
@@ -96,13 +105,17 @@ function Restaurant() {
           <div className="col-span-2 space-y-8">
             {/* Description */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-coffee-800 mb-4">About</h2>
+              <h2 className="text-xl font-semibold text-coffee-800 mb-4">
+                About
+              </h2>
               <p className="text-coffee-600">{restaurant.description}</p>
             </div>
 
             {/* Vibes & Dietary Options */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-coffee-800 mb-4">Vibes</h2>
+              <h2 className="text-xl font-semibold text-coffee-800 mb-4">
+                Vibes
+              </h2>
               <div className="flex flex-wrap gap-2 mb-6">
                 {restaurant.vibes.map((vibe, index) => (
                   <span
@@ -113,7 +126,9 @@ function Restaurant() {
                   </span>
                 ))}
               </div>
-              <h2 className="text-xl font-semibold text-coffee-800 mb-4">Dietary Options</h2>
+              <h2 className="text-xl font-semibold text-coffee-800 mb-4">
+                Dietary Options
+              </h2>
               <div className="flex flex-wrap gap-2">
                 {restaurant.dietaryOptions.map((option, index) => (
                   <span
@@ -128,7 +143,9 @@ function Restaurant() {
 
             {/* Review Form */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-coffee-800 mb-4">Write a Review</h2>
+              <h2 className="text-xl font-semibold text-coffee-800 mb-4">
+                Write a Review
+              </h2>
               <form onSubmit={handleSubmitReview}>
                 <div className="flex items-center mb-4">
                   {[1, 2, 3, 4, 5].map((star) => (
@@ -140,7 +157,9 @@ function Restaurant() {
                     >
                       <Star
                         className={`w-6 h-6 ${
-                          star <= rating ? 'text-coffee-400 fill-current' : 'text-coffee-200'
+                          star <= rating
+                            ? 'text-coffee-400 fill-current'
+                            : 'text-coffee-200'
                         }`}
                       />
                     </button>
