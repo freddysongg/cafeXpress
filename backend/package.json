@@ -22,6 +22,7 @@
   },
   "type": "module",
   "dependencies": {
+    "@fastify/cors": "^10.0.2",
     "@fastify/rate-limit": "^10.2.2",
     "@google/generative-ai": "^0.21.0",
     "@langchain/community": "^0.3.26",
