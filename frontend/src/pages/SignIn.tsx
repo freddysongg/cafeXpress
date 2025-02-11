@@ -24,13 +24,13 @@ function SignIn() {
       const data = await response.json();
 
       if (response.ok) {
-        navigate('/dashboard'); // Redirect upon successful authentication
+        navigate('/'); // Redirect upon successful authentication
       } else {
         setError(
           data.message || 'Sign in failed. Please check your credentials.'
         );
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       setError('An error occurred. Please try again later.');
     }

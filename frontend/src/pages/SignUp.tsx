@@ -26,11 +26,11 @@ function SignUp() {
       const data = await response.json();
 
       if (response.ok) {
-        navigate('/dashboard'); // Redirect user upon successful signup
+        navigate('/'); // Redirect user upon successful signup
       } else {
         setError(data.message || 'Sign up failed. Please try again.');
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       setError('An error occurred. Please try again later.');
     }
