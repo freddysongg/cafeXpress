@@ -30,6 +30,7 @@ function SignUp() {
       } else {
         setError(data.message || 'Sign up failed. Please try again.');
       }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       setError('An error occurred. Please try again later.');
     }
