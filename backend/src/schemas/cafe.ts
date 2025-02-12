@@ -12,7 +12,6 @@ export interface CafeBody {
   city: string;
   state: string;
   zipCode: string;
-  ownerId: string;
   ambiance?: object;
   dietaryOptions?: object;
   location?: {
@@ -39,7 +38,6 @@ export const CafeSchema = z.object({
   city: z.string(),
   state: z.string(),
   zipCode: z.string(),
-  ownerId: z.string(),
   ambiance: z.record(z.boolean()).optional(),
   dietaryOptions: z.record(z.boolean()).optional(),
   location: z

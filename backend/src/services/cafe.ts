@@ -22,7 +22,6 @@ export async function createCafe(req: FastifyRequest, reply: FastifyReply): Prom
         city: data.city,
         state: data.state,
         zipCode: data.zipCode,
-        ownerId: data.ownerId,
         ambiance: data.ambiance,
         dietaryOptions: data.dietaryOptions,
         location: sql<Location>`${data.location}`,
