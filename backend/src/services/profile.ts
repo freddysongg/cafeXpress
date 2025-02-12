@@ -7,11 +7,17 @@ import { eq } from 'drizzle-orm';
  * Get Profile by User ID
  */
 export async function getProfile(
-  req: FastifyRequest<{ Params: { userId: string } }>,
+  req: FastifyRequest,
   reply: FastifyReply
 ): Promise<void> {
   try {
-    const userId = req.params.userId;
+    //console.log('User in getProfile:', req.user);  // Debugging output
+    const userId = req.user?.id;
+    if (!userId) {
+      reply.status(400).send({ status: 'error', message: 'User ID is missing' });
+      return;
+    }
+
     const user = await db
       .select({
         username: users.username,

@@ -33,18 +33,19 @@ export async function fetchCafes(
     // Map the response data to a cleaner format
     const cafesData = response.data.businesses.map((cafe: any) => ({
       name: cafe.name,
-      description: cafe.description || null, // Yelp doesn't provide a description field
+      description: cafe.description || null,
       address: cafe.location.display_address.join(', '),
       city: cafe.location.city || null,
       state: cafe.location.state || null,
       zipCode: cafe.location.zip_code || null,
-      ambiance: {}, // Not provided by Yelp, default to empty object
-      dietaryOptions: {}, // Not provided by Yelp, default to empty object
+      ambiance: {},
+      dietaryOptions: {},
       location: {
         type: 'Point',
-        coordinates: [cafe.coordinates.longitude, cafe.coordinates.latitude] // GeoJSON format
+        coordinates: [cafe.coordinates.longitude, cafe.coordinates.latitude]
       },
-      keywords: cafe.categories.map((category: any) => category.title) // Use Yelp categories as keywords
+      keywords: cafe.categories.map((category: any) => category.title),
+      photos: cafe.image_url ? [cafe.image_url] : []
     }));
 
     // Insert cafes into the database
@@ -61,10 +62,11 @@ export async function fetchCafes(
           ambiance: cafe.ambiance,
           dietaryOptions: cafe.dietaryOptions,
           location: cafe.location,
-          keywords: cafe.keywords
+          keywords: cafe.keywords,
+          photos: cafe.photos // Store the profile photo
         })
         .onConflictDoUpdate({
-          target: cafes.address, // Use name as the conflict target (you can change this to a unique field if needed)
+          target: cafes.address,
           set: {
             name: cafe.name,
             description: cafe.description,
@@ -73,7 +75,8 @@ export async function fetchCafes(
             state: cafe.state,
             zipCode: cafe.zipCode,
             location: cafe.location,
-            keywords: cafe.keywords
+            keywords: cafe.keywords,
+            photos: cafe.photos // Update the profile photo
           }
         });
     }
@@ -86,7 +89,11 @@ export async function fetchCafes(
     });
   } catch (error) {
     const err = error as Error;
-    console.error('Error fetching or storing cafes:', err.message);
+    console.error('Error fetching or storing cafes:', {
+      message: err.message,
+      stack: err.stack,
+      ...(axios.isAxiosError(error) && { response: error.response?.data })
+    });
 
     // Send error response
     reply.status(500).send({

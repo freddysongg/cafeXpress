@@ -1,18 +1,16 @@
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance, FastifyRequest } from 'fastify';
 import { getProfile } from '@services/profile.js';
-//import { authenticate } from 'middleware/authentication.js';
+import { authenticate } from 'middleware/authentication.js';
+
 
 export const profileRoutes = async (app: FastifyInstance) => {
   // Get user profile by ID
-  app.get<{
-    Params: {
-      userId: string;
-    };
-  }>(
-    '/:userId',
-    //{ preHandler: authenticate },
+  app.get(
+    '/',
+    { preHandler: authenticate },
     async (req, reply) => {
       try {
+        //console.log('User from token:', req.user);  // Log the user data
         const response = await getProfile(req, reply);
         reply.send(response);
       } catch (error) {
