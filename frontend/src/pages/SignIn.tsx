@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Coffee, Mail, Lock } from 'lucide-react';
+import { useAuth } from '../components/AuthContext'; // Import your AuthContext
 
 function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,15 +25,26 @@ function SignIn() {
 
       const data = await response.json();
 
-      if (response.ok) {
-        navigate('/'); // Redirect upon successful authentication
+      console.log('Login Response:', data); // Debugging line
+
+      if (response.ok && data.status === 'success') {
+        // localStorage.setItem('token', data.data.token);
+        // localStorage.setItem('userId', data.data.userId);
+        const { token, userId } = data.data;
+
+        if (!userId || !token) {
+          throw new Error('User ID or Token is missing in the response.');
+        }
+
+        login(userId, token);
+        navigate('/');
       } else {
         setError(
           data.message || 'Sign in failed. Please check your credentials.'
         );
       }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
+      console.error('Login Error:', error); // Debugging line
       setError('An error occurred. Please try again later.');
     }
   };

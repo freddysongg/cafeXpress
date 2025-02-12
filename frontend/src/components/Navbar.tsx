@@ -1,12 +1,16 @@
 import React from 'react';
 import { User, Menu, Settings } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from './AuthContext';
 
 const Navbar = () => {
   const location = useLocation();
   const isAuth =
     location.pathname === '/signin' || location.pathname === '/signup';
   const isHome = location.pathname === '/';
+  const { isAuthenticated, user, logout } = useAuth();
+
+  console.log('Navbar - user:', user); // Debugging
 
   // Don't show navbar on auth pages
   if (isAuth) return null;
@@ -38,12 +42,34 @@ const Navbar = () => {
             <NavLink href="/settings" isHome={isHome}>
               <Settings className="w-5 h-5" />
             </NavLink>
-            <Link
+            {isAuthenticated ? (
+              <>
+                <span
+                  className={`transition-colors duration-300 ${isHome ? 'text-white' : 'text-coffee-700 hover:text-coffee-900'}`}
+                >
+                  Welcome, {user?.username}!
+                </span>
+                <button
+                  onClick={logout}
+                  className={`transition-colors duration-300 ${isHome ? 'text-white hover:text-white/80' : 'text-coffee-700 hover:text-coffee-900'}`}
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/signin"
+                className="bg-coffee-500 text-white px-6 py-2 rounded-full hover:bg-coffee-600 transition-all duration-300"
+              >
+                Sign In
+              </Link>
+            )}
+            {/* <Link
               to="/signin"
               className="bg-coffee-500 text-white px-6 py-2 rounded-full hover:bg-coffee-600 transition-all duration-300"
             >
               Sign In
-            </Link>
+            </Link> */}
           </div>
 
           {/* Mobile Menu Button */}

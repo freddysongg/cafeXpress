@@ -1,20 +1,23 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Coffee, Mail, Lock, User } from 'lucide-react';
+import { useAuth } from '../components/AuthContext';
 
 function SignUp() {
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { login } = useAuth(); // Assuming you have a login function in your AuthContext
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    const userData = { name, username, email, password };
+    const userData = { firstName, lastName, username, email, password };
 
     try {
       const response = await fetch('http://localhost:8000/auth/register', {
@@ -26,11 +29,14 @@ function SignUp() {
       const data = await response.json();
 
       if (response.ok) {
+        // Assuming the response contains user data and token on successful signup
+        const { token, userId } = data.data;
+        // Store token and user data in local storage (or in the state using context)
+        login(userId, token); // Call the login function from AuthContext to update the global state
         navigate('/'); // Redirect user upon successful signup
       } else {
         setError(data.message || 'Sign up failed. Please try again.');
       }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       setError('An error occurred. Please try again later.');
     }
@@ -58,21 +64,42 @@ function SignUp() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label
-              htmlFor="name"
+              htmlFor="firstName"
               className="block text-sm font-medium text-coffee-700"
             >
-              Full name
+              First Name
             </label>
             <div className="mt-1 relative">
               <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-coffee-400 w-5 h-5" />
               <input
-                id="name"
+                id="firstName"
                 type="text"
                 required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
                 className="pl-10 w-full px-4 py-2 border border-coffee-200 rounded-lg focus:ring-2 focus:ring-coffee-400 focus:border-transparent"
-                placeholder="Enter your full name"
+                placeholder="Enter your first name"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="lastName"
+              className="block text-sm font-medium text-coffee-700"
+            >
+              Last Name
+            </label>
+            <div className="mt-1 relative">
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-coffee-400 w-5 h-5" />
+              <input
+                id="lastName"
+                type="text"
+                required
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                className="pl-10 w-full px-4 py-2 border border-coffee-200 rounded-lg focus:ring-2 focus:ring-coffee-400 focus:border-transparent"
+                placeholder="Enter your last name"
               />
             </div>
           </div>
