@@ -6,46 +6,36 @@ import { setTimeout } from 'timers/promises';
 import type { GeminiClient } from '@schemas/gemini.js';
 import { RecommendationCache } from '@services/cache.js';
 import { SemanticSearchService } from '@services/semanticSearch.js';
+import { SemanticAnalysisService } from '@services/semanticAnalysis.js';
 import { EmbeddingSchema } from '@schemas/semantic.js';
-import type { ISemanticSearchService } from '@schemas/semantic.js';
-import type { Embedding } from '@schemas/semantic.js';
+import type { ISemanticSearchService, Embedding } from '@schemas/semantic.js';
 import {
   RecommendationResponse,
   UserWithLocation,
   Location,
   personalizedRecommendationRequest,
-  preferencesSchema
+  preferencesSchema,
+  CACHE_CONFIG,
+  RATE_LIMIT,
+  CachedSentiment
 } from '@schemas/recommendation.js';
 
-const CACHE_CONFIG = {
-  ttl: 30 * 60 * 1000,
-  maxSize: 5000,
-  staleWhileRevalidate: 15 * 60 * 1000,
-  embeddingTtl: 12 * 60 * 60 * 1000,
-  cachePartitions: {
-    recommendations: { ttl: 60 * 60 * 1000, maxSize: 1000 },
-    embeddings: { ttl: 12 * 60 * 60 * 1000, maxSize: 10000 },
-    sentiment: { ttl: 6 * 60 * 60 * 1000, maxSize: 5000 }
-  }
-};
-
-const RATE_LIMIT = {
-  requestsPerSecond: 5,
-  maxRetries: 3,
-  initialRetryDelay: 1000,
-  backoffFactor: 2,
-  embeddingRetries: 5,
-  embeddingDelay: 2000
-};
-
-const cache = new RecommendationCache(CACHE_CONFIG);
+const cache = new RecommendationCache({
+  ttl: CACHE_CONFIG.ttl,
+  prefix: 'recommendation:',
+  maxSize: CACHE_CONFIG.maxSize,
+  staleWhileRevalidate: CACHE_CONFIG.staleWhileRevalidate
+});
 let lastRequestTime = 0;
 
 let semanticSearchService: ISemanticSearchService;
+let semanticAnalysisService: SemanticAnalysisService;
 
 export function initializeRecommendationService(geminiClient: GeminiClient): void {
   semanticSearchService = new SemanticSearchService(geminiClient);
+  semanticAnalysisService = new SemanticAnalysisService();
   semanticSearchService.initialize();
+  semanticAnalysisService.initialize();
 }
 
 async function fetchUserData(userId: string): Promise<UserWithLocation> {
@@ -169,6 +159,7 @@ async function fetchCafesData(
     lastReviewDate: Date;
   }>
 > {
+  // Create materialized view if it doesn't exist
   await db.execute(sql`
     CREATE MATERIALIZED VIEW IF NOT EXISTS cafe_summary AS
     SELECT 
@@ -185,6 +176,7 @@ async function fetchCafesData(
     GROUP BY c.id
   `);
 
+  // Refresh materialized view
   await db.execute(sql`REFRESH MATERIALIZED VIEW cafe_summary`);
 
   const baseQuery = db
@@ -275,12 +267,17 @@ async function analyzeCafeSentiment(
   },
   preferences: z.infer<typeof preferencesSchema>
 ) {
-  const preferencesEmbedding = preferences.semanticEmbedding;
+  const _preferencesEmbedding = preferences.semanticEmbedding;
   const sentimentCacheKey = `sentiment:${cafe.id}`;
-  const cachedSentiment = await cache.get(sentimentCacheKey);
+  const cachedSentiment = await cache.get<CachedSentiment>(sentimentCacheKey);
 
   if (cachedSentiment) {
-    return { ...cafe, ...cachedSentiment };
+    return {
+      ...cafe,
+      sentiment: cachedSentiment.recommendations[0].metadata.sentimentScore,
+      semanticScore: cachedSentiment.recommendations[0].metadata.semanticScore,
+      semanticAnalysis: cachedSentiment.recommendations[0].metadata.semanticAnalysis
+    };
   }
 
   const text = `${cafe.name}: ${cafe.address}. ${cafe.description || ''}`;
@@ -293,6 +290,7 @@ async function analyzeCafeSentiment(
   };
   const entities = sentimentResponse.entities;
 
+  const semanticAnalysis = await semanticAnalysisService.analyzeInput(text);
   const semanticScore =
     cafe.semanticEmbedding && preferences.semanticEmbedding
       ? await semanticSearchService.calculateSimilarity(
@@ -324,6 +322,7 @@ async function analyzeCafeSentiment(
           description: cafe.description || cafe.address,
           sentimentScore: sentiment,
           semanticScore,
+          semanticAnalysis: semanticAnalysis.matchedKeywords,
           tags: entities
         }
       }
@@ -336,7 +335,8 @@ async function analyzeCafeSentiment(
   return {
     ...cafe,
     sentiment: sentiment,
-    semanticScore
+    semanticScore,
+    semanticAnalysis: semanticAnalysis.matchedKeywords
   };
 }
 
@@ -348,11 +348,30 @@ function calculateHybridScore(
   if (isNaN(rating) || isNaN(semanticScore)) {
     return 0;
   }
-  const sentimentWeight = sentiment.compound >= 0.5 ? 1.2 : sentiment.compound <= -0.5 ? 0.8 : 1.0;
-  const semanticWeight = 0.4;
-  const ratingWeight = 0.6;
 
-  return (rating * ratingWeight + semanticScore * semanticWeight) * sentimentWeight;
+  // Configurable weights with defaults
+  const weights = {
+    semantic: process.env.SEMANTIC_WEIGHT ? parseFloat(process.env.SEMANTIC_WEIGHT) : 0.5,
+    rating: process.env.RATING_WEIGHT ? parseFloat(process.env.RATING_WEIGHT) : 0.4,
+    sentiment: process.env.SENTIMENT_WEIGHT ? parseFloat(process.env.SENTIMENT_WEIGHT) : 0.1
+  };
+
+  // Normalize weights to sum to 1
+  const totalWeight = Math.max(weights.semantic + weights.rating + weights.sentiment, 0.001);
+  const normalizedWeights = {
+    semantic: weights.semantic / totalWeight,
+    rating: weights.rating / totalWeight,
+    sentiment: weights.sentiment / totalWeight
+  };
+
+  // Calculate sentiment multiplier based on compound score
+  const sentimentMultiplier =
+    sentiment.compound >= 0.5 ? 1.2 : sentiment.compound <= -0.5 ? 0.8 : 1.0;
+
+  // Calculate weighted score with fallback values
+  const baseScore = rating * normalizedWeights.rating + semanticScore * normalizedWeights.semantic;
+
+  return baseScore * sentimentMultiplier * normalizedWeights.sentiment;
 }
 
 export async function getRecommendations(
@@ -360,13 +379,13 @@ export async function getRecommendations(
   request: z.infer<typeof personalizedRecommendationRequest>
 ): Promise<RecommendationResponse> {
   // Validate request against schema
-  const parsedRequest = personalizedRecommendationRequest.parse(request);
+  const _parsedRequest = personalizedRecommendationRequest.parse(request);
   if (!semanticSearchService) {
     throw new Error('SemanticSearchService not initialized');
   }
 
   const cacheKey = `recommendations:${request.userId}`;
-  const cached = await cache.get(cacheKey);
+  const cached = await cache.get<CachedSentiment>(cacheKey);
 
   if (cached) {
     return {
@@ -403,14 +422,25 @@ export async function getRecommendations(
     const analysisResults = await Promise.allSettled(
       cafesData.map(async (cafe) => {
         const sentiment = await analyzeCafeSentiment(geminiClient, cafe, preferences);
-        const semanticScore =
-          cafe.semanticEmbedding && preferences.semanticEmbedding
-            ? await semanticSearchService.calculateSemanticScore(
-                cafe.semanticEmbedding,
-                preferences.semanticEmbedding
-              )
-            : 0;
-        return { ...sentiment, semanticScore };
+        let semanticScore = 0;
+        try {
+          semanticScore =
+            cafe.semanticEmbedding && preferences.semanticEmbedding
+              ? await semanticSearchService.calculateSemanticScore(
+                  cafe.semanticEmbedding,
+                  preferences.semanticEmbedding
+                )
+              : 0.5; // Fallback score if embeddings are missing
+        } catch (error) {
+          console.error('Failed to calculate semantic score:', error);
+          semanticScore = 0.5; // Fallback score on error
+        }
+
+        return {
+          ...sentiment,
+          semanticScore,
+          rating: cafe.rating || 3.5 // Fallback rating
+        };
       })
     );
 

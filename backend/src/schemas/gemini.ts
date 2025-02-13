@@ -15,3 +15,21 @@ export type GeminiClient = {
   batchAnalyzeSentiment(texts: string[]): Promise<Array<{ score: number }>>;
   getModelVersion(): string;
 };
+
+export interface GeminiResponse {
+  recommendations: {
+    id: string;
+    cafeId: string;
+    name: string;
+    description: string;
+    score: number;
+    reason: string;
+    confidenceScore: number;
+    metadata: {
+      name: string;
+      description: string;
+    };
+  }[];
+  generatedAt: string;
+  modelVersion: string;
+}

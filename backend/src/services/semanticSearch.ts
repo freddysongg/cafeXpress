@@ -4,15 +4,16 @@ import { cafes, reviews } from '@config/schemas.js';
 import type { GeminiClient } from '@schemas/gemini.js';
 import type {
   SearchResponse,
-  GeminiResponse,
   SearchResult,
   Embedding,
   SentimentScore,
   SentimentResult,
   ISemanticSearchService
 } from '@schemas/semantic.js';
+import type { GeminiResponse } from '@schemas/gemini.js';
 import { eq, sql, desc } from 'drizzle-orm';
-import { RecommendationCache, DEFAULT_CACHE_CONFIG } from '@services/cache.js';
+import { RecommendationCache } from '@services/cache.js';
+import { DEFAULT_CACHE_CONFIG } from '@schemas/cache.js';
 
 class InMemoryVectorStore {
   private vectors: { id: string; embedding: Embedding; metadata: any }[] = [];
@@ -132,11 +133,13 @@ export class SemanticSearchService implements ISemanticSearchService {
       .from(cafes);
 
     const embeddings = cafesData
-      .filter((cafe) => Array.isArray(cafe.semanticEmbedding))
+      .filter(
+        (cafe) => cafe.semanticEmbedding !== null && Array.isArray(cafe.semanticEmbedding?.vector)
+      )
       .map((cafe) => ({
         id: cafe.id,
         embedding: {
-          vector: cafe.semanticEmbedding as number[],
+          vector: cafe.semanticEmbedding!.vector,
           metadata: {
             type: 'cafe' as const,
             id: cafe.id,
@@ -210,7 +213,7 @@ export class SemanticSearchService implements ISemanticSearchService {
     }
 
     try {
-      const embeddings = new GeminiEmbeddings(this.geminiClient);
+      const _embeddings = new GeminiEmbeddings(this.geminiClient);
 
       let sentimentResult: SentimentResult;
       try {
@@ -241,20 +244,36 @@ export class SemanticSearchService implements ISemanticSearchService {
       const cached =
         (await this.cache.get(`${query}:${sentimentType}`)) || (await this.cache.get(query));
       if (cached) {
-        const recommendations = Array.isArray(cached) ? cached : cached.recommendations;
+        const recommendations = Array.isArray(cached)
+          ? cached
+          : (cached as GeminiResponse).recommendations;
 
         return {
           status: 'success',
-          data: recommendations.map((result) => ({
-            id: result.id,
-            cafeId: result.cafeId,
-            name: result.name,
-            description: result.description,
-            score: result.score,
-            reason: result.reason,
-            confidenceScore: result.confidenceScore,
-            metadata: result.metadata
-          }))
+          data: recommendations.map(
+            (result: {
+              id: string;
+              cafeId: string;
+              name: string;
+              description: string;
+              score: number;
+              reason: string;
+              confidenceScore: number;
+              metadata: {
+                name: string;
+                description: string;
+              };
+            }) => ({
+              id: result.id,
+              cafeId: result.cafeId,
+              name: result.name,
+              description: result.description,
+              score: result.score,
+              reason: result.reason,
+              confidenceScore: result.confidenceScore,
+              metadata: result.metadata
+            })
+          )
         };
       }
 

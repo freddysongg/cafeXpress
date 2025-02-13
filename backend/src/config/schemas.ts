@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, jsonb, timestamp, varchar } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, jsonb, timestamp, varchar} from 'drizzle-orm/pg-core';
 import { EmbeddingSchema } from '@schemas/semantic.js';
 
 export const users = pgTable('users', {
@@ -38,19 +38,26 @@ export const cafes = pgTable('cafes', {
   createdAt: timestamp('created_at').defaultNow(),
   name: text('name').notNull(),
   description: text('description'),
-  address: text('address').notNull(),
+  address: text('address').notNull().unique(),
   city: varchar('city', { length: 50 }).notNull(),
   state: varchar('state', { length: 50 }).notNull(),
   zipCode: varchar('zip_code', { length: 10 }).notNull(),
-  ownerId: uuid('owner_id')
-    .references(() => users.id)
-    .notNull()
-    .defaultRandom(),
   ambiance: jsonb('ambiance').default('{}'), // Example: {"quiet": true, "family_friendly": false}
   dietaryOptions: jsonb('dietary_options').default('{}'), // Example: {"vegan": true, "gluten_free": false}
   location: jsonb('location').$type<{ type: string; coordinates: number[] }>(),
-  semanticEmbedding: jsonb('semantic_embedding').$type<number[]>()
-});
+  semanticEmbedding: jsonb('semantic_embedding').$type<{
+    vector: number[];
+    metadata: {
+      type: 'cafe';
+      id: string;
+      keywords: string[];
+      createdAt: Date;
+      updatedAt: Date;
+    };
+  }>(),
+  keywords: jsonb('keywords').$type<string[]>().default([])
+}
+);
 
 export const reviews = pgTable('reviews', {
   id: uuid('id').primaryKey().defaultRandom(),

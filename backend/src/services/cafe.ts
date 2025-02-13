@@ -2,27 +2,31 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '@config/db.js';
 import { cafes } from '@config/schemas.js';
 import { eq } from 'drizzle-orm';
+import { CafeParams, CafeBody, CafeSchema } from '@schemas/cafe.js';
+import { sql } from 'drizzle-orm';
 
 /**
  * Create Cafe
  */
 export async function createCafe(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
-    const { name, address, city, state, zipCode, ownerId, ambiance, dietaryOptions } = req.body as {
-      name: string;
-      address: string;
-      city: string;
-      state: string;
-      zipCode: string;
-      ownerId: string;
-      ambiance?: object;
-      dietaryOptions?: object;
-    };
+    const data = CafeSchema.parse(req.body);
 
-    // Create cafe
+    // Create cafe with initial empty semantic embedding
     const [newCafe] = await db
       .insert(cafes)
-      .values({ name, address, city, state, zipCode, ownerId, ambiance, dietaryOptions })
+      .values({
+        name: data.name,
+        description: data.description,
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zipCode,
+        ambiance: data.ambiance,
+        dietaryOptions: data.dietaryOptions,
+        location: sql<Location>`${data.location}`,
+        semanticEmbedding: data.semanticEmbedding
+      })
       .returning({
         id: cafes.id,
         name: cafes.name,
@@ -50,7 +54,7 @@ export async function createCafe(req: FastifyRequest, reply: FastifyReply): Prom
  * Get Cafe by ID
  */
 export async function getCafeById(
-  req: FastifyRequest<{ Params: { cafeId: string } }>,
+  req: FastifyRequest<{ Params: CafeParams }>,
   reply: FastifyReply
 ): Promise<void> {
   try {
@@ -61,12 +65,15 @@ export async function getCafeById(
       .select({
         id: cafes.id,
         name: cafes.name,
+        description: cafes.description,
         address: cafes.address,
         city: cafes.city,
         state: cafes.state,
         zipCode: cafes.zipCode,
         ambiance: cafes.ambiance,
         dietaryOptions: cafes.dietaryOptions,
+        location: cafes.location,
+        semanticEmbedding: cafes.semanticEmbedding,
         createdAt: cafes.createdAt
       })
       .from(cafes)
@@ -106,6 +113,7 @@ export async function getAllCafes(req: FastifyRequest, reply: FastifyReply): Pro
       .select({
         id: cafes.id,
         name: cafes.name,
+        description: cafes.description,
         city: cafes.city,
         state: cafes.state,
         zipCode: cafes.zipCode,
@@ -132,28 +140,55 @@ export async function getAllCafes(req: FastifyRequest, reply: FastifyReply): Pro
  * Update Cafe
  */
 export async function updateCafe(
-  req: FastifyRequest<{
-    Params: { cafeId: string };
-    Body: Partial<{
-      name: string;
-      address: string;
-      city: string;
-      state: string;
-      zipCode: string;
-      ambiance: object;
-      dietaryOptions: object;
-    }>;
-  }>,
+  req: FastifyRequest<{ Params: CafeParams; Body: CafeBody }>,
   reply: FastifyReply
 ): Promise<void> {
   try {
     const cafeId = req.params.cafeId;
-    const { name, address, city, state, zipCode, ambiance, dietaryOptions } = req.body;
+    const {
+      name,
+      description,
+      address,
+      city,
+      state,
+      zipCode,
+      ambiance,
+      dietaryOptions,
+      location,
+      semanticEmbedding
+    } = CafeSchema.parse(req.body);
 
-    // Update cafe details
+    // Update cafe details including semantic embedding metadata
     const updatedCafe = await db
       .update(cafes)
-      .set({ name, address, city, state, zipCode, ambiance, dietaryOptions })
+      .set({
+        name,
+        description,
+        address,
+        city,
+        state,
+        zipCode,
+        ambiance,
+        dietaryOptions,
+        location: location
+          ? sql`ST_GeomFromGeoJSON(${JSON.stringify({
+              type: 'Point',
+              coordinates: location.coordinates
+            })})`
+          : null,
+        semanticEmbedding: semanticEmbedding
+          ? {
+              vector: semanticEmbedding.vector,
+              metadata: {
+                type: 'cafe',
+                id: semanticEmbedding.metadata.id,
+                keywords: semanticEmbedding.metadata.keywords,
+                createdAt: new Date(semanticEmbedding.metadata.createdAt),
+                updatedAt: new Date()
+              }
+            }
+          : null
+      })
       .where(eq(cafes.id, cafeId))
       .returning({
         id: cafes.id,
@@ -190,7 +225,7 @@ export async function updateCafe(
  * Delete Cafe by ID
  */
 export async function deleteCafe(
-  req: FastifyRequest<{ Params: { cafeId: string } }>,
+  req: FastifyRequest<{ Params: CafeParams }>,
   reply: FastifyReply
 ): Promise<void> {
   try {

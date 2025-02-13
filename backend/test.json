@@ -1,0 +1,196 @@
+{
+  "test": [
+    {
+      "test1": "Example Test 1",
+      "test2": "Unique Value 1"
+    },
+    {
+      "test1": "Example Test 2",
+      "test2": "Unique Value 2"
+    }
+  ],
+  "users": [
+    {
+      "username": "TestDummy1",
+      "firstName": "Test1",
+      "lastName": "Dummy1",
+      "email": "TestDummy1@gmail.com",
+      "password": "TestPass1"
+    },
+    {
+      "username": "TestDummy2",
+      "firstName": "Test2",
+      "lastName": "Dummy2",
+      "email": "TestDummy2@gmail.com",
+      "password": "TestPass2"
+    },
+    {
+      "username": "SampleUser3",
+      "firstName": "Sample3",
+      "lastName": "User3",
+      "email": "SampleUser3@example.com",
+      "password": "SamplePass3"
+    },
+    {
+      "username": "UserTest4",
+      "firstName": "User4",
+      "lastName": "Test4",
+      "email": "UserTest4@mail.com",
+      "password": "UserPass4"
+    }
+  ],
+  "cafes": [
+    {
+      "name": "Coffee Corner",
+      "description": "A cozy coffee shop in the heart of the city",
+      "address": "123 Main St",
+      "city": "New York",
+      "state": "NY",
+      "zipCode": "10001",
+      "ambiance": {
+        "quiet": true,
+        "family_friendly": false
+      },
+      "dietaryOptions": {
+        "vegan": true,
+        "gluten_free": false
+      },
+      "location": {
+        "latitude": 40.73061,
+        "longitude": -73.935242
+      },
+      "semanticEmbedding": [0.1, 0.2, 0.3, 0.4]
+    },
+    {
+      "name": "Sunrise Cafe",
+      "description": "A bright and cheerful spot for breakfast and coffee",
+      "address": "456 Elm St",
+      "city": "Los Angeles",
+      "state": "CA",
+      "zipCode": "90001",
+      "ambiance": {
+        "quiet": false,
+        "family_friendly": true
+      },
+      "dietaryOptions": {
+        "vegan": false,
+        "gluten_free": true
+      },
+      "location": {
+        "latitude": 34.0522,
+        "longitude": -118.2437
+      },
+      "semanticEmbedding": [0.5, 0.6, 0.7, 0.8]
+    },
+    {
+      "name": "Mountain Brew",
+      "description": "A rustic cafe nestled in the mountains, perfect for nature lovers",
+      "address": "789 Pine St",
+      "city": "Denver",
+      "state": "CO",
+      "zipCode": "80202",
+      "ambiance": {
+        "quiet": true,
+        "family_friendly": false
+      },
+      "dietaryOptions": {
+        "vegan": true,
+        "gluten_free": true
+      },
+      "location": {
+        "latitude": 39.7392,
+        "longitude": -104.9903
+      },
+      "semanticEmbedding": [0.3, 0.4, 0.5, 0.6]
+    },
+    {
+      "name": "Urban Grind",
+      "description": "A modern cafe in the heart of the city, ideal for remote workers",
+      "address": "101 Oak St",
+      "city": "Chicago",
+      "state": "IL",
+      "zipCode": "60601",
+      "ambiance": {
+        "quiet": false,
+        "family_friendly": true
+      },
+      "dietaryOptions": {
+        "vegan": false,
+        "gluten_free": false
+      },
+      "location": {
+        "latitude": 41.8781,
+        "longitude": -87.6298
+      },
+      "semanticEmbedding": [0.7, 0.8, 0.9, 1.0]
+    }
+  ],
+  "reviews": [
+    {
+      "userId": "user-uuid-1",
+      "cafeId": "cafe-uuid-1",
+      "rating": 5,
+      "description": "Great ambiance and friendly staff!"
+    },
+    {
+      "userId": "user-uuid-2",
+      "cafeId": "cafe-uuid-2",
+      "rating": 4,
+      "description": "Good coffee but a bit too noisy for my taste."
+    }
+  ],
+  "preferences": [
+    {
+      "userId": "user-uuid-1",
+      "favoriteCafes": [{ "cafe_id": "cafe-uuid-1" }, { "cafe_id": "cafe-uuid-2" }],
+      "dietaryRestrictions": {
+        "vegan": true,
+        "halal": false
+      },
+      "ambiance": {
+        "quiet": true,
+        "family_friendly": true
+      }
+    },
+    {
+      "userId": "user-uuid-2",
+      "favoriteCafes": [{ "cafe_id": "cafe-uuid-2" }],
+      "dietaryRestrictions": {
+        "vegan": false,
+        "halal": true
+      },
+      "ambiance": {
+        "quiet": false,
+        "family_friendly": false
+      }
+    }
+  ],
+  "businessInsights": [
+    {
+      "cafeId": "cafe-uuid-1",
+      "visits": 150,
+      "averageRating": 5,
+      "peakHours": {
+        "monday": "8:00-10:00",
+        "friday": "18:00-20:00"
+      },
+      "sentimentAnalysis": {
+        "positive": 80,
+        "negative": 20
+      }
+    },
+    {
+      "cafeId": "69749a71-7766-455d-8ea4-6a15c15fdf18",
+      "visits": 100,
+      "averageRating": 4,
+      "peakHours": {
+        "tuesday": "12:00-14:00",
+        "saturday": "9:00-11:00"
+      },
+      "sentimentAnalysis": {
+        "positive": 70,
+        "negative": 30
+      }
+    }
+  ]
+}
