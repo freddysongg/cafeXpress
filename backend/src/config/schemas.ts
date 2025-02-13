@@ -57,7 +57,8 @@ export const cafes = pgTable('cafes', {
     };
   }>(),
   keywords: jsonb('keywords').$type<string[]>().default([]),
-  photos: jsonb('photos').$type<string[]>().notNull().default([])
+  photos: jsonb('photos').$type<string[]>().notNull().default([]),
+  hours: jsonb('hours').default([])
 });
 
 export const reviews = pgTable('reviews', {

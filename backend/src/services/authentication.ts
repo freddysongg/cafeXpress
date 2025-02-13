@@ -102,11 +102,10 @@ export async function loginUser(
     return reply.status(200).send({
       status: 'success',
       message: 'Login successful',
-      data: 
-        { 
-          token,
-          //userId: user[0].id 
-        }
+      data: {
+        token
+        //userId: user[0].id
+      }
     });
   } catch (error) {
     const err = error as Error;

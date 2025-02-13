@@ -6,10 +6,7 @@ import { eq } from 'drizzle-orm';
 /**
  * Get Profile by User ID
  */
-export async function getProfile(
-  req: FastifyRequest,
-  reply: FastifyReply
-): Promise<void> {
+export async function getProfile(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
     //console.log('User in getProfile:', req.user);  // Debugging output
     const userId = req.user?.id;

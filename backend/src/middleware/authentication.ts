@@ -17,7 +17,6 @@ export async function authenticate(req: FastifyRequest, reply: FastifyReply): Pr
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as User;
     //console.log('Decoded token:', decoded); // Check the decoded token
     req.user = decoded; // Attach user data to the request object
-
   } catch (error) {
     const err = error as Error;
     console.error('Error authenticating user:', err.message);
