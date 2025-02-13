@@ -58,12 +58,9 @@ export async function fetchCafes(
       response.data.businesses.map(async (cafe: any) => {
         try {
           // Fetch details for the cafe
-          const detailsResponse = await axios.get(
-            `https://api.yelp.com/v3/businesses/${cafe.id}`,
-            {
-              headers: { Authorization: `Bearer ${API_KEY}` }
-            }
-          );
+          const detailsResponse = await axios.get(`https://api.yelp.com/v3/businesses/${cafe.id}`, {
+            headers: { Authorization: `Bearer ${API_KEY}` }
+          });
 
           // Extract and format hours
           const hours = detailsResponse.data.hours?.[0]?.open || [];
@@ -87,11 +84,13 @@ export async function fetchCafes(
             hours: formattedHours // Store hours in readable format
           };
         } catch (error) {
-          return {
-            ...cafe,
-            photos: [],
-            hours: {}
-          };
+          console.error(`Error fetching details for cafe ${cafe.id}:`, {
+            message: (error as Error).message,
+            ...(axios.isAxiosError(error) && {
+              status: error.response?.status,
+              data: error.response?.data
+            })
+          });
         }
       })
     );

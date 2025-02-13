@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyRequest } from 'fastify';
+import { FastifyInstance } from 'fastify';
 import { getProfile } from '@services/profile.js';
 import { authenticate } from 'middleware/authentication.js';
 
