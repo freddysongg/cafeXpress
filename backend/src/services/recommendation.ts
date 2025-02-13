@@ -6,7 +6,7 @@ import { setTimeout } from 'timers/promises';
 import type { GeminiClient } from '@schemas/gemini.js';
 import { RecommendationCache } from '@services/cache.js';
 import { SemanticSearchService } from '@services/semanticSearch.js';
-import { SemanticAnalysisService } from '@services/semanticAnalysis.js';
+import { SentimentAnalysisService } from '@services/sentimentAnalysis.js';
 import { EmbeddingSchema } from '@schemas/semantic.js';
 import type { ISemanticSearchService, Embedding } from '@schemas/semantic.js';
 import {
@@ -29,13 +29,13 @@ const cache = new RecommendationCache({
 let lastRequestTime = 0;
 
 let semanticSearchService: ISemanticSearchService;
-let semanticAnalysisService: SemanticAnalysisService;
+let sentimentAnalysisService: SentimentAnalysisService;
 
 export function initializeRecommendationService(geminiClient: GeminiClient): void {
   semanticSearchService = new SemanticSearchService(geminiClient);
-  semanticAnalysisService = new SemanticAnalysisService();
+  sentimentAnalysisService = new SentimentAnalysisService();
   semanticSearchService.initialize();
-  semanticAnalysisService.initialize();
+  sentimentAnalysisService.initialize();
 }
 
 async function fetchUserData(userId: string): Promise<UserWithLocation> {
@@ -267,7 +267,6 @@ async function analyzeCafeSentiment(
   },
   preferences: z.infer<typeof preferencesSchema>
 ) {
-  const _preferencesEmbedding = preferences.semanticEmbedding;
   const sentimentCacheKey = `sentiment:${cafe.id}`;
   const cachedSentiment = await cache.get<CachedSentiment>(sentimentCacheKey);
 
@@ -276,29 +275,25 @@ async function analyzeCafeSentiment(
       ...cafe,
       sentiment: cachedSentiment.recommendations[0].metadata.sentimentScore,
       semanticScore: cachedSentiment.recommendations[0].metadata.semanticScore,
-      semanticAnalysis: cachedSentiment.recommendations[0].metadata.semanticAnalysis
+      sentimentKeywords: cachedSentiment.recommendations[0].metadata.sentimentKeywords
     };
   }
 
   const text = `${cafe.name}: ${cafe.address}. ${cafe.description || ''}`;
-  const sentimentResponse = await geminiClient.analyzeText(text);
+  const sentimentResponse = await geminiClient.analyzeSentiment(text);
   const sentiment = {
-    positive: sentimentResponse.sentiment.positive,
-    negative: sentimentResponse.sentiment.negative,
-    neutral: sentimentResponse.sentiment.neutral,
-    compound: sentimentResponse.sentiment.compound
+    positive: sentimentResponse.score,
+    negative: 1 - sentimentResponse.score,
+    neutral: 0,
+    compound: sentimentResponse.score * 2 - 1
   };
-  const entities = sentimentResponse.entities;
 
-  const semanticAnalysis = await semanticAnalysisService.analyzeInput(text);
+  const sentimentKeywords = await sentimentAnalysisService.analyzeSentiment(text);
   const semanticScore =
     cafe.semanticEmbedding && preferences.semanticEmbedding
       ? await semanticSearchService.calculateSimilarity(
-          { vector: cafe.semanticEmbedding.vector, metadata: cafe.semanticEmbedding.metadata },
-          {
-            vector: preferences.semanticEmbedding.vector,
-            metadata: preferences.semanticEmbedding.metadata
-          }
+          cafe.semanticEmbedding,
+          preferences.semanticEmbedding
         )
       : 0;
 
@@ -309,21 +304,16 @@ async function analyzeCafeSentiment(
         cafeId: cafe.id,
         name: cafe.name,
         description: cafe.description || cafe.address,
-        score: calculateHybridScore(cafe.rating, semanticScore, sentiment),
-        reason:
-          sentiment.compound >= 0.5
-            ? 'positive'
-            : sentiment.compound <= -0.5
-              ? 'negative'
-              : 'neutral',
+        score: ScoringHelper.calculateHybridScore(cafe.rating, semanticScore, sentiment),
+        reason: ScoringHelper.getSentimentReason(sentiment.compound),
         confidenceScore: 1.0,
         metadata: {
           name: cafe.name,
           description: cafe.description || cafe.address,
           sentimentScore: sentiment,
           semanticScore,
-          semanticAnalysis: semanticAnalysis.matchedKeywords,
-          tags: entities
+          sentimentKeywords: sentimentKeywords.matchedSentimentKeywords,
+          tags: sentimentKeywords.matchedSentimentKeywords
         }
       }
     ],
@@ -334,44 +324,48 @@ async function analyzeCafeSentiment(
   await cache.set(sentimentCacheKey, cachedData);
   return {
     ...cafe,
-    sentiment: sentiment,
+    sentiment,
     semanticScore,
-    semanticAnalysis: semanticAnalysis.matchedKeywords
+    sentimentKeywords: sentimentKeywords.matchedSentimentKeywords
   };
 }
 
-function calculateHybridScore(
-  rating: number,
-  semanticScore: number,
-  sentiment: { positive: number; negative: number; neutral: number; compound: number }
-): number {
-  if (isNaN(rating) || isNaN(semanticScore)) {
-    return 0;
+class ScoringHelper {
+  static calculateHybridScore(
+    rating: number,
+    semanticScore: number,
+    sentiment: { positive: number; negative: number; neutral: number; compound: number }
+  ): number {
+    if (isNaN(rating) || isNaN(semanticScore)) return 0;
+
+    const weights = {
+      semantic: process.env.SEMANTIC_WEIGHT ? parseFloat(process.env.SEMANTIC_WEIGHT) : 0.5,
+      rating: process.env.RATING_WEIGHT ? parseFloat(process.env.RATING_WEIGHT) : 0.4,
+      sentiment: process.env.SENTIMENT_WEIGHT ? parseFloat(process.env.SENTIMENT_WEIGHT) : 0.1
+    };
+
+    const totalWeight = Math.max(weights.semantic + weights.rating + weights.sentiment, 0.001);
+    const normalizedWeights = {
+      semantic: weights.semantic / totalWeight,
+      rating: weights.rating / totalWeight,
+      sentiment: weights.sentiment / totalWeight
+    };
+
+    const sentimentMultiplier =
+      sentiment.compound >= 0.5 ? 1.2 : sentiment.compound <= -0.5 ? 0.8 : 1.0;
+
+    const baseScore =
+      rating * normalizedWeights.rating + semanticScore * normalizedWeights.semantic;
+    return baseScore * sentimentMultiplier * normalizedWeights.sentiment;
   }
 
-  // Configurable weights with defaults
-  const weights = {
-    semantic: process.env.SEMANTIC_WEIGHT ? parseFloat(process.env.SEMANTIC_WEIGHT) : 0.5,
-    rating: process.env.RATING_WEIGHT ? parseFloat(process.env.RATING_WEIGHT) : 0.4,
-    sentiment: process.env.SENTIMENT_WEIGHT ? parseFloat(process.env.SENTIMENT_WEIGHT) : 0.1
-  };
-
-  // Normalize weights to sum to 1
-  const totalWeight = Math.max(weights.semantic + weights.rating + weights.sentiment, 0.001);
-  const normalizedWeights = {
-    semantic: weights.semantic / totalWeight,
-    rating: weights.rating / totalWeight,
-    sentiment: weights.sentiment / totalWeight
-  };
-
-  // Calculate sentiment multiplier based on compound score
-  const sentimentMultiplier =
-    sentiment.compound >= 0.5 ? 1.2 : sentiment.compound <= -0.5 ? 0.8 : 1.0;
-
-  // Calculate weighted score with fallback values
-  const baseScore = rating * normalizedWeights.rating + semanticScore * normalizedWeights.semantic;
-
-  return baseScore * sentimentMultiplier * normalizedWeights.sentiment;
+  static getSentimentReason(compound: number): string {
+    if (compound >= 0.5) return 'Very positive reviews';
+    if (compound >= 0.05) return 'Positive reviews';
+    if (compound <= -0.5) return 'Very negative reviews';
+    if (compound <= -0.05) return 'Negative reviews';
+    return 'Mixed reviews';
+  }
 }
 
 export async function getRecommendations(
@@ -419,9 +413,9 @@ export async function getRecommendations(
       });
     const cafesData = await fetchCafesData(favoriteCafes, location);
 
-    const analysisResults = await Promise.allSettled(
+    const sentimentResults = await Promise.allSettled(
       cafesData.map(async (cafe) => {
-        const sentiment = await analyzeCafeSentiment(geminiClient, cafe, preferences);
+        const sentimentData = await analyzeCafeSentiment(geminiClient, cafe, preferences);
         let semanticScore = 0;
         try {
           semanticScore =
@@ -430,34 +424,38 @@ export async function getRecommendations(
                   cafe.semanticEmbedding,
                   preferences.semanticEmbedding
                 )
-              : 0.5; // Fallback score if embeddings are missing
+              : 0.5;
         } catch (error) {
           console.error('Failed to calculate semantic score:', error);
-          semanticScore = 0.5; // Fallback score on error
+          semanticScore = 0.5;
         }
 
         return {
-          ...sentiment,
+          ...sentimentData,
           semanticScore,
-          rating: cafe.rating || 3.5 // Fallback rating
+          rating: cafe.rating || 3.5
         };
       })
     );
 
-    const recommendationData = analysisResults
+    const hybridRecommendations = sentimentResults
       .filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled')
       .map((r) => ({
         id: r.value.id,
         cafeId: r.value.id,
         name: r.value.name,
         description: r.value.description || r.value.address,
-        score: calculateHybridScore(r.value.rating, r.value.semanticScore, r.value.sentiment),
-        reason: r.value.sentiment,
+        score: ScoringHelper.calculateHybridScore(
+          r.value.rating,
+          r.value.semanticScore,
+          r.value.sentiment
+        ),
+        reason: ScoringHelper.getSentimentReason(r.value.sentiment.compound),
         confidenceScore: 1.0,
         metadata: {
           rating: r.value.rating,
           semanticScore: r.value.semanticScore,
-          sentiment: {
+          sentimentScore: {
             positive: r.value.sentiment.positive,
             negative: r.value.sentiment.negative,
             neutral: r.value.sentiment.neutral,
@@ -468,7 +466,7 @@ export async function getRecommendations(
         }
       }));
 
-    const recommendations = recommendationData.sort((a, b) => b.score - a.score).slice(0, 10);
+    const recommendations = hybridRecommendations.sort((a, b) => b.score - a.score).slice(0, 10);
 
     const cacheData = {
       recommendations: recommendations.map((r) => ({
@@ -482,7 +480,7 @@ export async function getRecommendations(
         metadata: {
           name: r.name,
           description: r.description,
-          sentiment: r.metadata.sentiment,
+          sentiment: r.metadata.sentimentScore,
           tags: []
         }
       })),

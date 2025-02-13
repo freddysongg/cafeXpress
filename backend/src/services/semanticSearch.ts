@@ -46,6 +46,34 @@ class InMemoryVectorStore {
   }
 }
 
+// Sentiment Analysis Helpers
+function getDefaultSentimentScore(): SentimentResult {
+  return {
+    score: {
+      positive: 0.5,
+      negative: 0.5,
+      neutral: 0,
+      compound: 0
+    }
+  };
+}
+
+function getSentimentType(compound: number): string {
+  if (compound >= 0.05) return 'positive';
+  if (compound <= -0.05) return 'negative';
+  return 'neutral';
+}
+
+// Error Handling Helpers
+function handleSearchError(error: unknown): SearchResponse {
+  console.error('Search error:', error);
+  return {
+    status: 'error',
+    message: 'An error occurred during search'
+  };
+}
+
+// Constants
 const MAX_RESULTS = 10;
 const BATCH_SIZE = 100;
 const SIMILARITY_THRESHOLD = 0.7;
@@ -208,14 +236,13 @@ export class SemanticSearchService implements ISemanticSearchService {
     if (!query || typeof query !== 'string' || query.trim().length < 3) {
       return {
         status: 'error',
-        message: 'Search query must be a string with at least 3 characters'
+        message: 'Search query must be at least 3 characters'
       };
     }
 
     try {
-      const _embeddings = new GeminiEmbeddings(this.geminiClient);
-
       let sentimentResult: SentimentResult;
+
       try {
         const sentimentResponse = await this.geminiClient.analyzeSentiment(query);
         sentimentResult = {
@@ -223,128 +250,103 @@ export class SemanticSearchService implements ISemanticSearchService {
             positive: sentimentResponse.score,
             negative: 1 - sentimentResponse.score,
             neutral: 0,
-            compound: sentimentResponse.score * 2 - 1 // Convert 0-1 range to -1 to 1 range
+            compound: sentimentResponse.score * 2 - 1
           }
         };
       } catch (error) {
         console.error('Failed to analyze sentiment:', error);
-        sentimentResult = {
-          score: {
-            positive: 0,
-            negative: 0,
-            neutral: 1,
-            compound: 0
-          }
-        };
-      }
-      const sentiment = sentimentResult.score;
-      const sentimentType =
-        sentiment.compound > 0.5 ? 'positive' : sentiment.compound < -0.5 ? 'negative' : 'neutral';
-
-      const cached =
-        (await this.cache.get(`${query}:${sentimentType}`)) || (await this.cache.get(query));
-      if (cached) {
-        const recommendations = Array.isArray(cached)
-          ? cached
-          : (cached as GeminiResponse).recommendations;
-
-        return {
-          status: 'success',
-          data: recommendations.map(
-            (result: {
-              id: string;
-              cafeId: string;
-              name: string;
-              description: string;
-              score: number;
-              reason: string;
-              confidenceScore: number;
-              metadata: {
-                name: string;
-                description: string;
-              };
-            }) => ({
-              id: result.id,
-              cafeId: result.cafeId,
-              name: result.name,
-              description: result.description,
-              score: result.score,
-              reason: result.reason,
-              confidenceScore: result.confidenceScore,
-              metadata: result.metadata
-            })
-          )
-        };
+        sentimentResult = getDefaultSentimentScore();
       }
 
-      const [semanticResults, keywordResults] = await Promise.all([
-        this.semanticSearch(query, sentiment),
-        this.keywordSearch(query, sentiment)
-      ]);
+      const sentimentScore = sentimentResult.score;
+      const sentimentType = getSentimentType(sentimentScore.compound);
 
-      const combinedResults = this.combineResults(semanticResults, keywordResults);
+      const cached = await this.getCachedResults(query, sentimentType);
+      if (cached) return cached;
 
-      const response: GeminiResponse = {
-        recommendations: combinedResults.map((result) => ({
-          id: result.id,
-          cafeId: result.cafeId,
-          name: result.name,
-          description: result.description,
-          score: result.score,
-          reason: result.reason,
-          confidenceScore: result.confidenceScore,
-          metadata: result.metadata
-        })),
-        generatedAt: new Date().toISOString(),
-        modelVersion: '1.0.0'
-      };
-      await this.cache.set(query, response);
+      const semanticResults = await this.getSemanticResults(query, sentimentResult);
+      const sentimentResults = await this.getSentimentResults(query, sentimentResult);
 
-      return {
-        status: 'success',
-        data: combinedResults
-      };
+      return this.combineAndCacheResults(semanticResults, sentimentResults, sentimentScore, query);
     } catch (error) {
-      const err = error as Error;
-      console.error('Error performing search:', err.message);
-      return {
-        status: 'error',
-        message: err.message
-      };
+      return handleSearchError(error);
     }
   }
 
-  private async semanticSearch(query: string, sentiment: SentimentScore): Promise<SearchResult[]> {
+  private async getCachedResults(
+    query: string,
+    sentimentType: string
+  ): Promise<SearchResponse | null> {
+    const cached = await this.cache.get(`${query}:${sentimentType}`);
+    if (cached) {
+      const recommendations = Array.isArray(cached)
+        ? cached
+        : (cached as GeminiResponse).recommendations;
+
+      return {
+        status: 'success',
+        data: recommendations.map(
+          (result: {
+            id: string;
+            cafeId: string;
+            name: string;
+            description: string;
+            score: number;
+            reason: string;
+            confidenceScore: number;
+            metadata: {
+              name: string;
+              description: string;
+            };
+          }) => ({
+            id: result.id,
+            cafeId: result.cafeId,
+            name: result.name,
+            description: result.description,
+            score: result.score,
+            reason: result.reason,
+            confidenceScore: result.confidenceScore,
+            metadata: result.metadata
+          })
+        )
+      };
+    }
+    return null;
+  }
+
+  private async getSemanticResults(
+    query: string,
+    sentimentResult: SentimentResult
+  ): Promise<SearchResult[]> {
     try {
-      const queryWithSentiment = `${query} [${
-        sentiment.compound > 0 ? 'positive' : sentiment.compound < 0 ? 'negative' : 'neutral'
-      }]`;
-      const queryVector = await this.geminiClient.generateEmbedding(queryWithSentiment);
+      const queryWithSentiment = `${query} [${getSentimentType(sentimentResult.score.compound)}]`;
+      const semanticVector = await this.geminiClient.generateEmbedding(queryWithSentiment);
       const queryEmbedding: Embedding = {
-        vector: queryVector,
+        vector: semanticVector,
         metadata: {
           type: 'query',
           id: 'query',
           createdAt: new Date()
         }
       };
-      const results = await this.vectorStore.similaritySearchVectorWithScore(
+
+      const semanticMatches = await this.vectorStore.similaritySearchVectorWithScore(
         queryEmbedding,
         MAX_RESULTS,
         SIMILARITY_THRESHOLD
       );
 
-      return results.map((result) => ({
-        id: result.id,
-        cafeId: result.id,
-        name: result.metadata?.name || '',
-        description: result.metadata?.description || '',
-        score: result.score,
+      return semanticMatches.map((match) => ({
+        id: match.id,
+        cafeId: match.id,
+        name: match.metadata?.name || '',
+        description: match.metadata?.description || '',
+        score: match.score,
         reason: 'Semantic match',
-        confidenceScore: result.score,
+        confidenceScore: match.score,
         metadata: {
-          name: result.metadata?.name || '',
-          description: result.metadata?.description || ''
+          name: match.metadata?.name || '',
+          description: match.metadata?.description || ''
         }
       }));
     } catch (error) {
@@ -353,7 +355,10 @@ export class SemanticSearchService implements ISemanticSearchService {
     }
   }
 
-  private async keywordSearch(query: string, sentiment: SentimentScore): Promise<SearchResult[]> {
+  private async getSentimentResults(
+    query: string,
+    sentimentResult: SentimentResult
+  ): Promise<SearchResult[]> {
     const results = await db
       .select({
         id: cafes.id,
@@ -381,7 +386,7 @@ export class SemanticSearchService implements ISemanticSearchService {
 
     return results.map((result) => {
       const sentimentScore = result.sentimentScore.compound;
-      const sentimentAlignment = 1 - Math.abs(sentimentScore - sentiment.compound);
+      const sentimentAlignment = 1 - Math.abs(sentimentScore - sentimentResult.score.compound);
       const adjustedScore = Number(result.score) * (0.5 + 0.5 * sentimentAlignment);
 
       return {
@@ -399,25 +404,50 @@ export class SemanticSearchService implements ISemanticSearchService {
     });
   }
 
+  private async combineAndCacheResults(
+    semanticResults: SearchResult[],
+    sentimentResults: SearchResult[],
+    sentiment: SentimentScore,
+    query: string
+  ): Promise<SearchResponse> {
+    const combinedResults = this.combineResults(semanticResults, sentimentResults);
+
+    const response: GeminiResponse = {
+      recommendations: combinedResults.map((result) => ({
+        id: result.id,
+        cafeId: result.cafeId,
+        name: result.name,
+        description: result.description,
+        score: result.score,
+        reason: result.reason,
+        confidenceScore: result.confidenceScore,
+        metadata: result.metadata
+      })),
+      generatedAt: new Date().toISOString(),
+      modelVersion: '1.0.0'
+    };
+    this.cache.set(query, response);
+
+    return {
+      status: 'success',
+      data: combinedResults
+    };
+  }
+
   private combineResults(
     semanticResults: SearchResult[],
-    keywordResults: SearchResult[]
+    sentimentResults: SearchResult[]
   ): SearchResult[] {
     const resultsMap = new Map<string, SearchResult>();
 
     semanticResults.forEach((result) => {
       resultsMap.set(result.id, {
         ...result,
-        name: result.metadata?.name || result.name,
-        description: result.metadata?.description || result.description,
-        metadata: {
-          name: result.metadata?.name || result.name,
-          description: result.metadata?.description || result.description
-        }
+        score: result.score
       });
     });
 
-    keywordResults.forEach((result) => {
+    sentimentResults.forEach((result) => {
       const existing = resultsMap.get(result.id);
       if (existing) {
         existing.score = (existing.score + result.score) / 2;
@@ -429,21 +459,5 @@ export class SemanticSearchService implements ISemanticSearchService {
     return Array.from(resultsMap.values())
       .sort((a, b) => b.score - a.score)
       .slice(0, MAX_RESULTS);
-  }
-}
-
-class GeminiEmbeddings {
-  private geminiClient: GeminiClient;
-
-  constructor(geminiClient: GeminiClient) {
-    this.geminiClient = geminiClient;
-  }
-
-  async embedDocuments(texts: string[]): Promise<number[][]> {
-    return Promise.all(texts.map((text) => this.geminiClient.generateEmbedding(text)));
-  }
-
-  async embedQuery(text: string): Promise<number[]> {
-    return this.geminiClient.generateEmbedding(text);
   }
 }
