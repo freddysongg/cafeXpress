@@ -28,6 +28,7 @@ export interface CafeBody {
       updatedAt: Date;
     };
   };
+  photos?: string[];
 }
 
 // Define the schema for the request body
@@ -60,7 +61,8 @@ export const CafeSchema = z.object({
         updatedAt: z.date()
       })
     })
-    .optional()
+    .optional(),
+  photos: z.array(z.string().url()).optional()
 });
 
 // Infer the TypeScript type from the schema

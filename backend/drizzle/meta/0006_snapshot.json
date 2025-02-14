@@ -1,6 +1,6 @@
 {
-  "id": "8f9f0058-d36a-40f6-b824-6314c29f0f77",
-  "prevId": "1ca5599a-741f-41cd-aee5-073551e757c4",
+  "id": "701305e7-d219-4286-a478-c314c68912a5",
+  "prevId": "a716841d-eff3-47d9-9b4f-c5a53ab10257",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -96,11 +96,6 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "cafes_name_unique": {
-          "name": "cafes_name_unique",
-          "nullsNotDistinct": false,
-          "columns": ["name"]
-        },
         "cafes_address_unique": {
           "name": "cafes_address_unique",
           "nullsNotDistinct": false,
@@ -213,14 +208,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "comment": {
-          "name": "comment",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "text": {
-          "name": "text",
+        "title": {
+          "name": "title",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -288,6 +277,13 @@
           "primaryKey": true,
           "notNull": true,
           "default": "gen_random_uuid()"
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'user'"
         },
         "username": {
           "name": "username",

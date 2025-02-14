@@ -1,6 +1,6 @@
 {
-  "id": "8f9f0058-d36a-40f6-b824-6314c29f0f77",
-  "prevId": "1ca5599a-741f-41cd-aee5-073551e757c4",
+  "id": "fe889c83-4790-4a6d-a4b5-56601b7c7ea5",
+  "prevId": "b7ce1364-0900-45e9-bea2-54702ae3b62d",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -90,17 +90,26 @@
           "primaryKey": false,
           "notNull": false,
           "default": "'[]'::jsonb"
+        },
+        "photos": {
+          "name": "photos",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "hours": {
+          "name": "hours",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'::jsonb"
         }
       },
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "cafes_name_unique": {
-          "name": "cafes_name_unique",
-          "nullsNotDistinct": false,
-          "columns": ["name"]
-        },
         "cafes_address_unique": {
           "name": "cafes_address_unique",
           "nullsNotDistinct": false,
@@ -213,14 +222,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "comment": {
-          "name": "comment",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "text": {
-          "name": "text",
+        "title": {
+          "name": "title",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -288,6 +291,13 @@
           "primaryKey": true,
           "notNull": true,
           "default": "gen_random_uuid()"
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'user'"
         },
         "username": {
           "name": "username",

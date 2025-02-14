@@ -9,12 +9,12 @@ dotenv.config();
 const app = Fastify();
 
 app.register(cors, {
-    origin: ['http://localhost:5173', 'cafexpress-api-production.up.railway.app'], 
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-    preflight: true
-  });
+  origin: ['http://localhost:5173', 'cafexpress-api-production.up.railway.app'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  preflight: true
+});
 
 app.register(routes);
 setupGeminiClient(app);
