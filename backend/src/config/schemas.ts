@@ -1,5 +1,5 @@
 import { pgTable, uuid, text, jsonb, timestamp, varchar } from 'drizzle-orm/pg-core';
-import { EmbeddingSchema } from '@schemas/semantic.js';
+import { sql } from 'drizzle-orm';
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -11,15 +11,16 @@ export const users = pgTable('users', {
   phone: text('phone'),
   password: text('password').notNull(),
   description: text('description'),
-  location: jsonb('location').$type<Location>(),
-  preferencesEmbedding: jsonb('preferences_embedding').$type<{
-    vector: number[];
-    metadata: {
-      type: 'user' | 'preferences' | 'cafe';
-      id: string;
-      createdAt?: Date;
-    };
+  location: jsonb('location').$type<{
+    type: 'Point';
+    coordinates: [number, number];
   }>(),
+  preferences: jsonb('preferences').$type<{
+    dietary: string[];
+    ambiance: string[];
+    activities: string[];
+  }>(),
+  favoriteCafes: jsonb('favorite_cafes').$type<string[]>(),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow()
 });
@@ -30,7 +31,6 @@ export const preferences = pgTable('preferences', {
   favoriteCafes: jsonb('favorite_cafes').$type<string[]>(),
   dietaryRestrictions: jsonb('dietary_restrictions').$type<string[]>(),
   ambiance: jsonb('ambiance').$type<string[]>(),
-  semanticEmbedding: jsonb('semantic_embedding').$type<typeof EmbeddingSchema>(),
   createdAt: timestamp('created_at').defaultNow()
 });
 
@@ -43,12 +43,31 @@ export const cafes = pgTable('cafes', {
   city: varchar('city', { length: 50 }).notNull(),
   state: varchar('state', { length: 50 }).notNull(),
   zipCode: varchar('zip_code', { length: 10 }).notNull(),
-  ambiance: jsonb('ambiance').default('{}'), // Example: {"quiet": true, "family_friendly": false}
-  dietaryOptions: jsonb('dietary_options').default('{}'), // Example: {"vegan": true, "gluten_free": false}
-  location: jsonb('location').$type<{ type: string; coordinates: number[] }>(),
-  keywords: jsonb('keywords').$type<string[]>().default([]),
-  photos: jsonb('photos').$type<string[]>().notNull().default([]),
-  hours: jsonb('hours').default([])
+  ambiance: jsonb('ambiance')
+    .$type<Record<string, boolean>>()
+    .default(sql`'{}'::jsonb`),
+  dietaryOptions: jsonb('dietary_options')
+    .$type<Record<string, boolean>>()
+    .default(sql`'{}'::jsonb`),
+  location: jsonb('location').$type<{
+    type: 'Point';
+    coordinates: [number, number];
+  }>(),
+  keywords: jsonb('keywords')
+    .$type<string[]>()
+    .default(sql`'[]'::jsonb`),
+  photos: jsonb('photos')
+    .$type<string[]>()
+    .default(sql`'[]'::jsonb`),
+  hours: jsonb('hours')
+    .$type<
+      {
+        day: string;
+        open: string;
+        close: string;
+      }[]
+    >()
+    .default(sql`'[]'::jsonb`)
 });
 
 export const reviews = pgTable('reviews', {
@@ -56,24 +75,7 @@ export const reviews = pgTable('reviews', {
   cafeId: uuid('cafe_id').references(() => cafes.id),
   userId: uuid('user_id').references(() => users.id),
   rating: jsonb('rating').$type<number>().notNull(),
+  title: text('title').notNull(),
   description: text('description'),
-  title: text('title').notNull(), // Required text field for raw review text
-  sentimentScore: jsonb('sentiment_score')
-    .$type<{
-      positive: number;
-      negative: number;
-      neutral: number;
-      compound: number;
-    }>()
-    .notNull(),
-  entities: jsonb('entities').$type<
-    Array<{
-      name: string;
-      type: string;
-      salience: number;
-      sentiment?: 'positive' | 'negative' | 'neutral';
-    }>
-  >(),
-  processedAt: timestamp('processed_at'),
   createdAt: timestamp('created_at').defaultNow()
 });

@@ -3,19 +3,17 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Coffee, Mail, Lock, User } from 'lucide-react';
 import { useAuth } from '../components/AuthContext';
 
-function SignUp() {
+const SignUp = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const navigate = useNavigate();
   const { login } = useAuth(); // Assuming you have a login function in your AuthContext
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
 
     const userData = { firstName, lastName, username, email, password };
 
@@ -35,10 +33,10 @@ function SignUp() {
         login(userId, token); // Call the login function from AuthContext to update the global state
         navigate('/'); // Redirect user upon successful signup
       } else {
-        setError(data.message || 'Sign up failed. Please try again.');
+        // Handle signup failure
       }
     } catch (error) {
-      setError('An error occurred. Please try again later.');
+      console.error('Signup error:', error);
     }
   };
 
@@ -58,8 +56,6 @@ function SignUp() {
           </h2>
           <p className="mt-2 text-coffee-600">Join CafeXpress today</p>
         </div>
-
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
@@ -177,6 +173,6 @@ function SignUp() {
       </div>
     </div>
   );
-}
+};
 
 export default SignUp;

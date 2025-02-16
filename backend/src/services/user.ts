@@ -10,17 +10,8 @@ import { UserBody } from '@schemas/user.js';
  */
 export async function createUser(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
-    const {
-      username,
-      email,
-      firstName,
-      lastName,
-      phone,
-      password,
-      description,
-      location,
-      preferencesEmbedding
-    } = req.body as UserBody;
+    const { username, email, firstName, lastName, phone, password, description, location } =
+      req.body as UserBody;
 
     // Create user
     const [newUser] = await db
@@ -33,8 +24,7 @@ export async function createUser(req: FastifyRequest, reply: FastifyReply): Prom
         phone,
         password,
         description,
-        location: location ? sql`${JSON.stringify(location)}` : null,
-        preferencesEmbedding
+        location: location ? sql`${JSON.stringify(location)}` : null
       })
       .returning({
         id: users.id,
@@ -150,7 +140,7 @@ export async function updateUser(
 ): Promise<void> {
   try {
     const userId = req.params.userId;
-    const { username, email, description, location, preferencesEmbedding } = req.body;
+    const { username, email, description, location } = req.body;
 
     // Update user
     const updatedUser = await db
@@ -159,8 +149,7 @@ export async function updateUser(
         username,
         email,
         description,
-        location: location ? sql`${JSON.stringify(location)}` : null,
-        preferencesEmbedding
+        location: location ? sql`${JSON.stringify(location)}` : null
       })
       .where(eq(users.id, userId))
       .returning({
@@ -168,8 +157,7 @@ export async function updateUser(
         username: users.username,
         email: users.email,
         description: users.description,
-        location: users.location,
-        preferencesEmbedding: users.preferencesEmbedding
+        location: users.location
       });
 
     if (!updatedUser.length) {
