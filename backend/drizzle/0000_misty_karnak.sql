@@ -7,22 +7,13 @@ CREATE TABLE "cafes" (
 	"city" varchar(50) NOT NULL,
 	"state" varchar(50) NOT NULL,
 	"zip_code" varchar(10) NOT NULL,
-	"ambiance" jsonb DEFAULT '{}',
-	"dietary_options" jsonb DEFAULT '{}',
+	"ambiance" jsonb DEFAULT '[]'::jsonb,
+	"dietary_options" jsonb DEFAULT '[]'::jsonb,
 	"location" jsonb,
-	"semantic_embedding" jsonb,
 	"keywords" jsonb DEFAULT '[]'::jsonb,
+	"photos" jsonb DEFAULT '[]'::jsonb,
+	"hours" jsonb DEFAULT '[]'::jsonb,
 	CONSTRAINT "cafes_address_unique" UNIQUE("address")
-);
---> statement-breakpoint
-CREATE TABLE "preferences" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"user_id" uuid,
-	"favorite_cafes" jsonb,
-	"dietary_restrictions" jsonb,
-	"ambiance" jsonb,
-	"semantic_embedding" jsonb,
-	"created_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
 CREATE TABLE "reviews" (
@@ -30,17 +21,14 @@ CREATE TABLE "reviews" (
 	"cafe_id" uuid,
 	"user_id" uuid,
 	"rating" jsonb NOT NULL,
+	"title" text NOT NULL,
 	"description" text,
-	"comment" text,
-	"text" text NOT NULL,
-	"sentiment_score" jsonb NOT NULL,
-	"entities" jsonb,
-	"processed_at" timestamp,
 	"created_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"role" text DEFAULT 'user' NOT NULL,
 	"username" text NOT NULL,
 	"email" text NOT NULL,
 	"first_name" text,
@@ -49,11 +37,11 @@ CREATE TABLE "users" (
 	"password" text NOT NULL,
 	"description" text,
 	"location" jsonb,
-	"preferences_embedding" jsonb,
+	"preferences" jsonb,
+	"favorite_cafes" jsonb,
 	"created_at" timestamp DEFAULT now(),
 	"updated_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-ALTER TABLE "preferences" ADD CONSTRAINT "preferences_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "reviews" ADD CONSTRAINT "reviews_cafe_id_cafes_id_fk" FOREIGN KEY ("cafe_id") REFERENCES "public"."cafes"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "reviews" ADD CONSTRAINT "reviews_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;

@@ -1,1 +1,0 @@
-ALTER TABLE "cafes" ADD COLUMN "hours" jsonb DEFAULT '[]'::jsonb;
