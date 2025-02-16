@@ -25,7 +25,6 @@ export async function createCafe(req: FastifyRequest, reply: FastifyReply): Prom
         ambiance: data.ambiance,
         dietaryOptions: data.dietaryOptions,
         location: sql<Location>`${data.location}`,
-        semanticEmbedding: data.semanticEmbedding,
         photos: data.photos
       })
       .returning({
@@ -74,7 +73,6 @@ export async function getCafeById(
         ambiance: cafes.ambiance,
         dietaryOptions: cafes.dietaryOptions,
         location: cafes.location,
-        semanticEmbedding: cafes.semanticEmbedding,
         createdAt: cafes.createdAt,
         photos: cafes.photos
       })
@@ -158,7 +156,6 @@ export async function updateCafe(
       ambiance,
       dietaryOptions,
       location,
-      semanticEmbedding,
       photos
     } = CafeSchema.parse(req.body);
 
@@ -179,18 +176,6 @@ export async function updateCafe(
               type: 'Point',
               coordinates: location.coordinates
             })})`
-          : null,
-        semanticEmbedding: semanticEmbedding
-          ? {
-              vector: semanticEmbedding.vector,
-              metadata: {
-                type: 'cafe',
-                id: semanticEmbedding.metadata.id,
-                keywords: semanticEmbedding.metadata.keywords,
-                createdAt: new Date(semanticEmbedding.metadata.createdAt),
-                updatedAt: new Date()
-              }
-            }
           : null,
         photos
       })
