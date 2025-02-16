@@ -33,7 +33,7 @@ let sentimentAnalysisService: SentimentAnalysisService;
 
 export function initializeRecommendationService(geminiClient: GeminiClient): void {
   semanticSearchService = new SemanticSearchService(geminiClient);
-  sentimentAnalysisService = new SentimentAnalysisService();
+  sentimentAnalysisService = new SentimentAnalysisService(geminiClient);
 }
 
 async function fetchUserData(userId: string): Promise<UserWithLocation> {
@@ -275,7 +275,8 @@ class ScoringHelper {
     const sentimentMultiplier =
       sentiment.compound >= 0.5 ? 1.2 : sentiment.compound <= -0.5 ? 0.8 : 1.0;
 
-    const baseScore = rating * normalizedWeights.rating + semanticScore * normalizedWeights.semantic;
+    const baseScore =
+      rating * normalizedWeights.rating + semanticScore * normalizedWeights.semantic;
     return baseScore * sentimentMultiplier * normalizedWeights.sentiment;
   }
 
@@ -323,10 +324,12 @@ export async function getRecommendations(
     const preferences = await fetchUserPreferences(request.userId);
     const favoriteCafes = Array.isArray(preferences.favoriteCafes) ? preferences.favoriteCafes : [];
 
-    const location = request.location || (user.location && {
-      latitude: user.location.coordinates[1],
-      longitude: user.location.coordinates[0]
-    });
+    const location =
+      request.location ||
+      (user.location && {
+        latitude: user.location.coordinates[1],
+        longitude: user.location.coordinates[0]
+      });
 
     const cafesData = await fetchCafesData(favoriteCafes, location);
 
@@ -334,10 +337,10 @@ export async function getRecommendations(
       cafesData.map(async (cafe) => {
         try {
           const cafeText = `${cafe.name}: ${cafe.description || cafe.address}`;
-          
+
           const sentimentAnalysis = await sentimentAnalysisService.analyzeSentiment(cafeText);
-          
-          let semanticScore = 0.5; 
+
+          let semanticScore = 0.5;
           if (cafe.semanticEmbedding && preferences.semanticEmbedding) {
             try {
               semanticScore = await semanticSearchService.calculateSemanticScore(
@@ -352,10 +355,10 @@ export async function getRecommendations(
           return {
             ...cafe,
             sentiment: {
-              positive: sentimentAnalysis.overallSentiment,
-              negative: 1 - sentimentAnalysis.overallSentiment,
-              neutral: 0,
-              compound: sentimentAnalysis.overallSentiment * 2 - 1
+              positive: sentimentAnalysis.score.positive,
+              negative: sentimentAnalysis.score.negative,
+              neutral: sentimentAnalysis.score.neutral,
+              compound: sentimentAnalysis.score.compound
             },
             semanticScore,
             sentimentKeywords: sentimentAnalysis.matchedSentimentKeywords,
@@ -386,7 +389,7 @@ export async function getRecommendations(
         reason: ScoringHelper.getSentimentReason(result.sentiment.compound),
         confidenceScore: Math.min(
           1,
-          (result.semanticScore + result.sentiment.positive + (result.rating / 5)) / 3
+          (result.semanticScore + result.sentiment.positive + result.rating / 5) / 3
         ),
         metadata: {
           name: result.name,
@@ -405,7 +408,7 @@ export async function getRecommendations(
 
     const generatedAt = new Date().toISOString();
     const modelVersion = geminiClient.getModelVersion();
-    
+
     await cache.set(cacheKey, {
       recommendations,
       generatedAt,

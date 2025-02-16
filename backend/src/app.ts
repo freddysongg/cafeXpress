@@ -14,29 +14,35 @@ const buildApp = async () => {
         target: 'pino-pretty',
         options: {
           translateTime: 'HH:MM:ss Z',
-          ignore: 'pid,hostname',
-        },
-      },
+          ignore: 'pid,hostname'
+        }
+      }
     }
   });
 
   try {
     app.addHook('onRequest', async (request) => {
-      request.log.info({
-        method: request.method,
-        url: request.url,
-        params: request.params,
-        query: request.query,
-      }, '📥 Request');
+      request.log.info(
+        {
+          method: request.method,
+          url: request.url,
+          params: request.params,
+          query: request.query
+        },
+        '📥 Request'
+      );
     });
 
     app.addHook('onResponse', async (request, reply) => {
-      request.log.info({
-        method: request.method,
-        url: request.url,
-        statusCode: reply.statusCode,
-        responseTime: `${reply.elapsedTime}ms`
-      }, '📤 Response');
+      request.log.info(
+        {
+          method: request.method,
+          url: request.url,
+          statusCode: reply.statusCode,
+          responseTime: `${reply.elapsedTime}ms`
+        },
+        '📤 Response'
+      );
     });
 
     await app.register(cors, {
@@ -54,15 +60,20 @@ const buildApp = async () => {
 
     setupGeminiClient(app);
 
-    await app.register(routes);
+    await app.register(routes, {
+      timeout: 30000 // 30 seconds timeout for plugin initialization
+    });
 
     app.setErrorHandler((error, request, reply) => {
-      request.log.error({
-        message: error.message,
-        code: error.code,
-        method: request.method,
-        url: request.url,
-      }, '❌ Error');
+      request.log.error(
+        {
+          message: error.message,
+          code: error.code,
+          method: request.method,
+          url: request.url
+        },
+        '❌ Error'
+      );
 
       reply.status(error.statusCode || 500).send({
         status: 'error',

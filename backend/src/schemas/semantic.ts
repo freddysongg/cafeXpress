@@ -163,6 +163,7 @@ export interface SentimentScore {
 
 export interface SentimentResult {
   score: SentimentScore;
+  matchedSentimentKeywords?: string[];
 }
 
 export interface ISemanticSearchService {

@@ -53,27 +53,72 @@ class GeminiClientImpl implements GeminiClient {
   }
 
   async generateEmbeddings(texts: string[]) {
-    const results = await Promise.all(texts.map((text) => this.model.embedContent(text)));
-    return results.map((result) => result.embedding.values);
+    // Process in batches of 10 to avoid rate limits
+    const batchSize = 10;
+    const batches = [];
+
+    for (let i = 0; i < texts.length; i += batchSize) {
+      const batch = texts.slice(i, i + batchSize);
+      batches.push(batch);
+    }
+
+    const results = [];
+    for (const batch of batches) {
+      const batchResults = await Promise.all(batch.map((text) => this.model.embedContent(text)));
+      results.push(...batchResults.map((result) => result.embedding.values));
+
+      // Add a small delay between batches to respect rate limits
+      if (batches.length > 1) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+    }
+
+    return results;
   }
 
   async analyzeSentiment(text: string) {
-    const prompt = `Analyze the sentiment of this text and return a score between -1 (negative) and 1 (positive):
-    ${text}
-    
-    Return JSON in this format:
-    {
-      "score": number
-    }`;
+    const prompt = `Analyze the sentiment of this text and return a score between 0 (negative) and 1 (positive).
+    Return ONLY a JSON object with a single "score" field, nothing else.
+    Text to analyze: ${text}`;
 
     const result = await this.model.generateContent(prompt);
     const response = await result.response;
-    const json = JSON.parse(response.text());
-    return { score: json.score };
+    const responseText = response.text().trim();
+
+    // Remove any markdown formatting if present
+    const jsonStr = responseText.replace(/```json\n|\n```|```/g, '').trim();
+
+    try {
+      const json = JSON.parse(jsonStr);
+      return { score: Number(json.score) };
+    } catch (error) {
+      console.error('Failed to parse sentiment response:', responseText);
+      // Fallback to neutral sentiment
+      return { score: 0.5 };
+    }
   }
 
   async batchAnalyzeSentiment(texts: string[]) {
-    const results = await Promise.all(texts.map((text) => this.analyzeSentiment(text)));
+    // Process in batches of 5 to avoid rate limits
+    const batchSize = 5;
+    const batches = [];
+
+    for (let i = 0; i < texts.length; i += batchSize) {
+      const batch = texts.slice(i, i + batchSize);
+      batches.push(batch);
+    }
+
+    const results = [];
+    for (const batch of batches) {
+      const batchResults = await Promise.all(batch.map((text) => this.analyzeSentiment(text)));
+      results.push(...batchResults);
+
+      // Add a small delay between batches to respect rate limits
+      if (batches.length > 1) {
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      }
+    }
+
     return results;
   }
 }

@@ -81,12 +81,9 @@ export class SemanticSearchService implements ISemanticSearchService {
 
   async initialize() {
     if (this.initialized) return;
-    
+
     try {
-      await Promise.all([
-        this.loadCafeEmbeddings(),
-        this.loadReviewSentiments()
-      ]);
+      await Promise.all([this.loadCafeEmbeddings(), this.loadReviewSentiments()]);
       this.initialized = true;
     } catch (error) {
       console.error('Failed to initialize SemanticSearchService:', error);
@@ -137,7 +134,8 @@ export class SemanticSearchService implements ISemanticSearchService {
 
     const type1 = embedding1.metadata.type;
     const type2 = embedding2.metadata.type;
-    const weight = type1 === type2 ? typeWeights[type1] : Math.max(typeWeights[type1], typeWeights[type2]);
+    const weight =
+      type1 === type2 ? typeWeights[type1] : Math.max(typeWeights[type1], typeWeights[type2]);
 
     const createdAt1 = embedding1.metadata.createdAt;
     const createdAt2 = embedding2.metadata.createdAt;
@@ -159,7 +157,10 @@ export class SemanticSearchService implements ISemanticSearchService {
         id: cafes.id,
         name: cafes.name,
         description: cafes.description,
-        semanticEmbedding: cafes.semanticEmbedding
+        keywords: cafes.keywords,
+        semanticEmbedding: cafes.semanticEmbedding,
+        dietaryOptions: cafes.dietaryOptions,
+        ambiance: cafes.ambiance
       })
       .from(cafes);
 
@@ -174,12 +175,15 @@ export class SemanticSearchService implements ISemanticSearchService {
           metadata: {
             type: 'cafe' as const,
             id: cafe.id,
+            keywords: cafe.keywords || [],
             createdAt: new Date()
           }
         },
         metadata: {
           name: cafe.name,
-          description: cafe.description
+          description: cafe.description,
+          dietaryOptions: cafe.dietaryOptions,
+          ambiance: cafe.ambiance
         }
       }));
 
@@ -194,15 +198,17 @@ export class SemanticSearchService implements ISemanticSearchService {
       const batch = await db
         .select({
           id: reviews.id,
-          text: reviews.text
+          title: reviews.title,
+          description: reviews.description
         })
         .from(reviews)
         .limit(BATCH_SIZE)
         .offset(offset);
 
       const sentimentResponses = await this.geminiClient.batchAnalyzeSentiment(
-        batch.map((r) => r.text)
+        batch.map((r) => `${r.title}${r.description ? `: ${r.description}` : ''}`)
       );
+
       const sentimentResults: SentimentResult[] = sentimentResponses.map((response) => ({
         score: {
           positive: response.score,
@@ -218,7 +224,8 @@ export class SemanticSearchService implements ISemanticSearchService {
           await tx
             .update(reviews)
             .set({
-              sentimentScore: sql`${JSON.stringify(sentiment.score)}`
+              sentimentScore: sql`${JSON.stringify(sentiment.score)}`,
+              processedAt: sql`CURRENT_TIMESTAMP`
             })
             .where(eq(reviews.id, batch[i].id));
         }
@@ -240,7 +247,7 @@ export class SemanticSearchService implements ISemanticSearchService {
 
     try {
       let sentimentResult: SentimentResult;
-      
+
       try {
         const sentimentResponse = await this.geminiClient.analyzeSentiment(query);
         sentimentResult = {
@@ -271,7 +278,10 @@ export class SemanticSearchService implements ISemanticSearchService {
     }
   }
 
-  private async getCachedResults(query: string, sentimentType: string): Promise<SearchResponse | null> {
+  private async getCachedResults(
+    query: string,
+    sentimentType: string
+  ): Promise<SearchResponse | null> {
     const cached = await this.cache.get(`${query}:${sentimentType}`);
     if (cached) {
       const recommendations = Array.isArray(cached)
@@ -309,7 +319,10 @@ export class SemanticSearchService implements ISemanticSearchService {
     return null;
   }
 
-  private async getSemanticResults(query: string, sentimentResult: SentimentResult): Promise<SearchResult[]> {
+  private async getSemanticResults(
+    query: string,
+    sentimentResult: SentimentResult
+  ): Promise<SearchResult[]> {
     try {
       const queryWithSentiment = `${query} [${getSentimentType(sentimentResult.score.compound)}]`;
       const semanticVector = await this.geminiClient.generateEmbedding(queryWithSentiment);
@@ -347,7 +360,10 @@ export class SemanticSearchService implements ISemanticSearchService {
     }
   }
 
-  private async getSentimentResults(query: string, sentimentResult: SentimentResult): Promise<SearchResult[]> {
+  private async getSentimentResults(
+    query: string,
+    sentimentResult: SentimentResult
+  ): Promise<SearchResult[]> {
     const results = await db
       .select({
         id: cafes.id,
@@ -356,18 +372,26 @@ export class SemanticSearchService implements ISemanticSearchService {
         city: cafes.city,
         state: cafes.state,
         description: cafes.description,
+        dietaryOptions: cafes.dietaryOptions,
+        ambiance: cafes.ambiance,
+        keywords: cafes.keywords,
         sentimentScore: sql<SentimentScore>`coalesce(jsonb_build_object(
           'positive', avg((${reviews.sentimentScore}->>'positive')::numeric),
           'negative', avg((${reviews.sentimentScore}->>'negative')::numeric),
           'neutral', avg((${reviews.sentimentScore}->>'neutral')::numeric),
           'compound', avg((${reviews.sentimentScore}->>'compound')::numeric)
         ), '{"positive":0,"negative":0,"neutral":0,"compound":0}'::jsonb)`,
-        score: sql<number>`ts_rank(to_tsvector(${cafes.name} || ' ' || ${cafes.description}), plainto_tsquery(${query}))`
+        score: sql<number>`ts_rank(
+          to_tsvector('english', ${cafes.name} || ' ' || coalesce(${cafes.description}, '') || ' ' || 
+          coalesce(array_to_string(${cafes.keywords}, ' '), '')), 
+          plainto_tsquery('english', ${query})
+        )`
       })
       .from(cafes)
       .leftJoin(reviews, eq(reviews.cafeId, cafes.id))
       .where(
-        sql`to_tsvector(${cafes.name} || ' ' || ${cafes.description}) @@ plainto_tsquery(${query})`
+        sql`to_tsvector('english', ${cafes.name} || ' ' || coalesce(${cafes.description}, '') || ' ' || 
+        coalesce(array_to_string(${cafes.keywords}, ' '), '')) @@ plainto_tsquery('english', ${query})`
       )
       .groupBy(cafes.id)
       .orderBy(desc(sql`score`))
@@ -381,12 +405,15 @@ export class SemanticSearchService implements ISemanticSearchService {
       return {
         ...result,
         cafeId: result.id,
-        reason: 'Keyword match',
+        reason: 'Keyword and sentiment match',
         confidenceScore: adjustedScore,
         description: result.description || '',
         metadata: {
           name: result.name,
           description: result.description || '',
+          dietaryOptions: result.dietaryOptions,
+          ambiance: result.ambiance,
+          keywords: result.keywords,
           sentimentAlignment
         }
       };

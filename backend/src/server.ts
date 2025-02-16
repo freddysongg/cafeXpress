@@ -16,7 +16,7 @@ const asciiArt = `
 const start = async () => {
   try {
     const app = await buildApp();
-    
+
     app.log.info('🚀 Starting server...');
 
     await app.listen({
