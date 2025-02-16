@@ -88,6 +88,7 @@ function Explore() {
     Record<string, string>
   >({});
 
+  // Initialize map
   useEffect(() => {
     const initMap = async () => {
       const loader = new Loader({
@@ -103,18 +104,127 @@ function Explore() {
           zoom: 13,
         });
 
-        setMap(newMap);
+  // Update markers when cafes change
+  useEffect(() => {
+    if (map) {
+      const newMarkers: google.maps.Marker[] = [];
+
+      // Add user location marker if available
+      if (userLocation) {
+        const userMarker = new google.maps.Marker({
+          position: {
+            lat: userLocation.latitude,
+            lng: userLocation.longitude,
+          },
+          map,
+          title: 'Your Location',
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 10,
+            fillColor: '#4285F4',
+            fillOpacity: 1,
+            strokeColor: '#ffffff',
+            strokeWeight: 2,
+          },
+        });
+        newMarkers.push(userMarker);
+      }
 
         DUMMY_CAFES.forEach((cafe) => {
           new google.maps.Marker({
             position: {
-              lat: 40.7128 + Math.random() * 0.02,
-              lng: -74.006 + Math.random() * 0.02,
+              lat: cafe.metadata.location.latitude,
+              lng: cafe.metadata.location.longitude,
             },
-            map: newMap,
+            map,
             title: cafe.name,
           });
-        });
+          newMarkers.push(marker);
+        }
+      });
+
+      return () => {
+        newMarkers.forEach((marker) => marker.setMap(null));
+      };
+    }
+  }, [map, cafes, userLocation]);
+
+  // Handle search and recommendations
+  const handleSearch = async (query: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const request: RecommendationRequest = {
+        location: userLocation || undefined,
+        preferences: {
+          ambiance: query ? [query] : undefined,
+        },
+      };
+
+      const recommendations = await getRecommendations(request);
+      setCafes(recommendations);
+      // Update URL with search query
+      setSearchParams(query ? { q: query } : {});
+    } catch (error) {
+      console.error('Error searching cafes:', error);
+      setError('Failed to search cafes');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get initial recommendations and location
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      try {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            async (position) => {
+              const location = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+              };
+              setUserLocation(location);
+
+              const searchQuery = searchParams.get('q');
+              const request: RecommendationRequest = {
+                location,
+                preferences: {
+                  ambiance: searchQuery ? [searchQuery] : undefined,
+                },
+              };
+
+              const recommendations = await getRecommendations(request);
+              setCafes(recommendations);
+              setLoading(false);
+            },
+            () => {
+              // Fallback if location permission denied
+              const searchQuery = searchParams.get('q');
+              getRecommendations({
+                preferences: {
+                  ambiance: searchQuery ? [searchQuery] : undefined,
+                },
+              }).then((recommendations) => {
+                setCafes(recommendations);
+                setLoading(false);
+              });
+            }
+          );
+        } else {
+          const searchQuery = searchParams.get('q');
+          const recommendations = await getRecommendations({
+            preferences: {
+              ambiance: searchQuery ? [searchQuery] : undefined,
+            },
+          });
+          setCafes(recommendations);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error fetching recommendations:', error);
+        setError('Failed to load recommendations');
+        setLoading(false);
       }
     };
 
@@ -216,11 +326,39 @@ function Explore() {
             </div>
           )}
           {/* Café Cards */}
-          <div className="space-y-6">
-            {DUMMY_CAFES.map((cafe) => (
-              <CafeCard key={cafe.id} cafe={cafe} />
-            ))}
-          </div>
+          {!loading && !error && cafes.length === 0 && (
+            <div className="text-center py-8 text-coffee-600">
+              <p>No cafes found matching your search criteria</p>
+            </div>
+          )}
+
+          {!loading && !error && cafes.length > 0 && (
+            <div className="space-y-6">
+              {cafes.map((cafe) => (
+                <CafeCard
+                  key={cafe.id}
+                  cafe={{
+                    id: parseInt(cafe.id),
+                    name: cafe.name,
+                    image:
+                      'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80',
+                    rating: cafe.metadata.rating,
+                    reviews: cafe.metadata.reviewCount,
+                    distance:
+                      userLocation && cafe.metadata.location
+                        ? calculateDistance(
+                            userLocation,
+                            cafe.metadata.location
+                          ).toFixed(1) + ' km'
+                        : 'Distance unknown',
+                    address: cafe.metadata.address,
+                    isOpen: true,
+                    tags: cafe.metadata.tags || [],
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -196,7 +196,7 @@ export const RATE_LIMIT = {
   embeddingDelay: 2000
 };
 
-export interface SemanticAnalysis {
+export interface SentimentAnalysis {
   matchedKeywords: Array<{
     keyword: string;
     confidence: number;
@@ -217,7 +217,7 @@ export interface CachedSentiment {
     reason: string;
     confidenceScore: number;
     metadata: {
-      semanticAnalysis: SemanticAnalysis;
+      sentimentKeywords: SentimentAnalysis;
       name: string;
       description: string;
       sentimentScore: {
