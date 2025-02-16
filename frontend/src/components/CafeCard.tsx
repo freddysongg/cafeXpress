@@ -1,9 +1,10 @@
 import React from 'react';
 import { Star, Clock, MapPin } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface CafeProps {
   cafe: {
-    id: number;
+    id: string;
     name: string;
     image: string;
     rating: number;
@@ -16,8 +17,17 @@ interface CafeProps {
 }
 
 const CafeCard: React.FC<CafeProps> = ({ cafe }) => {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate(`/restaurant/${cafe.id}`);
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden border border-coffee-100">
+    <div
+      onClick={handleClick}
+      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden border border-coffee-100 cursor-pointer"
+    >
       <div className="flex">
         {/* Café Image */}
         <div className="w-1/3">

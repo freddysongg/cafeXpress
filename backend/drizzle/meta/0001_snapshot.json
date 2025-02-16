@@ -1,6 +1,6 @@
 {
-  "id": "8f9f0058-d36a-40f6-b824-6314c29f0f77",
-  "prevId": "1ca5599a-741f-41cd-aee5-073551e757c4",
+  "id": "3679a5d1-a2cf-410a-847d-75619103edb8",
+  "prevId": "caf499a4-57ce-47b5-a4d4-68bd92bde6fd",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -63,23 +63,17 @@
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false,
-          "default": "'{}'"
+          "default": "'{}'::jsonb"
         },
         "dietary_options": {
           "name": "dietary_options",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false,
-          "default": "'{}'"
+          "default": "'{}'::jsonb"
         },
         "location": {
           "name": "location",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "semantic_embedding": {
-          "name": "semantic_embedding",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false
@@ -90,17 +84,26 @@
           "primaryKey": false,
           "notNull": false,
           "default": "'[]'::jsonb"
+        },
+        "photos": {
+          "name": "photos",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'::jsonb"
+        },
+        "hours": {
+          "name": "hours",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'::jsonb"
         }
       },
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "cafes_name_unique": {
-          "name": "cafes_name_unique",
-          "nullsNotDistinct": false,
-          "columns": ["name"]
-        },
         "cafes_address_unique": {
           "name": "cafes_address_unique",
           "nullsNotDistinct": false,
@@ -142,12 +145,6 @@
         },
         "ambiance": {
           "name": "ambiance",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "semantic_embedding": {
-          "name": "semantic_embedding",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false
@@ -207,39 +204,15 @@
           "primaryKey": false,
           "notNull": true
         },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "description": {
           "name": "description",
           "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "comment": {
-          "name": "comment",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "text": {
-          "name": "text",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "sentiment_score": {
-          "name": "sentiment_score",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "entities": {
-          "name": "entities",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "processed_at": {
-          "name": "processed_at",
-          "type": "timestamp",
           "primaryKey": false,
           "notNull": false
         },
@@ -289,6 +262,13 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'user'"
+        },
         "username": {
           "name": "username",
           "type": "text",
@@ -337,8 +317,14 @@
           "primaryKey": false,
           "notNull": false
         },
-        "preferences_embedding": {
-          "name": "preferences_embedding",
+        "preferences": {
+          "name": "preferences",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "favorite_cafes": {
+          "name": "favorite_cafes",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false

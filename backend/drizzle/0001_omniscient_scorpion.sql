@@ -1,1 +1,0 @@
-ALTER TABLE "cafes" ADD CONSTRAINT "cafes_name_unique" UNIQUE("name");
