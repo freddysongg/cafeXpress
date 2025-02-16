@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 
 export async function authenticate(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
+    const token = req.headers['authorization']?.split(' ')[1];
 
     if (!token) {
       return reply.status(401).send({
@@ -15,7 +15,7 @@ export async function authenticate(req: FastifyRequest, reply: FastifyReply): Pr
 
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as User;
-
+    //console.log('Decoded token:', decoded); // Check the decoded token
     req.user = decoded; // Attach user data to the request object
   } catch (error) {
     const err = error as Error;

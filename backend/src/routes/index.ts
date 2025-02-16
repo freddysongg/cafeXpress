@@ -6,6 +6,7 @@ import { reviewsRoutes } from './reviews.js';
 import { preferencesRoutes } from './preferences.js';
 import { authenticationRoutes } from './authentication.js';
 import { yelpRoutes } from './yelp.js';
+import { profileRoutes } from './profile.js';
 
 const routes = async (app: FastifyInstance) => {
   app.get('/', async (request: FastifyRequest, reply: FastifyReply) => {
@@ -17,6 +18,7 @@ const routes = async (app: FastifyInstance) => {
   app.register(preferencesRoutes, { prefix: '/preference' });
   app.register(authenticationRoutes, { prefix: '/auth' });
   app.register(yelpRoutes, { prefix: '/yelp' });
+  app.register(profileRoutes, { prefix: '/profile' });
   app.register(recommendationRoutes, { prefix: '/recommendations' });
 };
 

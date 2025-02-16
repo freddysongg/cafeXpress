@@ -14,11 +14,15 @@
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^1.16.8",
+    "@radix-ui/react-dropdown-menu": "^2.1.5",
+    "@radix-ui/react-slot": "^1.1.1",
     "@vercel/analytics": "^1.4.1",
+    "class-variance-authority": "^0.7.1",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.22.3"
+    "react-router-dom": "^6.22.3",
+    "tailwind-merge": "^3.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",

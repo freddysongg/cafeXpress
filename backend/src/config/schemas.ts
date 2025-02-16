@@ -3,6 +3,7 @@ import { EmbeddingSchema } from '@schemas/semantic.js';
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
+  role: text('role').notNull().default('user'),
   username: text('username').notNull(),
   email: text('email').notNull(),
   firstName: text('first_name'),
@@ -55,7 +56,9 @@ export const cafes = pgTable('cafes', {
       updatedAt: Date;
     };
   }>(),
-  keywords: jsonb('keywords').$type<string[]>().default([])
+  keywords: jsonb('keywords').$type<string[]>().default([]),
+  photos: jsonb('photos').$type<string[]>().notNull().default([]),
+  hours: jsonb('hours').default([])
 });
 
 export const reviews = pgTable('reviews', {
@@ -64,8 +67,7 @@ export const reviews = pgTable('reviews', {
   userId: uuid('user_id').references(() => users.id),
   rating: jsonb('rating').$type<number>().notNull(),
   description: text('description'),
-  comment: text('comment'),
-  text: text('text').notNull(), // Required text field for raw review text
+  title: text('title').notNull(), // Required text field for raw review text
   sentimentScore: jsonb('sentiment_score')
     .$type<{
       positive: number;

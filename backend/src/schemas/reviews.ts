@@ -2,7 +2,8 @@ export interface ReviewBody {
   userId: string;
   cafeId: string;
   rating: number;
-  text: string;
+  description: string;
+  title: string;
   sentimentScore: {
     positive: number;
     negative: number;

@@ -25,7 +25,8 @@ export async function createCafe(req: FastifyRequest, reply: FastifyReply): Prom
         ambiance: data.ambiance,
         dietaryOptions: data.dietaryOptions,
         location: sql<Location>`${data.location}`,
-        semanticEmbedding: data.semanticEmbedding
+        semanticEmbedding: data.semanticEmbedding,
+        photos: data.photos
       })
       .returning({
         id: cafes.id,
@@ -74,7 +75,8 @@ export async function getCafeById(
         dietaryOptions: cafes.dietaryOptions,
         location: cafes.location,
         semanticEmbedding: cafes.semanticEmbedding,
-        createdAt: cafes.createdAt
+        createdAt: cafes.createdAt,
+        photos: cafes.photos
       })
       .from(cafes)
       .where(eq(cafes.id, cafeId))
@@ -117,7 +119,8 @@ export async function getAllCafes(req: FastifyRequest, reply: FastifyReply): Pro
         city: cafes.city,
         state: cafes.state,
         zipCode: cafes.zipCode,
-        createdAt: cafes.createdAt
+        createdAt: cafes.createdAt,
+        photos: cafes.photos
       })
       .from(cafes);
 
@@ -155,7 +158,8 @@ export async function updateCafe(
       ambiance,
       dietaryOptions,
       location,
-      semanticEmbedding
+      semanticEmbedding,
+      photos
     } = CafeSchema.parse(req.body);
 
     // Update cafe details including semantic embedding metadata
@@ -187,7 +191,8 @@ export async function updateCafe(
                 updatedAt: new Date()
               }
             }
-          : null
+          : null,
+        photos
       })
       .where(eq(cafes.id, cafeId))
       .returning({
