@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 interface CafeProps {
   cafe: {
-    id: number;
+    id: string;
     name: string;
     image: string;
     rating: number;
