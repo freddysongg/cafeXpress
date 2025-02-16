@@ -6,7 +6,7 @@ import { setTimeout } from 'timers/promises';
 import type { GeminiClient } from '@schemas/gemini.js';
 import { RecommendationCache } from '@services/cache.js';
 import { SemanticSearchService } from '@services/semanticSearch.js';
-import { SemanticAnalysisService } from '@services/semanticAnalysis.js';
+import { SentimentAnalysisService } from '@services/sentimentAnalysis.js';
 import { EmbeddingSchema } from '@schemas/semantic.js';
 import type { ISemanticSearchService, Embedding } from '@schemas/semantic.js';
 import {
@@ -29,13 +29,11 @@ const cache = new RecommendationCache({
 let lastRequestTime = 0;
 
 let semanticSearchService: ISemanticSearchService;
-let semanticAnalysisService: SemanticAnalysisService;
+let sentimentAnalysisService: SentimentAnalysisService;
 
 export function initializeRecommendationService(geminiClient: GeminiClient): void {
   semanticSearchService = new SemanticSearchService(geminiClient);
-  semanticAnalysisService = new SemanticAnalysisService();
-  semanticSearchService.initialize();
-  semanticAnalysisService.initialize();
+  sentimentAnalysisService = new SentimentAnalysisService();
 }
 
 async function fetchUserData(userId: string): Promise<UserWithLocation> {
@@ -253,135 +251,49 @@ async function fetchCafesData(
   return typedResults;
 }
 
-async function analyzeCafeSentiment(
-  geminiClient: GeminiClient,
-  cafe: {
-    id: string;
-    name: string;
-    address: string;
-    description?: string;
-    rating: number;
-    semanticEmbedding?: z.infer<typeof EmbeddingSchema>;
-    reviewCount: number;
-    lastReviewDate: Date;
-  },
-  preferences: z.infer<typeof preferencesSchema>
-) {
-  const _preferencesEmbedding = preferences.semanticEmbedding;
-  const sentimentCacheKey = `sentiment:${cafe.id}`;
-  const cachedSentiment = await cache.get<CachedSentiment>(sentimentCacheKey);
+class ScoringHelper {
+  static calculateHybridScore(
+    rating: number,
+    semanticScore: number,
+    sentiment: { positive: number; negative: number; neutral: number; compound: number }
+  ): number {
+    if (isNaN(rating) || isNaN(semanticScore)) return 0;
 
-  if (cachedSentiment) {
-    return {
-      ...cafe,
-      sentiment: cachedSentiment.recommendations[0].metadata.sentimentScore,
-      semanticScore: cachedSentiment.recommendations[0].metadata.semanticScore,
-      semanticAnalysis: cachedSentiment.recommendations[0].metadata.semanticAnalysis
+    const weights = {
+      semantic: process.env.SEMANTIC_WEIGHT ? parseFloat(process.env.SEMANTIC_WEIGHT) : 0.5,
+      rating: process.env.RATING_WEIGHT ? parseFloat(process.env.RATING_WEIGHT) : 0.4,
+      sentiment: process.env.SENTIMENT_WEIGHT ? parseFloat(process.env.SENTIMENT_WEIGHT) : 0.1
     };
+
+    const totalWeight = Math.max(weights.semantic + weights.rating + weights.sentiment, 0.001);
+    const normalizedWeights = {
+      semantic: weights.semantic / totalWeight,
+      rating: weights.rating / totalWeight,
+      sentiment: weights.sentiment / totalWeight
+    };
+
+    const sentimentMultiplier =
+      sentiment.compound >= 0.5 ? 1.2 : sentiment.compound <= -0.5 ? 0.8 : 1.0;
+
+    const baseScore = rating * normalizedWeights.rating + semanticScore * normalizedWeights.semantic;
+    return baseScore * sentimentMultiplier * normalizedWeights.sentiment;
   }
 
-  const text = `${cafe.name}: ${cafe.address}. ${cafe.description || ''}`;
-  const sentimentResponse = await geminiClient.analyzeText(text);
-  const sentiment = {
-    positive: sentimentResponse.sentiment.positive,
-    negative: sentimentResponse.sentiment.negative,
-    neutral: sentimentResponse.sentiment.neutral,
-    compound: sentimentResponse.sentiment.compound
-  };
-  const entities = sentimentResponse.entities;
-
-  const semanticAnalysis = await semanticAnalysisService.analyzeInput(text);
-  const semanticScore =
-    cafe.semanticEmbedding && preferences.semanticEmbedding
-      ? await semanticSearchService.calculateSimilarity(
-          { vector: cafe.semanticEmbedding.vector, metadata: cafe.semanticEmbedding.metadata },
-          {
-            vector: preferences.semanticEmbedding.vector,
-            metadata: preferences.semanticEmbedding.metadata
-          }
-        )
-      : 0;
-
-  const cachedData = {
-    recommendations: [
-      {
-        id: cafe.id,
-        cafeId: cafe.id,
-        name: cafe.name,
-        description: cafe.description || cafe.address,
-        score: calculateHybridScore(cafe.rating, semanticScore, sentiment),
-        reason:
-          sentiment.compound >= 0.5
-            ? 'positive'
-            : sentiment.compound <= -0.5
-              ? 'negative'
-              : 'neutral',
-        confidenceScore: 1.0,
-        metadata: {
-          name: cafe.name,
-          description: cafe.description || cafe.address,
-          sentimentScore: sentiment,
-          semanticScore,
-          semanticAnalysis: semanticAnalysis.matchedKeywords,
-          tags: entities
-        }
-      }
-    ],
-    generatedAt: new Date().toISOString(),
-    modelVersion: geminiClient.getModelVersion()
-  };
-
-  await cache.set(sentimentCacheKey, cachedData);
-  return {
-    ...cafe,
-    sentiment: sentiment,
-    semanticScore,
-    semanticAnalysis: semanticAnalysis.matchedKeywords
-  };
-}
-
-function calculateHybridScore(
-  rating: number,
-  semanticScore: number,
-  sentiment: { positive: number; negative: number; neutral: number; compound: number }
-): number {
-  if (isNaN(rating) || isNaN(semanticScore)) {
-    return 0;
+  static getSentimentReason(compound: number): string {
+    if (compound >= 0.5) return 'Very positive reviews';
+    if (compound >= 0.05) return 'Positive reviews';
+    if (compound <= -0.5) return 'Very negative reviews';
+    if (compound <= -0.05) return 'Negative reviews';
+    return 'Mixed reviews';
   }
-
-  // Configurable weights with defaults
-  const weights = {
-    semantic: process.env.SEMANTIC_WEIGHT ? parseFloat(process.env.SEMANTIC_WEIGHT) : 0.5,
-    rating: process.env.RATING_WEIGHT ? parseFloat(process.env.RATING_WEIGHT) : 0.4,
-    sentiment: process.env.SENTIMENT_WEIGHT ? parseFloat(process.env.SENTIMENT_WEIGHT) : 0.1
-  };
-
-  // Normalize weights to sum to 1
-  const totalWeight = Math.max(weights.semantic + weights.rating + weights.sentiment, 0.001);
-  const normalizedWeights = {
-    semantic: weights.semantic / totalWeight,
-    rating: weights.rating / totalWeight,
-    sentiment: weights.sentiment / totalWeight
-  };
-
-  // Calculate sentiment multiplier based on compound score
-  const sentimentMultiplier =
-    sentiment.compound >= 0.5 ? 1.2 : sentiment.compound <= -0.5 ? 0.8 : 1.0;
-
-  // Calculate weighted score with fallback values
-  const baseScore = rating * normalizedWeights.rating + semanticScore * normalizedWeights.semantic;
-
-  return baseScore * sentimentMultiplier * normalizedWeights.sentiment;
 }
 
 export async function getRecommendations(
   geminiClient: GeminiClient & { getModelVersion: () => string },
   request: z.infer<typeof personalizedRecommendationRequest>
 ): Promise<RecommendationResponse> {
-  // Validate request against schema
-  const _parsedRequest = personalizedRecommendationRequest.parse(request);
-  if (!semanticSearchService) {
-    throw new Error('SemanticSearchService not initialized');
+  if (!semanticSearchService || !sentimentAnalysisService) {
+    throw new Error('Recommendation services not initialized');
   }
 
   const cacheKey = `recommendations:${request.userId}`;
@@ -411,97 +323,104 @@ export async function getRecommendations(
     const preferences = await fetchUserPreferences(request.userId);
     const favoriteCafes = Array.isArray(preferences.favoriteCafes) ? preferences.favoriteCafes : [];
 
-    const location =
-      request.location ||
-      (user.location && {
-        latitude: user.location.coordinates[1],
-        longitude: user.location.coordinates[0]
-      });
+    const location = request.location || (user.location && {
+      latitude: user.location.coordinates[1],
+      longitude: user.location.coordinates[0]
+    });
+
     const cafesData = await fetchCafesData(favoriteCafes, location);
 
-    const analysisResults = await Promise.allSettled(
+    const sentimentResults = await Promise.allSettled(
       cafesData.map(async (cafe) => {
-        const sentiment = await analyzeCafeSentiment(geminiClient, cafe, preferences);
-        let semanticScore = 0;
         try {
-          semanticScore =
-            cafe.semanticEmbedding && preferences.semanticEmbedding
-              ? await semanticSearchService.calculateSemanticScore(
-                  cafe.semanticEmbedding,
-                  preferences.semanticEmbedding
-                )
-              : 0.5; // Fallback score if embeddings are missing
-        } catch (error) {
-          console.error('Failed to calculate semantic score:', error);
-          semanticScore = 0.5; // Fallback score on error
-        }
+          const cafeText = `${cafe.name}: ${cafe.description || cafe.address}`;
+          
+          const sentimentAnalysis = await sentimentAnalysisService.analyzeSentiment(cafeText);
+          
+          let semanticScore = 0.5; 
+          if (cafe.semanticEmbedding && preferences.semanticEmbedding) {
+            try {
+              semanticScore = await semanticSearchService.calculateSemanticScore(
+                cafe.semanticEmbedding,
+                preferences.semanticEmbedding
+              );
+            } catch (error) {
+              console.error('Failed to calculate semantic score:', error);
+            }
+          }
 
-        return {
-          ...sentiment,
-          semanticScore,
-          rating: cafe.rating || 3.5 // Fallback rating
-        };
+          return {
+            ...cafe,
+            sentiment: {
+              positive: sentimentAnalysis.overallSentiment,
+              negative: 1 - sentimentAnalysis.overallSentiment,
+              neutral: 0,
+              compound: sentimentAnalysis.overallSentiment * 2 - 1
+            },
+            semanticScore,
+            sentimentKeywords: sentimentAnalysis.matchedSentimentKeywords,
+            rating: cafe.rating || 3.5
+          };
+        } catch (error) {
+          console.error(`Failed to process cafe ${cafe.id}:`, error);
+          throw error;
+        }
       })
     );
 
-    const recommendationData = analysisResults
+    const successfulResults = sentimentResults
       .filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled')
-      .map((r) => ({
-        id: r.value.id,
-        cafeId: r.value.id,
-        name: r.value.name,
-        description: r.value.description || r.value.address,
-        score: calculateHybridScore(r.value.rating, r.value.semanticScore, r.value.sentiment),
-        reason: r.value.sentiment,
-        confidenceScore: 1.0,
+      .map((r) => r.value);
+
+    const recommendations = successfulResults
+      .map((result) => ({
+        id: result.id,
+        cafeId: result.id,
+        name: result.name,
+        description: result.description || result.address,
+        score: ScoringHelper.calculateHybridScore(
+          result.rating,
+          result.semanticScore,
+          result.sentiment
+        ),
+        reason: ScoringHelper.getSentimentReason(result.sentiment.compound),
+        confidenceScore: Math.min(
+          1,
+          (result.semanticScore + result.sentiment.positive + (result.rating / 5)) / 3
+        ),
         metadata: {
-          rating: r.value.rating,
-          semanticScore: r.value.semanticScore,
-          sentiment: {
-            positive: r.value.sentiment.positive,
-            negative: r.value.sentiment.negative,
-            neutral: r.value.sentiment.neutral,
-            compound: r.value.sentiment.compound
-          },
-          reviewCount: r.value.reviewCount,
-          lastReviewDate: r.value.lastReviewDate
+          name: result.name,
+          description: result.description || result.address,
+          address: result.address,
+          rating: result.rating,
+          reviewCount: result.reviewCount,
+          lastReviewDate: result.lastReviewDate,
+          location: location,
+          tags: result.sentimentKeywords,
+          sentimentScore: result.sentiment
         }
-      }));
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10);
 
-    const recommendations = recommendationData.sort((a, b) => b.score - a.score).slice(0, 10);
+    const generatedAt = new Date().toISOString();
+    const modelVersion = geminiClient.getModelVersion();
+    
+    await cache.set(cacheKey, {
+      recommendations,
+      generatedAt,
+      modelVersion
+    });
 
-    const cacheData = {
-      recommendations: recommendations.map((r) => ({
-        id: r.id,
-        name: r.name,
-        description: r.description,
-        cafeId: r.cafeId,
-        score: r.score,
-        reason: r.reason,
-        confidenceScore: r.confidenceScore,
-        metadata: {
-          name: r.name,
-          description: r.description,
-          sentiment: r.metadata.sentiment,
-          tags: []
-        }
-      })),
-      generatedAt: new Date().toISOString(),
-      modelVersion: geminiClient.getModelVersion()
-    };
-
-    const response: RecommendationResponse = {
+    return {
       status: 'success',
-      data: cacheData.recommendations,
+      data: recommendations,
       metadata: {
-        generatedAt: cacheData.generatedAt,
-        modelVersion: cacheData.modelVersion,
+        generatedAt,
+        modelVersion,
         cacheHit: false
       }
     };
-
-    await cache.set(cacheKey, cacheData);
-    return response;
   } catch (error) {
     console.error('Recommendation generation failed:', error);
     return {

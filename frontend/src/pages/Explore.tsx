@@ -1,6 +1,27 @@
 import { useEffect, useRef, useState } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
+import { Button } from '../components/ui/button';
+import { ChevronDown } from 'lucide-react';
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
 import CafeCard from '../components/CafeCard';
+
+const DEFAULT_CAFES = [
+  {
+    id: '1',
+    name: 'The Coffee House',
+    description: 'vibey coffee house',
+    city: 'San Francisco',
+    state: 'CA',
+    zipCode: '94110',
+    createdAt: '2025-02-05T00:01:53.511Z',
+  },
+];
 
 const DUMMY_CAFES = [
   {
@@ -41,14 +62,37 @@ const DUMMY_CAFES = [
   },
 ];
 
+const filterOptions = {
+  distance: ['5 miles', '10 miles', '15 miles', '20 miles'],
+  ambiance: ['Cozy', 'Modern', 'Quiet', 'Lively'],
+  dietary: ['Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free'],
+  availability: ['Open Now', 'Opens at 9 AM', 'Closes at 5 PM'],
+};
+
 function Explore() {
   const mapRef = useRef<HTMLDivElement>(null);
   const [, setMap] = useState<google.maps.Map | null>(null);
+  const [, setCafes] = useState<
+    {
+      id: string;
+      name: string;
+      description: string | null;
+      city: string;
+      state: string;
+      zipCode: string;
+      createdAt: string;
+    }[]
+  >([]);
+  const [, setLoading] = useState(true);
+  const [selectedFilters, setSelectedFilters] = useState<
+    Record<string, string>
+  >({});
 
+  // Initialize map
   useEffect(() => {
     const initMap = async () => {
       const loader = new Loader({
-        apiKey: 'AIzaSyCsQUZzKQn5yfyWqPVep13mRKTGbL86fH0', // Replace with your API key
+        apiKey: 'AIzaSyCsQUZzKQn5yfyWqPVep13mRKTGbL86fH0',
         version: 'weekly',
       });
 
@@ -56,91 +100,268 @@ function Explore() {
 
       if (mapRef.current) {
         const newMap = new google.maps.Map(mapRef.current, {
-          center: { lat: 40.7128, lng: -74.006 }, // New York coordinates
+          center: { lat: 40.7128, lng: -74.006 },
           zoom: 13,
-          styles: [
-            {
-              featureType: 'all',
-              elementType: 'geometry',
-              stylers: [{ color: '#FAF7F2' }],
-            },
-            {
-              featureType: 'water',
-              elementType: 'geometry',
-              stylers: [{ color: '#E8D6C0' }],
-            },
-            {
-              featureType: 'road',
-              elementType: 'geometry',
-              stylers: [{ color: '#D4B494' }],
-            },
-            {
-              featureType: 'road.arterial',
-              elementType: 'geometry',
-              stylers: [{ color: '#C09268' }],
-            },
-            {
-              featureType: 'poi',
-              elementType: 'geometry',
-              stylers: [{ color: '#AB703C' }],
-            },
-            {
-              featureType: 'transit',
-              elementType: 'geometry',
-              stylers: [{ color: '#8B5E2F' }],
-            },
-          ],
         });
 
-        setMap(newMap);
+  // Update markers when cafes change
+  useEffect(() => {
+    if (map) {
+      const newMarkers: google.maps.Marker[] = [];
 
-        // Add markers for each café
+      // Add user location marker if available
+      if (userLocation) {
+        const userMarker = new google.maps.Marker({
+          position: {
+            lat: userLocation.latitude,
+            lng: userLocation.longitude,
+          },
+          map,
+          title: 'Your Location',
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 10,
+            fillColor: '#4285F4',
+            fillOpacity: 1,
+            strokeColor: '#ffffff',
+            strokeWeight: 2,
+          },
+        });
+        newMarkers.push(userMarker);
+      }
+
         DUMMY_CAFES.forEach((cafe) => {
           new google.maps.Marker({
             position: {
-              lat: 40.7128 + Math.random() * 0.02,
-              lng: -74.006 + Math.random() * 0.02,
+              lat: cafe.metadata.location.latitude,
+              lng: cafe.metadata.location.longitude,
             },
-            map: newMap,
+            map,
             title: cafe.name,
           });
-        });
+          newMarkers.push(marker);
+        }
+      });
+
+      return () => {
+        newMarkers.forEach((marker) => marker.setMap(null));
+      };
+    }
+  }, [map, cafes, userLocation]);
+
+  // Handle search and recommendations
+  const handleSearch = async (query: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const request: RecommendationRequest = {
+        location: userLocation || undefined,
+        preferences: {
+          ambiance: query ? [query] : undefined,
+        },
+      };
+
+      const recommendations = await getRecommendations(request);
+      setCafes(recommendations);
+      // Update URL with search query
+      setSearchParams(query ? { q: query } : {});
+    } catch (error) {
+      console.error('Error searching cafes:', error);
+      setError('Failed to search cafes');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get initial recommendations and location
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      try {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            async (position) => {
+              const location = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+              };
+              setUserLocation(location);
+
+              const searchQuery = searchParams.get('q');
+              const request: RecommendationRequest = {
+                location,
+                preferences: {
+                  ambiance: searchQuery ? [searchQuery] : undefined,
+                },
+              };
+
+              const recommendations = await getRecommendations(request);
+              setCafes(recommendations);
+              setLoading(false);
+            },
+            () => {
+              // Fallback if location permission denied
+              const searchQuery = searchParams.get('q');
+              getRecommendations({
+                preferences: {
+                  ambiance: searchQuery ? [searchQuery] : undefined,
+                },
+              }).then((recommendations) => {
+                setCafes(recommendations);
+                setLoading(false);
+              });
+            }
+          );
+        } else {
+          const searchQuery = searchParams.get('q');
+          const recommendations = await getRecommendations({
+            preferences: {
+              ambiance: searchQuery ? [searchQuery] : undefined,
+            },
+          });
+          setCafes(recommendations);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error fetching recommendations:', error);
+        setError('Failed to load recommendations');
+        setLoading(false);
       }
     };
 
+    const fetchCafes = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/cafe/all');
+        const data = await response.json();
+        if (data.status === 'success' && data.data.length > 0) {
+          setCafes(data.data);
+        } else {
+          setCafes(DEFAULT_CAFES);
+        }
+      } catch (error) {
+        console.error('Error fetching cafés:', error);
+        setCafes(DEFAULT_CAFES);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCafes();
     initMap();
   }, []);
+
+  const handleFilterSelect = (category: string, value: string) => {
+    setSelectedFilters((prev) => ({
+      ...prev,
+      [category]: value,
+    }));
+  };
+
+  const FilterButton = ({ category }: { category: string }) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          className="bg-white text-black font-medium hover:bg-gray-100 capitalize flex items-center gap-2"
+        >
+          {category}
+          <ChevronDown className="ml-2" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="bg-white text-black">
+        {filterOptions[category as keyof typeof filterOptions].map((option) => (
+          <DropdownMenuItem
+            key={option}
+            onClick={() => handleFilterSelect(category, option)}
+            className={
+              selectedFilters[category] === option
+                ? 'bg-accent'
+                : 'hover:bg-gray-100'
+            }
+          >
+            {option}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   return (
     <div className="flex h-screen pt-16">
       {/* Map Section */}
       <div ref={mapRef} className="w-1/2 h-full" />
-
       {/* Cafés List Section */}
       <div className="w-1/2 h-full overflow-y-auto bg-coffee-50 p-6">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-2xl font-bold mb-6 text-coffee-800">
             Nearby Cafés
           </h2>
-
-          {/* Filters */}
-          <div className="flex gap-4 mb-6 overflow-x-auto pb-2">
-            <button className="btn-filter">Open Now</button>
-            <button className="btn-filter">Top Rated</button>
-            <button className="btn-filter">Distance</button>
-            <button className="btn-filter">Price</button>
+          {/* Filter Buttons */}
+          <div className="flex gap-4 mb-6">
+            <FilterButton category="distance" />
+            <FilterButton category="ambiance" />
+            <FilterButton category="dietary" />
+            <FilterButton category="availability" />
           </div>
-
+          {/* Selected Filters */}
+          {Object.keys(selectedFilters).length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-6">
+              {Object.entries(selectedFilters).map(([category, value]) => (
+                <div
+                  key={category}
+                  className="bg-white text-black font-normal px-3 py-1 rounded-full text-sm flex items-center gap-2 shadow-md"
+                >
+                  {value}
+                  <button
+                    onClick={() => {
+                      const newFilters = { ...selectedFilters };
+                      delete newFilters[category];
+                      setSelectedFilters(newFilters);
+                    }}
+                    className="hover:text-muted-foreground"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           {/* Café Cards */}
-          <div className="space-y-6">
-            {DUMMY_CAFES.map((cafe) => (
-              <CafeCard key={cafe.id} cafe={cafe} />
-            ))}
-          </div>
+          {!loading && !error && cafes.length === 0 && (
+            <div className="text-center py-8 text-coffee-600">
+              <p>No cafes found matching your search criteria</p>
+            </div>
+          )}
+
+          {!loading && !error && cafes.length > 0 && (
+            <div className="space-y-6">
+              {cafes.map((cafe) => (
+                <CafeCard
+                  key={cafe.id}
+                  cafe={{
+                    id: parseInt(cafe.id),
+                    name: cafe.name,
+                    image:
+                      'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80',
+                    rating: cafe.metadata.rating,
+                    reviews: cafe.metadata.reviewCount,
+                    distance:
+                      userLocation && cafe.metadata.location
+                        ? calculateDistance(
+                            userLocation,
+                            cafe.metadata.location
+                          ).toFixed(1) + ' km'
+                        : 'Distance unknown',
+                    address: cafe.metadata.address,
+                    isOpen: true,
+                    tags: cafe.metadata.tags || [],
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
-
 export default Explore;
