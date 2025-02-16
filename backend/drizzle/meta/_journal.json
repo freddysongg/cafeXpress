@@ -8,6 +8,13 @@
       "when": 1739677651121,
       "tag": "0000_misty_karnak",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1739684929655,
+      "tag": "0001_zippy_tempest",
+      "breakpoints": true
     }
   ]
 }
