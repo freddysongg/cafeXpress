@@ -1,11 +1,25 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { FastifyInstance } from 'fastify';
 import { getRecommendations } from '@services/recommendation.js';
 import { validateUUID } from '@utils/validation.js';
 import { PersonalizedRecommendationRequest } from '@schemas/recommendation.js';
-import { rateLimit } from '@schemas/rateLimit.js';
+import { SemanticSearchService } from '@services/semanticSearch.js';
+import { SentimentAnalysisService } from '@services/sentimentAnalysis.js';
+import { initializeRecommendationService } from '@services/recommendation.js';
 
 export const recommendationRoutes = async (app: FastifyInstance) => {
+  const semanticSearchService = new SemanticSearchService(app.gemini);
+  const sentimentAnalysisService = new SentimentAnalysisService();
+  
+  await semanticSearchService.initialize();
+  await sentimentAnalysisService.initialize();
+  
+  initializeRecommendationService(app.gemini);
+
+  const rateLimit = {
+    max: 10,
+    timeWindow: '1 minute'
+  };
+
   app.get<{
     Params: {
       userId: string;
@@ -13,46 +27,35 @@ export const recommendationRoutes = async (app: FastifyInstance) => {
     Querystring: {
       latitude?: string;
       longitude?: string;
+      dietary?: string;
+      activities?: string;
+      ambiance?: string;
     };
   }>(
     '/:userId',
     {
-      preHandler: rateLimit('recommendations', {
-        max: 10,
-        windowMs: 60000
-      })
+      config: {
+        rateLimit
+      }
     },
     async (req, reply) => {
-      // Validate UUID
-      if (!validateUUID(req.params.userId)) {
-        return reply.status(400).send({
-          status: 'error',
-          message: 'Invalid user ID format'
-        });
-      }
-
-      // Validate Gemini client availability and type
-      if (!app.gemini || typeof app.gemini.generateContent !== 'function') {
-        app.log.error('Gemini client not properly initialized');
-        return reply.status(503).send({
-          status: 'error',
-          message: 'Recommendation service unavailable',
-          metadata: {
-            serviceStatus: 'unavailable',
-            timestamp: new Date().toISOString()
-          }
-        });
-      }
-
       try {
-        const geminiClient = app.gemini;
+        if (!validateUUID(req.params.userId)) {
+          return reply.status(400).send({
+            status: 'error',
+            message: 'Invalid user ID format'
+          });
+        }
 
-        // Build request object
         const request: PersonalizedRecommendationRequest = {
-          userId: req.params.userId
+          userId: req.params.userId,
+          preferences: {
+            dietary: req.query.dietary?.split(','),
+            activities: req.query.activities?.split(','),
+            ambiance: req.query.ambiance?.split(',')
+          }
         };
 
-        // Add location if provided
         if (req.query.latitude && req.query.longitude) {
           const lat = parseFloat(req.query.latitude);
           const lon = parseFloat(req.query.longitude);
@@ -70,38 +73,30 @@ export const recommendationRoutes = async (app: FastifyInstance) => {
           };
         }
 
-        const result = await getRecommendations(geminiClient, request);
-
+        const result = await getRecommendations(app.gemini, request);
         return reply.send(result);
-      } catch (error) {
-        app.log.error('Recommendation route error:', {
-          error: error instanceof Error ? error.message : error,
-          userId: req.params.userId,
-          timestamp: new Date().toISOString()
-        });
 
+      } catch (error) {
+        req.log.error('Recommendation route error:', error);
+        
         let statusCode = 500;
-        let errorMessage = 'Failed to generate recommendations';
+        let message = 'Failed to generate recommendations';
 
         if (error instanceof Error) {
           if (error.message.includes('not found')) {
             statusCode = 404;
-            errorMessage = 'User preferences not found';
+            message = 'User preferences not found';
           } else if (error.message.includes('invalid input')) {
             statusCode = 400;
-            errorMessage = 'Invalid input data';
-          } else if (error.message.includes('rate limit')) {
-            statusCode = 429;
-            errorMessage = 'Rate limit exceeded';
+            message = 'Invalid input data';
           }
         }
-
+        
         return reply.status(statusCode).send({
           status: 'error',
-          message: error instanceof Error ? error.message : 'Failed to generate recommendations',
+          message,
           metadata: {
-            generatedAt: new Date().toISOString(),
-            modelVersion: app.gemini?.getModelVersion() || 'unknown'
+            timestamp: new Date().toISOString()
           }
         });
       }

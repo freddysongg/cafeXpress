@@ -11,13 +11,13 @@ const routes = async (app: FastifyInstance) => {
   app.get('/', async (request: FastifyRequest, reply: FastifyReply) => {
     reply.send({ message: 'Welcome to cafeXpress.' });
   });
-  app.register(recommendationRoutes, { prefix: '/recommendations' });
   app.register(usersRoutes, { prefix: '/user' });
   app.register(cafesRoutes, { prefix: '/cafe' });
   app.register(reviewsRoutes, { prefix: '/review' });
   app.register(preferencesRoutes, { prefix: '/preference' });
   app.register(authenticationRoutes, { prefix: '/auth' });
   app.register(yelpRoutes, { prefix: '/yelp' });
+  app.register(recommendationRoutes, { prefix: '/recommendations' });
 };
 
 export default routes;

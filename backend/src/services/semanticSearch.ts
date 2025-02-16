@@ -14,6 +14,7 @@ import type { GeminiResponse } from '@schemas/gemini.js';
 import { eq, sql, desc } from 'drizzle-orm';
 import { RecommendationCache } from '@services/cache.js';
 import { DEFAULT_CACHE_CONFIG } from '@schemas/cache.js';
+import { cosineSimilarity } from '@utils/math.js';
 
 class InMemoryVectorStore {
   private vectors: { id: string; embedding: Embedding; metadata: any }[] = [];
@@ -26,7 +27,7 @@ class InMemoryVectorStore {
     const results = this.vectors
       .map((vector) => ({
         ...vector,
-        score: this.cosineSimilarity(queryEmbedding, vector.embedding)
+        score: cosineSimilarity(queryEmbedding.vector, vector.embedding.vector)
       }))
       .filter((result: { score: number }) => result.score >= threshold)
       .sort((a: { score: number }, b: { score: number }) => b.score - a.score)
@@ -34,19 +35,8 @@ class InMemoryVectorStore {
 
     return results;
   }
-
-  private cosineSimilarity(embedding1: Embedding, embedding2: Embedding): number {
-    if (embedding1.vector.length !== embedding2.vector.length) return 0;
-
-    const dotProduct = embedding1.vector.reduce((sum, a, i) => sum + a * embedding2.vector[i], 0);
-    const magnitudeA = Math.sqrt(embedding1.vector.reduce((sum, a) => sum + a * a, 0));
-    const magnitudeB = Math.sqrt(embedding2.vector.reduce((sum, b) => sum + b * b, 0));
-
-    return dotProduct / (magnitudeA * magnitudeB);
-  }
 }
 
-// Sentiment Analysis Helpers
 function getDefaultSentimentScore(): SentimentResult {
   return {
     score: {
@@ -64,7 +54,6 @@ function getSentimentType(compound: number): string {
   return 'neutral';
 }
 
-// Error Handling Helpers
 function handleSearchError(error: unknown): SearchResponse {
   console.error('Search error:', error);
   return {
@@ -82,6 +71,7 @@ export class SemanticSearchService implements ISemanticSearchService {
   private vectorStore: InMemoryVectorStore;
   private cache: RecommendationCache;
   private geminiClient: GeminiClient;
+  private initialized: boolean = false;
 
   constructor(geminiClient: GeminiClient) {
     this.geminiClient = geminiClient;
@@ -89,11 +79,30 @@ export class SemanticSearchService implements ISemanticSearchService {
     this.vectorStore = new InMemoryVectorStore();
   }
 
+  async initialize() {
+    if (this.initialized) return;
+    
+    try {
+      await Promise.all([
+        this.loadCafeEmbeddings(),
+        this.loadReviewSentiments()
+      ]);
+      this.initialized = true;
+    } catch (error) {
+      console.error('Failed to initialize SemanticSearchService:', error);
+      throw new Error('Failed to initialize semantic search service');
+    }
+  }
+
   async generateEmbedding(params: {
     type: 'user' | 'preferences' | 'cafe';
     id: string;
     text: string;
   }): Promise<Embedding> {
+    if (!this.initialized) {
+      throw new Error('SemanticSearchService not initialized');
+    }
+
     const vector = await this.geminiClient.generateEmbedding(params.text);
     return {
       vector,
@@ -106,18 +115,19 @@ export class SemanticSearchService implements ISemanticSearchService {
   }
 
   async calculateSimilarity(embedding1: Embedding, embedding2: Embedding): Promise<number> {
-    if (embedding1.vector.length !== embedding2.vector.length) return 0;
+    if (!this.initialized) {
+      throw new Error('SemanticSearchService not initialized');
+    }
 
-    const dotProduct = embedding1.vector.reduce((sum, a, i) => sum + a * embedding2.vector[i], 0);
-    const magnitudeA = Math.sqrt(embedding1.vector.reduce((sum, a) => sum + a * a, 0));
-    const magnitudeB = Math.sqrt(embedding2.vector.reduce((sum, b) => sum + b * b, 0));
-
-    return dotProduct / (magnitudeA * magnitudeB);
+    return cosineSimilarity(embedding1.vector, embedding2.vector);
   }
 
   async calculateSemanticScore(embedding1: Embedding, embedding2: Embedding): Promise<number> {
-    const baseSimilarity = await this.calculateSimilarity(embedding1, embedding2);
+    if (!this.initialized) {
+      throw new Error('SemanticSearchService not initialized');
+    }
 
+    const baseSimilarity = await this.calculateSimilarity(embedding1, embedding2);
     const typeWeights = {
       user: 1.2,
       preferences: 1.5,
@@ -127,9 +137,7 @@ export class SemanticSearchService implements ISemanticSearchService {
 
     const type1 = embedding1.metadata.type;
     const type2 = embedding2.metadata.type;
-
-    const weight =
-      type1 === type2 ? typeWeights[type1] : Math.max(typeWeights[type1], typeWeights[type2]);
+    const weight = type1 === type2 ? typeWeights[type1] : Math.max(typeWeights[type1], typeWeights[type2]);
 
     const createdAt1 = embedding1.metadata.createdAt;
     const createdAt2 = embedding2.metadata.createdAt;
@@ -143,11 +151,6 @@ export class SemanticSearchService implements ISemanticSearchService {
     const recencyBonus = Math.max(0, 1 - Math.min(age1, age2) / (1000 * 60 * 60 * 24 * 7));
 
     return baseSimilarity * weight * (1 + recencyBonus * 0.2);
-  }
-
-  async initialize() {
-    await this.loadCafeEmbeddings();
-    await this.loadReviewSentiments();
   }
 
   private async loadCafeEmbeddings() {
@@ -191,21 +194,21 @@ export class SemanticSearchService implements ISemanticSearchService {
       const batch = await db
         .select({
           id: reviews.id,
-          content: sql<string>`content`
+          text: reviews.text
         })
         .from(reviews)
         .limit(BATCH_SIZE)
         .offset(offset);
 
       const sentimentResponses = await this.geminiClient.batchAnalyzeSentiment(
-        batch.map((r) => r.content)
+        batch.map((r) => r.text)
       );
       const sentimentResults: SentimentResult[] = sentimentResponses.map((response) => ({
         score: {
           positive: response.score,
           negative: 1 - response.score,
           neutral: 0,
-          compound: response.score * 2 - 1 // Convert 0-1 range to -1 to 1 range
+          compound: response.score * 2 - 1
         }
       }));
 
@@ -215,14 +218,9 @@ export class SemanticSearchService implements ISemanticSearchService {
           await tx
             .update(reviews)
             .set({
-              sentimentScore: {
-                positive: sentiment.score.positive,
-                negative: sentiment.score.negative,
-                neutral: sentiment.score.neutral,
-                compound: sentiment.score.compound
-              }
+              sentimentScore: sql`${JSON.stringify(sentiment.score)}`
             })
-            .where(sql`id = ${batch[i].id}`);
+            .where(eq(reviews.id, batch[i].id));
         }
       });
     }
@@ -242,7 +240,7 @@ export class SemanticSearchService implements ISemanticSearchService {
 
     try {
       let sentimentResult: SentimentResult;
-
+      
       try {
         const sentimentResponse = await this.geminiClient.analyzeSentiment(query);
         sentimentResult = {
@@ -273,10 +271,7 @@ export class SemanticSearchService implements ISemanticSearchService {
     }
   }
 
-  private async getCachedResults(
-    query: string,
-    sentimentType: string
-  ): Promise<SearchResponse | null> {
+  private async getCachedResults(query: string, sentimentType: string): Promise<SearchResponse | null> {
     const cached = await this.cache.get(`${query}:${sentimentType}`);
     if (cached) {
       const recommendations = Array.isArray(cached)
@@ -314,10 +309,7 @@ export class SemanticSearchService implements ISemanticSearchService {
     return null;
   }
 
-  private async getSemanticResults(
-    query: string,
-    sentimentResult: SentimentResult
-  ): Promise<SearchResult[]> {
+  private async getSemanticResults(query: string, sentimentResult: SentimentResult): Promise<SearchResult[]> {
     try {
       const queryWithSentiment = `${query} [${getSentimentType(sentimentResult.score.compound)}]`;
       const semanticVector = await this.geminiClient.generateEmbedding(queryWithSentiment);
@@ -355,10 +347,7 @@ export class SemanticSearchService implements ISemanticSearchService {
     }
   }
 
-  private async getSentimentResults(
-    query: string,
-    sentimentResult: SentimentResult
-  ): Promise<SearchResult[]> {
+  private async getSentimentResults(query: string, sentimentResult: SentimentResult): Promise<SearchResult[]> {
     const results = await db
       .select({
         id: cafes.id,
