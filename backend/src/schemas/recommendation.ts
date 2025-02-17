@@ -83,14 +83,17 @@ export const CacheConfig = {
   searchQueryTTL: 15 * 60 * 1000, // 15 minutes for search queries
   preferencesMatchTTL: 30 * 60 * 1000, // 30 minutes for preference matches
   keywordAnalysisTTL: 60 * 60 * 1000, // 1 hour for keyword analysis
+  semanticAnalysisTTL: 3600, // Add this line with an appropriate value
   maxSize: 1000
 };
 
 export const CacheKeys = {
-  searchQuery: (query: string) => `cache:query:${query}`,
-  userPreferences: (userId: string) => `cache:preferences:${userId}`,
-  keywordAnalysis: (keywords: string[]) => `cache:keywords:${keywords.sort().join(':')}`,
-  locationBased: (lat: number, lng: number) => `cache:location:${lat}:${lng}`
+  searchQuery: (query: string) => `searchQuery:${query}`,
+  userPreferences: (userId: string) => `userPreferences:${userId}`,
+  keywordAnalysis: (keywords: string[]) => `keywordAnalysis:${keywords.join(',')}`,
+  locationBased: (lat: number, lng: number) => `location:${lat},${lng}`,
+  semanticAnalysis: (keywords: KeywordMatch[], userId?: string) =>
+    `semanticAnalysis:${keywords.map((k) => k.keyword).join(',')}:${userId || 'guest'}`
 };
 
 export const RateLimitConfig = {

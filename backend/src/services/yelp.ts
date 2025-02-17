@@ -19,7 +19,7 @@ async function searchGooglePhotos(query: string): Promise<string[]> {
     key: GOOGLE_API_KEY,
     cx: GOOGLE_ENGINE_ID,
     searchType: 'image',
-    num: 8, // Number of images to retrieve
+    num: 8 // Number of images to retrieve
   };
 
   try {
@@ -71,8 +71,8 @@ export async function fetchCafes(
       params: {
         term: 'cafe',
         location,
-        limit,
-      },
+        limit
+      }
     });
 
     // Fetch details (including hours) and photos for each cafe
@@ -81,7 +81,7 @@ export async function fetchCafes(
         try {
           // Fetch details for the cafe
           const detailsResponse = await axios.get(`https://api.yelp.com/v3/businesses/${cafe.id}`, {
-            headers: { Authorization: `Bearer ${YELP_API_KEY}` },
+            headers: { Authorization: `Bearer ${YELP_API_KEY}` }
           });
 
           // Extract and format hours
@@ -89,7 +89,9 @@ export async function fetchCafes(
           const formattedHours = formatBusinessHours(hours);
 
           // Search for additional photos using Google Custom Search API
-          const googlePhotos = await searchGooglePhotos(`${cafe.name} ${cafe.location.city} inside photos`);
+          const googlePhotos = await searchGooglePhotos(
+            `${cafe.name} ${cafe.location.city} inside photos`
+          );
 
           // Combine Yelp profile photo with Google photos
           const photos = cafe.image_url ? [cafe.image_url, ...googlePhotos] : googlePhotos;
@@ -105,19 +107,19 @@ export async function fetchCafes(
             dietaryOptions: {},
             location: {
               type: 'Point',
-              coordinates: [cafe.coordinates.longitude, cafe.coordinates.latitude],
+              coordinates: [cafe.coordinates.longitude, cafe.coordinates.latitude]
             },
             keywords: cafe.categories.map((category: any) => category.title),
             photos, // Combine Yelp and Google photos
-            hours: formattedHours, // Store hours in readable format
+            hours: formattedHours // Store hours in readable format
           };
         } catch (error) {
           console.error(`Error fetching details for cafe ${cafe.id}:`, {
             message: (error as Error).message,
             ...(axios.isAxiosError(error) && {
               status: error.response?.status,
-              data: error.response?.data,
-            }),
+              data: error.response?.data
+            })
           });
           return null; // Skip this cafe if there's an error
         }
@@ -143,7 +145,7 @@ export async function fetchCafes(
           location: cafe.location,
           keywords: cafe.keywords,
           photos: cafe.photos,
-          hours: cafe.hours,
+          hours: cafe.hours
         })
         .onConflictDoUpdate({
           target: cafes.address,
@@ -157,28 +159,28 @@ export async function fetchCafes(
             location: cafe.location,
             keywords: cafe.keywords,
             photos: cafe.photos,
-            hours: cafe.hours,
-          },
+            hours: cafe.hours
+          }
         });
     }
 
     reply.status(200).send({
       status: 'success',
       message: 'Cafes fetched and stored successfully',
-      data: validCafesData,
+      data: validCafesData
     });
   } catch (error) {
     const err = error as Error;
     console.error('Error fetching or storing cafes:', {
       message: err.message,
       stack: err.stack,
-      ...(axios.isAxiosError(error) && { response: error.response?.data }),
+      ...(axios.isAxiosError(error) && { response: error.response?.data })
     });
 
     reply.status(500).send({
       status: 'error',
       message: 'Failed to fetch or store cafes',
-      error: err.message,
+      error: err.message
     });
   }
 }

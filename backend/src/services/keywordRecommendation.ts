@@ -49,10 +49,30 @@ class KeywordRecommendationService {
         ...searchKeywords.map((k) => ({ ...k, confidence: k.confidence * 1.5 })),
         ...preferenceKeywords
       ];
-      console.log('Combined keywords:', combinedKeywords);
+
+      const cacheKey = CacheKeys.semanticAnalysis(combinedKeywords, request.userId);
+      const cachedScores = await this.cache.get<KeywordMatch[]>(cacheKey);
+
+      let semanticScores: KeywordMatch[];
+
+      if (cachedScores) {
+        semanticScores = cachedScores;
+      } else {
+        const prompt = this.createSemanticAnalysisPrompt(combinedKeywords);
+        const response = await this.geminiClient.generateContent(prompt);
+
+        const responseText = response
+          .text()
+          .trim()
+          .replace(/```json\n|\n```|```/g, '');
+
+        semanticScores = JSON.parse(responseText) as KeywordMatch[];
+
+        await this.cache.set(cacheKey, semanticScores, CacheConfig.semanticAnalysisTTL);
+      }
 
       const { results: cafes, pagination } = await this.fetchCafesWithKeywords(
-        combinedKeywords,
+        semanticScores,
         location,
         request.filters,
         page
@@ -60,7 +80,7 @@ class KeywordRecommendationService {
 
       const recommendations = await this.rankAndScoreCafes(
         cafes,
-        combinedKeywords,
+        semanticScores,
         location,
         userPrefs,
         searchKeywords.length > 0
@@ -301,65 +321,40 @@ class KeywordRecommendationService {
   private getMatchingKeywords(cafe: any, keywords: KeywordMatch[]): KeywordMatch[] {
     const matches: KeywordMatch[] = [];
 
-    // Check ambiance keywords
     if (cafe.ambiance) {
       const ambianceKeywords = keywords.filter((k) => k.category === 'ambiance');
-      for (const k of ambianceKeywords) {
-        if (
-          Object.keys(cafe.ambiance).some(
-            (a) =>
-              a.toLowerCase().includes(k.keyword.toLowerCase()) ||
-              k.keyword.toLowerCase().includes(a.toLowerCase())
-          )
-        ) {
-          // Calculate individual match confidence based on cafe's attributes
-          const matchConfidence = k.confidence * (cafe.rating / 5.0); // Example: adjust by rating
+      ambianceKeywords.forEach((k) => {
+        if (cafe.ambiance.includes(k.keyword)) {
           matches.push({
             ...k,
-            confidence: matchConfidence
+            confidence: k.confidence
           });
         }
-      }
+      });
     }
 
-    // Check dietary keywords
     if (cafe.dietaryOptions) {
       const dietaryKeywords = keywords.filter((k) => k.category === 'dietary');
-      for (const k of dietaryKeywords) {
-        if (
-          Object.keys(cafe.dietaryOptions).some(
-            (d) =>
-              d.toLowerCase().includes(k.keyword.toLowerCase()) ||
-              k.keyword.toLowerCase().includes(d.toLowerCase())
-          )
-        ) {
-          const matchConfidence = k.confidence * (cafe.rating / 5.0);
+      dietaryKeywords.forEach((k) => {
+        if (cafe.dietaryOptions.includes(k.keyword)) {
           matches.push({
             ...k,
-            confidence: matchConfidence
+            confidence: k.confidence
           });
         }
-      }
+      });
     }
 
-    // Check general keywords
     if (cafe.keywords) {
       const generalKeywords = keywords.filter((k) => k.category === 'general');
-      for (const k of generalKeywords) {
-        if (
-          cafe.keywords.some(
-            (ck: string) =>
-              ck.toLowerCase().includes(k.keyword.toLowerCase()) ||
-              k.keyword.toLowerCase().includes(ck.toLowerCase())
-          )
-        ) {
-          const matchConfidence = k.confidence * (cafe.rating / 5.0);
+      generalKeywords.forEach((k) => {
+        if (cafe.keywords.includes(k.keyword)) {
           matches.push({
             ...k,
-            confidence: matchConfidence
+            confidence: k.confidence
           });
         }
-      }
+      });
     }
 
     return matches;
@@ -374,7 +369,6 @@ class KeywordRecommendationService {
     const searchKeywords = keywords.filter((k) => k.confidence > 1.0);
     const prefKeywords = keywords.filter((k) => k.confidence <= 1.0);
 
-    // Calculate individual scores
     const searchScore =
       searchKeywords.length > 0
         ? this.getMatchingKeywords(cafe, searchKeywords).length / searchKeywords.length
@@ -385,10 +379,9 @@ class KeywordRecommendationService {
         ? this.getMatchingKeywords(cafe, prefKeywords).length / prefKeywords.length
         : 0;
 
-    const ratingScore = (cafe.rating - 3.5) / 1.5; // Normalize to -1 to 1
-    const distanceScore = Math.max(0, 1 - (cafe.distance || 0) / 10); // Normalize to 0-1 within 10km
+    const ratingScore = (cafe.rating - 3.5) / 1.5;
+    const distanceScore = Math.max(0, 1 - (cafe.distance || 0) / 10);
 
-    // Weights should sum to 1
     const weights = {
       search: hasSearchQuery ? 0.4 : 0,
       preferences: userPrefs ? 0.3 : 0,
@@ -396,7 +389,6 @@ class KeywordRecommendationService {
       distance: 0.1
     };
 
-    // Normalize weights
     const totalWeight = Object.values(weights).reduce((sum, w) => sum + w, 0);
     Object.keys(weights).forEach((key) => {
       weights[key as keyof typeof weights] /= totalWeight;
@@ -408,7 +400,6 @@ class KeywordRecommendationService {
       ratingScore * weights.rating +
       distanceScore * weights.distance;
 
-    // Ensure score is between 0 and 1
     return Math.max(0, Math.min(1, (finalScore + 1) / 2));
   }
 
@@ -421,15 +412,9 @@ class KeywordRecommendationService {
   ): Promise<CafeRecommendation[]> {
     return cafes
       .map((cafe) => {
-        // Get matching keywords with individual scores for this specific cafe
         const matchingKeywords = this.getMatchingKeywords(cafe, keywords).map((keyword) => ({
           ...keyword,
-          confidence:
-            keyword.confidence *
-            // Adjust confidence based on cafe-specific factors
-            ((cafe.rating / 5.0) * // Rating factor
-              (1 - (cafe.distance || 0) / 20) * // Distance factor (decreases with distance)
-              (cafe.reviewCount > 10 ? 1.2 : 1)) // Bonus for well-reviewed cafes
+          confidence: keyword.confidence * (cafe.rating / 5.0)
         }));
 
         const score = this.calculateScore(cafe, matchingKeywords, userPrefs, hasSearchQuery);
@@ -503,6 +488,22 @@ class KeywordRecommendationService {
     }
 
     this.lastRequestTime = now;
+  }
+
+  private createSemanticAnalysisPrompt(keywords: KeywordMatch[]): string {
+    return `
+      Analyze the semantic similarity between the following keywords and cafe keywords.
+      Rate each match from 0.0 to 1.0 based on semantic relevance.
+      
+      User Keywords:
+      ${JSON.stringify(keywords.map((k) => k.keyword))}
+      
+      Cafe Keywords:
+      ${JSON.stringify(keywords.map((k) => k.category))}
+      
+      Return a JSON array in this format:
+      [{"keyword": "example", "confidence": 0.9, "category": "ambiance"}]
+    `;
   }
 }
 
