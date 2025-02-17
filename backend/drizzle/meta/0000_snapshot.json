@@ -1,5 +1,5 @@
 {
-  "id": "1ca5599a-741f-41cd-aee5-073551e757c4",
+  "id": "caf499a4-57ce-47b5-a4d4-68bd92bde6fd",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -63,14 +63,14 @@
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false,
-          "default": "'{}'"
+          "default": "'[]'::jsonb"
         },
         "dietary_options": {
           "name": "dietary_options",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false,
-          "default": "'{}'"
+          "default": "'[]'::jsonb"
         },
         "location": {
           "name": "location",
@@ -78,14 +78,22 @@
           "primaryKey": false,
           "notNull": false
         },
-        "semantic_embedding": {
-          "name": "semantic_embedding",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
         "keywords": {
           "name": "keywords",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'::jsonb"
+        },
+        "photos": {
+          "name": "photos",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'::jsonb"
+        },
+        "hours": {
+          "name": "hours",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false,
@@ -102,73 +110,6 @@
           "columns": ["address"]
         }
       },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.preferences": {
-      "name": "preferences",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "favorite_cafes": {
-          "name": "favorite_cafes",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "dietary_restrictions": {
-          "name": "dietary_restrictions",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "ambiance": {
-          "name": "ambiance",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "semantic_embedding": {
-          "name": "semantic_embedding",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "preferences_user_id_users_id_fk": {
-          "name": "preferences_user_id_users_id_fk",
-          "tableFrom": "preferences",
-          "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -202,39 +143,15 @@
           "primaryKey": false,
           "notNull": true
         },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "description": {
           "name": "description",
           "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "comment": {
-          "name": "comment",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "text": {
-          "name": "text",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "sentiment_score": {
-          "name": "sentiment_score",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "entities": {
-          "name": "entities",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "processed_at": {
-          "name": "processed_at",
-          "type": "timestamp",
           "primaryKey": false,
           "notNull": false
         },
@@ -284,6 +201,13 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'user'"
+        },
         "username": {
           "name": "username",
           "type": "text",
@@ -332,8 +256,14 @@
           "primaryKey": false,
           "notNull": false
         },
-        "preferences_embedding": {
-          "name": "preferences_embedding",
+        "preferences": {
+          "name": "preferences",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "favorite_cafes": {
+          "name": "favorite_cafes",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false

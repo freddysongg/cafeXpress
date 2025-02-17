@@ -1,6 +1,6 @@
 {
-  "id": "fe889c83-4790-4a6d-a4b5-56601b7c7ea5",
-  "prevId": "b7ce1364-0900-45e9-bea2-54702ae3b62d",
+  "id": "9b63b345-274d-438c-8a96-005fa271a0d2",
+  "prevId": "fe889c83-4790-4a6d-a4b5-56601b7c7ea5",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -74,12 +74,6 @@
         },
         "location": {
           "name": "location",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "semantic_embedding": {
-          "name": "semantic_embedding",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false

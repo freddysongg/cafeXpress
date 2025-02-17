@@ -1,25 +1,70 @@
 import { FastifyInstance } from 'fastify';
-import { getRecommendations } from '@services/recommendation.js';
 import { validateUUID } from '@utils/validation.js';
-import { PersonalizedRecommendationRequest } from '@schemas/recommendation.js';
-import { SemanticSearchService } from '@services/semanticSearch.js';
-import { SentimentAnalysisService } from '@services/sentimentAnalysis.js';
-import { initializeRecommendationService } from '@services/recommendation.js';
+import { SearchRequestSchema } from '@schemas/recommendation.js';
+import KeywordRecommendationService from '@services/keywordRecommendation.js';
 
 export const recommendationRoutes = async (app: FastifyInstance) => {
-  const semanticSearchService = new SemanticSearchService(app.gemini);
-  const sentimentAnalysisService = new SentimentAnalysisService();
-  
-  await semanticSearchService.initialize();
-  await sentimentAnalysisService.initialize();
-  
-  initializeRecommendationService(app.gemini);
+  const recommendationService = new KeywordRecommendationService(app.gemini);
 
   const rateLimit = {
     max: 10,
     timeWindow: '1 minute'
   };
 
+  // Route for search-based recommendations
+  app.get<{
+    Querystring: {
+      q?: string;
+      latitude?: string;
+      longitude?: string;
+      dietary?: string;
+      activities?: string;
+      ambiance?: string;
+      radius?: string;
+    };
+  }>(
+    '/search',
+    {
+      config: {
+        rateLimit
+      }
+    },
+    async (req, reply) => {
+      try {
+        const searchRequest = {
+          query: req.query.q,
+          location:
+            req.query.latitude && req.query.longitude
+              ? {
+                  latitude: parseFloat(req.query.latitude),
+                  longitude: parseFloat(req.query.longitude)
+                }
+              : undefined,
+          filters: {
+            dietary: req.query.dietary?.split(','),
+            activities: req.query.activities?.split(','),
+            ambiance: req.query.ambiance?.split(','),
+            radius: req.query.radius ? parseFloat(req.query.radius) : undefined
+          }
+        };
+
+        const validatedRequest = SearchRequestSchema.parse(searchRequest);
+        const result = await recommendationService.getRecommendations(validatedRequest);
+        return reply.send(result);
+      } catch (error) {
+        req.log.error('Search recommendations error:', error);
+        return reply.status(400).send({
+          status: 'error',
+          message: error instanceof Error ? error.message : 'Invalid search request',
+          metadata: {
+            timestamp: new Date().toISOString()
+          }
+        });
+      }
+    }
+  );
+
+  // Route for user-based recommendations
   app.get<{
     Params: {
       userId: string;
@@ -27,9 +72,6 @@ export const recommendationRoutes = async (app: FastifyInstance) => {
     Querystring: {
       latitude?: string;
       longitude?: string;
-      dietary?: string;
-      activities?: string;
-      ambiance?: string;
     };
   }>(
     '/:userId',
@@ -47,54 +89,26 @@ export const recommendationRoutes = async (app: FastifyInstance) => {
           });
         }
 
-        const request: PersonalizedRecommendationRequest = {
+        const searchRequest = {
           userId: req.params.userId,
-          preferences: {
-            dietary: req.query.dietary?.split(','),
-            activities: req.query.activities?.split(','),
-            ambiance: req.query.ambiance?.split(',')
-          }
+          location:
+            req.query.latitude && req.query.longitude
+              ? {
+                  latitude: parseFloat(req.query.latitude),
+                  longitude: parseFloat(req.query.longitude)
+                }
+              : undefined,
+          filters: {} // Add empty filters to match SearchRequestSchema
         };
 
-        if (req.query.latitude && req.query.longitude) {
-          const lat = parseFloat(req.query.latitude);
-          const lon = parseFloat(req.query.longitude);
-
-          if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
-            return reply.status(400).send({
-              status: 'error',
-              message: 'Invalid latitude/longitude values'
-            });
-          }
-
-          request.location = {
-            latitude: lat,
-            longitude: lon
-          };
-        }
-
-        const result = await getRecommendations(app.gemini, request);
+        const validatedRequest = SearchRequestSchema.parse(searchRequest);
+        const result = await recommendationService.getRecommendations(validatedRequest);
         return reply.send(result);
-
       } catch (error) {
-        req.log.error('Recommendation route error:', error);
-        
-        let statusCode = 500;
-        let message = 'Failed to generate recommendations';
-
-        if (error instanceof Error) {
-          if (error.message.includes('not found')) {
-            statusCode = 404;
-            message = 'User preferences not found';
-          } else if (error.message.includes('invalid input')) {
-            statusCode = 400;
-            message = 'Invalid input data';
-          }
-        }
-        
-        return reply.status(statusCode).send({
+        req.log.error('User recommendations error:', error);
+        return reply.status(500).send({
           status: 'error',
-          message,
+          message: error instanceof Error ? error.message : 'Failed to generate recommendations',
           metadata: {
             timestamp: new Date().toISOString()
           }

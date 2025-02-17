@@ -12,7 +12,7 @@ export async function createReview(
   reply: FastifyReply
 ): Promise<FastifyReply> {
   try {
-    const { userId, cafeId, rating, description, title, sentimentScore, entities } = req.body;
+    const { userId, cafeId, rating, description, title } = req.body;
 
     const userExists = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
@@ -39,10 +39,7 @@ export async function createReview(
         cafeId,
         rating,
         description,
-        title,
-        sentimentScore,
-        entities,
-        processedAt: new Date()
+        title
       })
       .returning({
         id: reviews.id,
@@ -51,9 +48,6 @@ export async function createReview(
         rating: reviews.rating,
         description: reviews.description,
         title: reviews.title,
-        sentimentScore: reviews.sentimentScore,
-        entities: reviews.entities,
-        processedAt: reviews.processedAt,
         createdAt: reviews.createdAt
       });
 

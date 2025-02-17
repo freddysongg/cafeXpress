@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Coffee, Mail, Lock } from 'lucide-react';
-import { useAuth } from '../components/AuthContext'; // Import your AuthContext
+import { useAuth } from '../hooks/useAuth';
 
 function SignIn() {
   const [email, setEmail] = useState('');
