@@ -170,7 +170,12 @@ class KeywordRecommendationService {
           total: recommendations.length,
           cached: false,
           generatedAt: new Date().toISOString(),
-          source: request.userId ? 'preferences' : request.query ? 'search' : 'location'
+          source: request.query ? 'search' : 'location',
+          pagination: {
+            currentPage: 1,
+            totalPages: 1,
+            hasMore: false
+          }
         }
       };
 
@@ -185,7 +190,12 @@ class KeywordRecommendationService {
           total: 0,
           cached: false,
           generatedAt: new Date().toISOString(),
-          source: 'search'
+          source: 'search',
+          pagination: {
+            currentPage: 1,
+            totalPages: 1,
+            hasMore: false
+          }
         }
       };
     }

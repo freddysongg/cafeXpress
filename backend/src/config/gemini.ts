@@ -91,6 +91,7 @@ class GeminiClientImpl implements GeminiClient {
     try {
       const json = JSON.parse(jsonStr);
       return { score: Number(json.score) };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       console.error('Failed to parse sentiment response:', responseText);
       // Fallback to neutral sentiment

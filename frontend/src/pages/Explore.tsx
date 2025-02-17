@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
 import { Button } from '../components/ui/button';
 import { ChevronDown } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,12 +14,13 @@ import {
   getRecommendations,
   type CafeRecommendation,
   type Location,
+  type KeywordMatch,
 } from '../services/api';
 import SearchBar from '../components/SearchBar';
 import debounce from 'lodash.debounce';
 
 const filterOptions = {
-  distance: ['1', '5', '10', '20'], // in kilometers
+  distance: ['1', '5', '10', '20'],
   ambiance: ['Cozy', 'Modern', 'Quiet', 'Lively'],
   dietary: ['Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free'],
   activities: ['Wifi', 'Study', 'Meeting', 'Games'],
@@ -31,6 +32,14 @@ type SearchFilters = {
   ambiance?: string[];
   radius?: number;
 };
+
+const RIVERSIDE_COORDINATES = { lat: 33.9806, lng: -117.3755 } as const;
+
+const mapLoader = new Loader({
+  apiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
+  version: 'weekly',
+  libraries: ['places'],
+});
 
 function Explore() {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -44,6 +53,8 @@ function Explore() {
     Record<string, string>
   >({});
   const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
+  const [matchingKeywords, setMatchingKeywords] = useState<KeywordMatch[]>([]);
+  const navigate = useNavigate();
 
   const debouncedSearchFn = useRef(
     debounce(
@@ -53,6 +64,7 @@ function Explore() {
         location: Location | null,
         callbacks: {
           setCafes: typeof setCafes;
+          setMatchingKeywords: typeof setMatchingKeywords;
           setSearchParams: typeof setSearchParams;
           setError: typeof setError;
           setLoading: typeof setLoading;
@@ -62,9 +74,26 @@ function Explore() {
           const recommendations = await getRecommendations({
             query: query || undefined,
             location: location || undefined,
-            filters,
+            filters: {
+              dietary: filters.dietary,
+              ambiance: filters.ambiance,
+              activities: filters.activities,
+              radius: filters.radius,
+            },
           });
+
           callbacks.setCafes(recommendations);
+          // Extract all unique matching keywords
+          const allKeywords = recommendations.flatMap(
+            (cafe) => cafe.matchingKeywords
+          );
+          const uniqueKeywords = Array.from(
+            new Map(
+              allKeywords.map((k) => [`${k.category}:${k.keyword}`, k])
+            ).values()
+          );
+          callbacks.setMatchingKeywords(uniqueKeywords);
+
           if (query) callbacks.setSearchParams({ q: query });
         } catch (error) {
           console.error('Error searching cafes:', error);
@@ -78,10 +107,10 @@ function Explore() {
   ).current;
 
   const handleSearch = useCallback(
-    (query: string) => {
+    (query: string, searchFilters?: SearchFilters) => {
       setLoading(true);
       setError(null);
-      const filters = {
+      const filters = searchFilters || {
         dietary: selectedFilters.dietary
           ? [selectedFilters.dietary]
           : undefined,
@@ -97,6 +126,7 @@ function Explore() {
       };
       debouncedSearchFn(query, filters, userLocation, {
         setCafes,
+        setMatchingKeywords,
         setSearchParams,
         setError,
         setLoading,
@@ -105,19 +135,30 @@ function Explore() {
     [selectedFilters, userLocation, debouncedSearchFn, setSearchParams]
   );
 
+  const searchFilters = useMemo(
+    () => ({
+      dietary: selectedFilters.dietary ? [selectedFilters.dietary] : undefined,
+      activities: selectedFilters.activities
+        ? [selectedFilters.activities]
+        : undefined,
+      ambiance: selectedFilters.ambiance
+        ? [selectedFilters.ambiance]
+        : undefined,
+      radius: selectedFilters.distance
+        ? parseFloat(selectedFilters.distance)
+        : undefined,
+    }),
+    [selectedFilters]
+  );
+
   // Initialize map
   useEffect(() => {
     const initMap = async () => {
-      const loader = new Loader({
-        apiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
-        version: 'weekly',
-      });
-
       try {
-        const { Map } = await loader.importLibrary('maps');
+        const { Map } = await mapLoader.importLibrary('maps');
         if (mapRef.current) {
           const newMap = new Map(mapRef.current, {
-            center: { lat: 40.7128, lng: -74.006 },
+            center: RIVERSIDE_COORDINATES,
             zoom: 13,
             clickableIcons: true,
             disableDefaultUI: false,
@@ -142,64 +183,66 @@ function Explore() {
     markers.forEach((marker) => marker.setMap(null));
     const newMarkers: google.maps.Marker[] = [];
 
+    // Add cafe markers
+    cafes.forEach((cafe) => {
+      if (cafe.metadata?.location?.coordinates) {
+        const marker = new google.maps.Marker({
+          map,
+          position: {
+            lat: cafe.metadata.location.coordinates[1],
+            lng: cafe.metadata.location.coordinates[0],
+          },
+          title: cafe.name,
+          icon: {
+            url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+          },
+        });
+
+        // Add click listener to navigate to cafe page
+        marker.addListener('click', () => {
+          navigate(`/restaurant/${cafe.id}`);
+        });
+
+        newMarkers.push(marker);
+      }
+    });
+
     // Add user location marker if available
     if (userLocation) {
       const userMarker = new google.maps.Marker({
+        map,
         position: {
           lat: userLocation.latitude,
           lng: userLocation.longitude,
         },
-        map,
         title: 'Your Location',
         icon: {
-          path: google.maps.SymbolPath.CIRCLE,
-          scale: 10,
-          fillColor: '#4285F4',
-          fillOpacity: 1,
-          strokeColor: '#ffffff',
-          strokeWeight: 2,
+          url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
         },
       });
       newMarkers.push(userMarker);
     }
 
-    // Add cafe markers
-    cafes.forEach((cafe) => {
-      if (cafe.metadata.location) {
-        const marker = new google.maps.Marker({
-          position: {
-            lat: cafe.metadata.location.coordinates[1],
-            lng: cafe.metadata.location.coordinates[0],
-          },
-          map,
-          title: cafe.name,
-        });
-        newMarkers.push(marker);
-      }
-    });
-
     setMarkers(newMarkers);
 
-    // Center map on user location or first cafe
-    if (userLocation) {
-      map.setCenter({
-        lat: userLocation.latitude,
-        lng: userLocation.longitude,
-      });
-    } else if (cafes.length > 0 && cafes[0].metadata.location) {
+    // Center map on first cafe or user location
+    if (cafes.length > 0 && cafes[0].metadata?.location?.coordinates) {
       map.setCenter({
         lat: cafes[0].metadata.location.coordinates[1],
         lng: cafes[0].metadata.location.coordinates[0],
       });
+    } else if (userLocation) {
+      map.setCenter({
+        lat: userLocation.latitude,
+        lng: userLocation.longitude,
+      });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, cafes, userLocation, navigate]);
 
-    return () => {
-      newMarkers.forEach((marker) => marker.setMap(null));
-    };
-  }, [map, cafes, userLocation, markers]);
-
-  // Get initial location and search only once
   useEffect(() => {
+    const searchQuery = searchParams.get('q');
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -209,69 +252,97 @@ function Explore() {
           };
           setUserLocation(location);
 
-          // Only search if there's an initial query in the URL
-          const searchQuery = searchParams.get('q');
           if (searchQuery) {
-            const filters = {
-              dietary: selectedFilters.dietary
-                ? [selectedFilters.dietary]
-                : undefined,
-              activities: selectedFilters.activities
-                ? [selectedFilters.activities]
-                : undefined,
-              ambiance: selectedFilters.ambiance
-                ? [selectedFilters.ambiance]
-                : undefined,
-              radius: selectedFilters.distance
-                ? parseFloat(selectedFilters.distance)
-                : undefined,
-            };
-            debouncedSearchFn(searchQuery, filters, location, {
-              setCafes,
-              setSearchParams,
-              setError,
-              setLoading,
-            });
+            setLoading(true);
+            handleSearch(searchQuery, searchFilters);
           } else {
             setLoading(false);
           }
         },
         () => {
           console.error('Location permission denied');
-          setLoading(false);
-          // Only search if there's an initial query
-          const searchQuery = searchParams.get('q');
           if (searchQuery) {
-            handleSearch(searchQuery);
+            setLoading(true);
+            handleSearch(searchQuery, searchFilters);
           }
+          setLoading(false);
         }
       );
     }
-  }, [
-    debouncedSearchFn,
-    handleSearch,
-    searchParams,
-    selectedFilters.activities,
-    selectedFilters.ambiance,
-    selectedFilters.dietary,
-    selectedFilters.distance,
-    setSearchParams,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const handleFilterSelect = (category: string, value: string) => {
-    setSelectedFilters((prev) => ({
-      ...prev,
-      [category]: value,
-    }));
+    setSelectedFilters((prev) => {
+      const newFilters = {
+        ...prev,
+        [category]: value,
+      };
+
+      const searchQuery = searchParams.get('q');
+      if (searchQuery) {
+        setLoading(true);
+        debouncedSearchFn(
+          searchQuery,
+          {
+            dietary: newFilters.dietary ? [newFilters.dietary] : undefined,
+            activities: newFilters.activities
+              ? [newFilters.activities]
+              : undefined,
+            ambiance: newFilters.ambiance ? [newFilters.ambiance] : undefined,
+            radius: newFilters.distance
+              ? parseFloat(newFilters.distance)
+              : undefined,
+          },
+          userLocation,
+          {
+            setCafes,
+            setMatchingKeywords,
+            setSearchParams,
+            setError,
+            setLoading,
+          }
+        );
+      }
+
+      return newFilters;
+    });
   };
 
-  // Trigger search when filters change
-  useEffect(() => {
-    const query = searchParams.get('q');
-    if (query) {
-      handleSearch(query);
-    }
-  }, [selectedFilters, handleSearch, searchParams]);
+  const handleFilterRemove = (category: string) => {
+    setSelectedFilters((prev) => {
+      const newFilters = { ...prev };
+      delete newFilters[category];
+
+      const searchQuery = searchParams.get('q');
+      if (searchQuery) {
+        setLoading(true);
+        debouncedSearchFn(
+          searchQuery,
+          {
+            dietary: newFilters.dietary ? [newFilters.dietary] : undefined,
+            activities: newFilters.activities
+              ? [newFilters.activities]
+              : undefined,
+            ambiance: newFilters.ambiance ? [newFilters.ambiance] : undefined,
+            radius: newFilters.distance
+              ? parseFloat(newFilters.distance)
+              : undefined,
+          },
+          userLocation,
+          {
+            setCafes,
+            setMatchingKeywords,
+            setSearchParams,
+            setError,
+            setLoading,
+          }
+        );
+      }
+
+      return newFilters;
+    });
+  };
 
   const FilterButton = ({ category }: { category: string }) => (
     <DropdownMenu>
@@ -336,17 +407,39 @@ function Explore() {
                 >
                   {value}
                   <button
-                    onClick={() => {
-                      const newFilters = { ...selectedFilters };
-                      delete newFilters[category];
-                      setSelectedFilters(newFilters);
-                    }}
+                    onClick={() => handleFilterRemove(category)}
                     className="hover:text-muted-foreground"
                   >
                     ×
                   </button>
                 </div>
               ))}
+            </div>
+          )}
+          {/* Matching Keywords Section */}
+          {matchingKeywords.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-sm font-semibold text-coffee-700 mb-2">
+                Matching Keywords:
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {matchingKeywords.map((keyword, index) => (
+                  <span
+                    key={`${keyword.category}-${keyword.keyword}-${index}`}
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      keyword.category === 'ambiance'
+                        ? 'bg-blue-100 text-blue-800'
+                        : keyword.category === 'dietary'
+                          ? 'bg-green-100 text-green-800'
+                          : keyword.category === 'activity'
+                            ? 'bg-purple-100 text-purple-800'
+                            : 'bg-gray-100 text-gray-800'
+                    }`}
+                  >
+                    {keyword.keyword}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
           {/* Loading and Error States */}
@@ -371,22 +464,18 @@ function Explore() {
               {cafes.map((cafe) => (
                 <CafeCard
                   key={cafe.id}
-                  cafe={
-                    {
-                      id: cafe.id,
-                      name: cafe.name,
-                      image:
-                        cafe.metadata.photos?.[0] ||
-                        'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80',
-                      rating: cafe.metadata.rating,
-                      reviews: cafe.metadata.reviewCount,
-                      distance:
-                        cafe.distance?.toFixed(1) + ' km' || 'Distance unknown',
-                      address: cafe.address,
-                      isOpen: true, // TODO: Add opening hours logic
-                      tags: cafe.metadata.keywords,
-                    } as const
-                  }
+                  cafe={{
+                    id: cafe.id,
+                    name: cafe.name,
+                    image: cafe.metadata.photos?.[0] || 'default-image-url',
+                    rating: cafe.metadata.rating || 0,
+                    reviews: cafe.metadata.reviewCount || 0,
+                    distance: cafe.distance?.toFixed(1) || '0',
+                    address: cafe.metadata.address || '',
+                    isOpen: true,
+                    tags: cafe.metadata.keywords || [],
+                    matchingKeywords: cafe.matchingKeywords,
+                  }}
                 />
               ))}
             </div>

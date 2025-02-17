@@ -1,8 +1,8 @@
-import React from 'react';
 import { Star, Clock, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { KeywordMatch } from '../services/api';
 
-interface CafeProps {
+interface CafeCardProps {
   cafe: {
     id: string;
     name: string;
@@ -13,10 +13,11 @@ interface CafeProps {
     address: string;
     isOpen: boolean;
     tags: string[];
+    matchingKeywords?: KeywordMatch[];
   };
 }
 
-const CafeCard: React.FC<CafeProps> = ({ cafe }) => {
+const CafeCard = ({ cafe }: CafeCardProps) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
@@ -82,6 +83,33 @@ const CafeCard: React.FC<CafeProps> = ({ cafe }) => {
               </span>
             ))}
           </div>
+
+          {/* Add matching keywords section */}
+          {cafe.matchingKeywords && cafe.matchingKeywords.length > 0 && (
+            <div className="px-4 py-2 border-t">
+              <div className="flex flex-wrap gap-2">
+                {cafe.matchingKeywords.map((keyword, index) => (
+                  <span
+                    key={`${keyword.category}-${keyword.keyword}-${index}`}
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      keyword.category === 'ambiance'
+                        ? 'bg-blue-100 text-blue-800'
+                        : keyword.category === 'dietary'
+                          ? 'bg-green-100 text-green-800'
+                          : keyword.category === 'activity'
+                            ? 'bg-purple-100 text-purple-800'
+                            : 'bg-gray-100 text-gray-800'
+                    }`}
+                  >
+                    {keyword.keyword}
+                    <span className="ml-1 text-xs opacity-75">
+                      {Math.round(keyword.confidence * 66.67)}%
+                    </span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

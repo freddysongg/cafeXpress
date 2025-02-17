@@ -39,7 +39,8 @@ export const SearchRequestSchema = z.object({
       radius: z.number().optional()
     })
     .optional(),
-  userId: z.string().optional()
+  userId: z.string().optional(),
+  page: z.number().optional()
 });
 
 // Response schema
@@ -68,7 +69,12 @@ export const RecommendationResponseSchema = z.object({
     cached: z.boolean(),
     generatedAt: z.string(),
     expiresAt: z.string().optional(),
-    source: z.enum(['cache', 'search', 'preferences', 'location'])
+    source: z.enum(['cache', 'search', 'preferences', 'location']),
+    pagination: z.object({
+      currentPage: z.number(),
+      totalPages: z.number(),
+      hasMore: z.boolean()
+    })
   })
 });
 
@@ -105,3 +111,40 @@ export type SearchRequest = z.infer<typeof SearchRequestSchema>;
 export type CafeRecommendation = z.infer<typeof CafeRecommendationSchema>;
 export type RecommendationResponse = z.infer<typeof RecommendationResponseSchema>;
 export type KeywordMatch = z.infer<typeof KeywordMatchSchema>;
+
+export interface RecommendationMetadata {
+  total: number;
+  cached: boolean;
+  generatedAt: string;
+  source: 'preferences' | 'location' | 'cache' | 'search';
+  expiresAt?: string;
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
+}
+
+export interface FetchCafesResult {
+  results: Array<{
+    id: string;
+    name: string;
+    description: string | null;
+    address: string;
+    keywords: string[] | null;
+    ambiance: Record<string, boolean> | null;
+    dietaryOptions: Record<string, boolean> | null;
+    location: any;
+    photos: string[] | null;
+    rating: number;
+    reviewCount: number;
+    distance: number;
+    matchScore: number;
+  }>;
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalCount: number;
+    hasMore: boolean;
+  };
+}

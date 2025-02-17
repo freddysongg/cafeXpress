@@ -30,6 +30,11 @@ export interface CafeRecommendation {
   name: string;
   description?: string;
   address: string;
+  phone?: string;
+  hours?: {
+    today?: string;
+    [key: string]: string | undefined;
+  };
   matchingKeywords: KeywordMatch[];
   score: number;
   distance?: number;
@@ -37,6 +42,7 @@ export interface CafeRecommendation {
     rating: number;
     reviewCount: number;
     keywords: string[];
+    address: string;
     location: {
       coordinates: [number, number];
       type: 'Point';
@@ -111,3 +117,11 @@ export async function getRecommendations(
     throw error;
   }
 }
+
+export const getCafeById = async (id: string): Promise<CafeRecommendation> => {
+  const response = await fetch(`${API_BASE_URL}/cafe/${id}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch cafe details');
+  }
+  return response.json();
+};

@@ -1,6 +1,6 @@
 import { db } from '@config/db.js';
 import { cafes, reviews, users } from '@config/schemas.js';
-import { eq, sql, desc, and } from 'drizzle-orm';
+import { eq, sql, desc } from 'drizzle-orm';
 import type { GeminiClient } from '@schemas/gemini.js';
 import { RecommendationCache } from '@services/cache.js';
 import {
@@ -12,8 +12,10 @@ import {
   type CafeRecommendation,
   type KeywordMatch,
   type RecommendationResponse,
-  type UserPreferences
+  type UserPreferences,
+  FetchCafesResult
 } from '@schemas/recommendation.js';
+import * as cafeQueries from '@services/queries/cafeQueries.js';
 
 class KeywordRecommendationService {
   private cache: RecommendationCache;
@@ -28,30 +30,13 @@ class KeywordRecommendationService {
   async getRecommendations(request: SearchRequest): Promise<RecommendationResponse> {
     try {
       const location = this.getRequestLocation(request);
-      let cacheKey: string;
+      const page = request.page || 1;
 
-      if (request.userId && request.query) {
-        cacheKey = `${CacheKeys.userPreferences(request.userId)}:${CacheKeys.searchQuery(request.query)}`;
-      } else if (request.query) {
-        cacheKey = CacheKeys.searchQuery(request.query);
-      } else if (request.userId) {
-        cacheKey = CacheKeys.userPreferences(request.userId);
-      } else {
-        cacheKey = CacheKeys.locationBased(location.latitude, location.longitude);
-      }
+      console.log('Search query:', request.query);
 
-      const cached = await this.cache.get<RecommendationResponse>(cacheKey);
-      if (cached?.status === 'success') {
-        return {
-          ...cached,
-          metadata: { ...cached.metadata, cached: true }
-        };
-      }
-
-      await this.applyRateLimit();
-
-      // Get all available keywords
       const searchKeywords = request.query ? await this.analyzeQueryKeywords(request.query) : [];
+      console.log('Analyzed search keywords:', searchKeywords);
+
       let userPrefs: UserPreferences | undefined;
       let preferenceKeywords: KeywordMatch[] = [];
 
@@ -60,14 +45,19 @@ class KeywordRecommendationService {
         preferenceKeywords = this.convertPreferencesToKeywords(userPrefs);
       }
 
-      // Combine keywords with proper weighting
       const combinedKeywords = [
-        ...searchKeywords.map((k) => ({ ...k, confidence: k.confidence * 1.5 })), // Prioritize search keywords
+        ...searchKeywords.map((k) => ({ ...k, confidence: k.confidence * 1.5 })),
         ...preferenceKeywords
       ];
+      console.log('Combined keywords:', combinedKeywords);
 
-      // Fetch and rank cafes
-      const cafes = await this.fetchCafesWithKeywords(combinedKeywords, location, request.filters);
+      const { results: cafes, pagination } = await this.fetchCafesWithKeywords(
+        combinedKeywords,
+        location,
+        request.filters,
+        page
+      );
+
       const recommendations = await this.rankAndScoreCafes(
         cafes,
         combinedKeywords,
@@ -76,19 +66,21 @@ class KeywordRecommendationService {
         searchKeywords.length > 0
       );
 
-      const response: RecommendationResponse = {
+      return {
         status: 'success',
         data: recommendations,
         metadata: {
-          total: recommendations.length,
+          total: pagination.totalCount,
           cached: false,
           generatedAt: new Date().toISOString(),
-          source: request.query ? 'search' : request.userId ? 'preferences' : 'location'
+          source: request.query ? 'search' : request.userId ? 'preferences' : 'location',
+          pagination: {
+            currentPage: pagination.currentPage,
+            totalPages: pagination.totalPages,
+            hasMore: pagination.hasMore
+          }
         }
       };
-
-      await this.cache.set(cacheKey, response);
-      return response;
     } catch (error) {
       console.error('Failed to generate recommendations:', error);
       return {
@@ -98,7 +90,12 @@ class KeywordRecommendationService {
           total: 0,
           cached: false,
           generatedAt: new Date().toISOString(),
-          source: 'search'
+          source: 'search',
+          pagination: {
+            currentPage: 1,
+            totalPages: 1,
+            hasMore: false
+          }
         }
       };
     }
@@ -126,8 +123,11 @@ class KeywordRecommendationService {
 
     const prompt = `Analyze this café search query and extract relevant keywords.
     Query: "${query}"
-    Return a JSON array of keywords in this exact format, with no markdown formatting or additional text:
-    [{"keyword": "example", "confidence": 0.9, "category": "ambiance"}]`;
+    Return a JSON array of keywords with categories (ambiance, dietary, general) in this exact format:
+    [{"keyword": "example", "confidence": 0.9, "category": "ambiance"}]
+    For ambiance words like: cozy, rustic, modern, vibrant
+    For dietary words like: vegan, gluten-free, organic
+    For general words like: cafe, coffee, tea`;
 
     try {
       const response = await this.geminiClient.generateContent(prompt);
@@ -163,101 +163,55 @@ class KeywordRecommendationService {
   private async fetchCafesWithKeywords(
     keywords: KeywordMatch[],
     location: { latitude: number; longitude: number },
-    filters?: SearchRequest['filters']
-  ) {
-    const keywordArray = keywords.map((k) => k.keyword);
-    console.log('Searching with keywords:', keywordArray);
+    filters?: SearchRequest['filters'],
+    page: number = 1
+  ): Promise<FetchCafesResult> {
+    const PAGE_SIZE = 10;
+    const MAX_RESULTS = 50;
+    const offset = (page - 1) * PAGE_SIZE;
 
-    const keywordConditions =
-      keywords.length > 0
-        ? sql`EXISTS (
-          SELECT 1 FROM jsonb_array_elements_text(${cafes.keywords}) AS k
-          WHERE k = ANY(array[${sql.join(keywordArray, sql`, `)}])
-        )`
-        : sql`TRUE`;
-
-    const filterConditions = this.buildNonDistanceFilters(filters);
-    console.log('Applied filters:', filters);
-
-    const distanceCalc = sql<number>`
-      111.111 *
-      SQRT(
-        POW(${location.latitude} - CAST(CAST(${cafes.location}->>'coordinates' AS json)->>1 AS float), 2) +
-        POW(${location.longitude} - CAST(CAST(${cafes.location}->>'coordinates' AS json)->>0 AS float), 2)
-      )
-    `;
-
-    // First, get the aggregated review data in a subquery
-    const reviewSubquery = db
-      .select({
-        cafeId: reviews.cafeId,
-        avgRating:
-          sql<number>`COALESCE(AVG(CAST(${reviews.rating}->>'rating' AS numeric)), 3.5)`.as(
-            'avg_rating'
-          ),
-        reviewCount: sql<number>`COUNT(${reviews.id})`.as('review_count')
-      })
-      .from(reviews)
-      .groupBy(reviews.cafeId)
-      .as('review_stats');
-
-    const results = await db
-      .select({
-        id: cafes.id,
-        name: cafes.name,
-        description: cafes.description,
-        address: cafes.address,
-        keywords: cafes.keywords,
-        location: cafes.location,
-        photos: cafes.photos,
-        rating: sql<number>`COALESCE(review_stats.avg_rating, 3.5)`,
-        reviewCount: sql<number>`COALESCE(review_stats.review_count, 0)`,
-        distance: distanceCalc
-      })
-      .from(cafes)
-      .leftJoin(reviewSubquery, eq(reviewSubquery.cafeId, cafes.id))
-      .where(
-        sql`
-        ${and(keywordConditions, filterConditions)}
-        AND (${distanceCalc} <= ${filters?.radius || 999999})
-      `
-      )
-      .orderBy(desc(sql`COALESCE(review_stats.avg_rating, 3.5)`));
-
-    console.log('Found cafes:', results.length);
-    if (results.length === 0) {
-      console.log('No cafes found matching criteria. Trying without distance filter...');
-      // Try without distance filter to see if that's the limiting factor
-      const resultsWithoutDistance = await db
-        .select({
-          id: cafes.id,
-          name: cafes.name,
-          keywords: cafes.keywords,
-          location: cafes.location
-        })
-        .from(cafes)
-        .where(and(keywordConditions, filterConditions));
-
-      console.log('Cafes without distance filter:', resultsWithoutDistance.length);
-      if (resultsWithoutDistance.length === 0) {
-        console.log('Still no cafes found. Checking individual conditions...');
-        // Check just keywords
-        const cafesByKeywords = await db
-          .select({ id: cafes.id, keywords: cafes.keywords })
-          .from(cafes)
-          .where(keywordConditions);
-        console.log('Cafes matching keywords:', cafesByKeywords.length);
-
-        // Check just filters
-        const cafesByFilters = await db
-          .select({ id: cafes.id })
-          .from(cafes)
-          .where(filterConditions);
-        console.log('Cafes matching filters:', cafesByFilters.length);
-      }
+    if (offset >= MAX_RESULTS) {
+      return {
+        results: [],
+        pagination: {
+          currentPage: page,
+          totalPages: Math.floor(MAX_RESULTS / PAGE_SIZE),
+          totalCount: 0,
+          hasMore: false
+        }
+      };
     }
 
-    return results;
+    const keywordConditions = cafeQueries.buildKeywordConditions(keywords);
+    const filterConditions = this.buildNonDistanceFilters(filters);
+    const distanceCalc = cafeQueries.calculateDistance(location.latitude, location.longitude);
+
+    const results = await cafeQueries.getCafesWithKeywords(
+      keywordConditions,
+      filterConditions,
+      distanceCalc,
+      filters?.radius || 999999
+    );
+
+    const firstResult = results[0];
+    const totalCount = firstResult ? Number(firstResult.totalCount) : 0;
+    const totalPages = Math.min(
+      Math.ceil(totalCount / PAGE_SIZE),
+      Math.floor(MAX_RESULTS / PAGE_SIZE)
+    );
+
+    return {
+      results: results.map((r) => {
+        const { ...cafeData } = r;
+        return cafeData;
+      }),
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount: Math.min(totalCount, MAX_RESULTS),
+        hasMore: page < totalPages
+      }
+    };
   }
 
   private buildNonDistanceFilters(filters?: SearchRequest['filters']) {
@@ -344,11 +298,71 @@ class KeywordRecommendationService {
     return conditions.length > 0 ? sql.join(conditions, sql` AND `) : sql`TRUE`;
   }
 
-  private getMatchingKeywords(
-    cafeKeywords: string[],
-    searchKeywords: KeywordMatch[]
-  ): KeywordMatch[] {
-    return searchKeywords.filter((k) => cafeKeywords.includes(k.keyword));
+  private getMatchingKeywords(cafe: any, keywords: KeywordMatch[]): KeywordMatch[] {
+    const matches: KeywordMatch[] = [];
+
+    // Check ambiance keywords
+    if (cafe.ambiance) {
+      const ambianceKeywords = keywords.filter((k) => k.category === 'ambiance');
+      for (const k of ambianceKeywords) {
+        if (
+          Object.keys(cafe.ambiance).some(
+            (a) =>
+              a.toLowerCase().includes(k.keyword.toLowerCase()) ||
+              k.keyword.toLowerCase().includes(a.toLowerCase())
+          )
+        ) {
+          // Calculate individual match confidence based on cafe's attributes
+          const matchConfidence = k.confidence * (cafe.rating / 5.0); // Example: adjust by rating
+          matches.push({
+            ...k,
+            confidence: matchConfidence
+          });
+        }
+      }
+    }
+
+    // Check dietary keywords
+    if (cafe.dietaryOptions) {
+      const dietaryKeywords = keywords.filter((k) => k.category === 'dietary');
+      for (const k of dietaryKeywords) {
+        if (
+          Object.keys(cafe.dietaryOptions).some(
+            (d) =>
+              d.toLowerCase().includes(k.keyword.toLowerCase()) ||
+              k.keyword.toLowerCase().includes(d.toLowerCase())
+          )
+        ) {
+          const matchConfidence = k.confidence * (cafe.rating / 5.0);
+          matches.push({
+            ...k,
+            confidence: matchConfidence
+          });
+        }
+      }
+    }
+
+    // Check general keywords
+    if (cafe.keywords) {
+      const generalKeywords = keywords.filter((k) => k.category === 'general');
+      for (const k of generalKeywords) {
+        if (
+          cafe.keywords.some(
+            (ck: string) =>
+              ck.toLowerCase().includes(k.keyword.toLowerCase()) ||
+              k.keyword.toLowerCase().includes(ck.toLowerCase())
+          )
+        ) {
+          const matchConfidence = k.confidence * (cafe.rating / 5.0);
+          matches.push({
+            ...k,
+            confidence: matchConfidence
+          });
+        }
+      }
+    }
+
+    return matches;
   }
 
   private calculateScore(
@@ -357,31 +371,24 @@ class KeywordRecommendationService {
     userPrefs?: UserPreferences,
     hasSearchQuery: boolean = false
   ): number {
-    // Split keywords by source
     const searchKeywords = keywords.filter((k) => k.confidence > 1.0);
     const prefKeywords = keywords.filter((k) => k.confidence <= 1.0);
 
     // Calculate individual scores
     const searchScore =
       searchKeywords.length > 0
-        ? this.getMatchingKeywords(cafe.keywords, searchKeywords).reduce(
-            (sum, k) => sum + k.confidence / 1.5,
-            0
-          ) / searchKeywords.length
-        : 0.5;
+        ? this.getMatchingKeywords(cafe, searchKeywords).length / searchKeywords.length
+        : 0;
 
     const prefScore =
       prefKeywords.length > 0
-        ? this.getMatchingKeywords(cafe.keywords, prefKeywords).reduce(
-            (sum, k) => sum + k.confidence,
-            0
-          ) / prefKeywords.length
-        : 0.5;
+        ? this.getMatchingKeywords(cafe, prefKeywords).length / prefKeywords.length
+        : 0;
 
-    const ratingScore = (cafe.rating - 3.5) / 1.5;
-    const distanceScore = cafe.distance ? Math.max(0, 1 - cafe.distance / 10000) : 0.5;
+    const ratingScore = (cafe.rating - 3.5) / 1.5; // Normalize to -1 to 1
+    const distanceScore = Math.max(0, 1 - (cafe.distance || 0) / 10); // Normalize to 0-1 within 10km
 
-    // Adjust weights based on available data
+    // Weights should sum to 1
     const weights = {
       search: hasSearchQuery ? 0.4 : 0,
       preferences: userPrefs ? 0.3 : 0,
@@ -395,12 +402,14 @@ class KeywordRecommendationService {
       weights[key as keyof typeof weights] /= totalWeight;
     });
 
-    return (
+    const finalScore =
       searchScore * weights.search +
       prefScore * weights.preferences +
       ratingScore * weights.rating +
-      distanceScore * weights.distance
-    );
+      distanceScore * weights.distance;
+
+    // Ensure score is between 0 and 1
+    return Math.max(0, Math.min(1, (finalScore + 1) / 2));
   }
 
   private async rankAndScoreCafes(
@@ -412,21 +421,33 @@ class KeywordRecommendationService {
   ): Promise<CafeRecommendation[]> {
     return cafes
       .map((cafe) => {
-        const cafeLocation = JSON.parse(cafe.location);
+        // Get matching keywords with individual scores for this specific cafe
+        const matchingKeywords = this.getMatchingKeywords(cafe, keywords).map((keyword) => ({
+          ...keyword,
+          confidence:
+            keyword.confidence *
+            // Adjust confidence based on cafe-specific factors
+            ((cafe.rating / 5.0) * // Rating factor
+              (1 - (cafe.distance || 0) / 20) * // Distance factor (decreases with distance)
+              (cafe.reviewCount > 10 ? 1.2 : 1)) // Bonus for well-reviewed cafes
+        }));
+
+        const score = this.calculateScore(cafe, matchingKeywords, userPrefs, hasSearchQuery);
+
         return {
           id: cafe.id,
           name: cafe.name,
           description: cafe.description,
           address: cafe.address,
-          distance: cafe.distance,
-          matchingKeywords: this.getMatchingKeywords(cafe.keywords, keywords),
-          score: this.calculateScore(cafe, keywords, userPrefs, hasSearchQuery),
+          distance: Number(cafe.distance),
+          matchingKeywords,
+          score: Number(score.toFixed(2)),
           metadata: {
             rating: cafe.rating,
             reviewCount: cafe.reviewCount,
             keywords: cafe.keywords,
             location: {
-              coordinates: [cafeLocation.coordinates[0], cafeLocation.coordinates[1]] as [
+              coordinates: [cafe.location.coordinates[0], cafe.location.coordinates[1]] as [
                 number,
                 number
               ],
