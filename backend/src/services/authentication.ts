@@ -94,7 +94,7 @@ export async function loginUser(
 
     // Generate JWT
     const token = jwt.sign(
-      { id: user[0].id, email: user[0].email, role: user[0].role },
+      { id: user[0].id, firstName: user[0].firstName, lastName: user[0].lastName, email: user[0].email, role: user[0].role },
       process.env.JWT_SECRET!, // Use a strong secret key
       { expiresIn: '1h' } // Token expires in 1 hour
     );

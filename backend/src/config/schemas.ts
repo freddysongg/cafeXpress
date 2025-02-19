@@ -68,6 +68,8 @@ export const cafes = pgTable('cafes', {
       }[]
     >()
     .default(sql`'[]'::jsonb`)
+
+    //ratings, status, number of ratings
 });
 
 export const reviews = pgTable('reviews', {

@@ -19,7 +19,7 @@ async function searchGooglePhotos(query: string): Promise<string[]> {
     key: GOOGLE_API_KEY,
     cx: GOOGLE_ENGINE_ID,
     searchType: 'image',
-    num: 8, // Number of images to retrieve
+    num: 6, // Number of images to retrieve
   };
 
   try {
@@ -89,7 +89,7 @@ export async function fetchCafes(
           const formattedHours = formatBusinessHours(hours);
 
           // Search for additional photos using Google Custom Search API
-          const googlePhotos = await searchGooglePhotos(`${cafe.name} ${cafe.location.city} inside photos`);
+          const googlePhotos = await searchGooglePhotos(`${cafe.name} ${cafe.location.city} photos`);
 
           // Combine Yelp profile photo with Google photos
           const photos = cafe.image_url ? [cafe.image_url, ...googlePhotos] : googlePhotos;
