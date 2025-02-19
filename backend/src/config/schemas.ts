@@ -1,4 +1,13 @@
-import { pgTable, uuid, text, jsonb, timestamp, varchar } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  text,
+  jsonb,
+  timestamp,
+  varchar,
+  numeric,
+  integer
+} from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 export const users = pgTable('users', {
@@ -67,9 +76,10 @@ export const cafes = pgTable('cafes', {
         close: string;
       }[]
     >()
-    .default(sql`'[]'::jsonb`)
-
-    //ratings, status, number of ratings
+    .default(sql`'[]'::jsonb`),
+  rating: numeric('rating', { precision: 4, scale: 2 }).default(sql`4.5`),
+  status: varchar('status', { length: 20 }).default('open'),
+  numOfRatings: integer('num_of_ratings').default(0)
 });
 
 export const reviews = pgTable('reviews', {
