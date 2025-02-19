@@ -1,7 +1,7 @@
 import React from 'react';
 import { User, Menu, Settings } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from './AuthContext';
+import { useAuth } from '../hooks/useAuth';
 
 const Navbar = () => {
   const location = useLocation();
@@ -27,7 +27,7 @@ const Navbar = () => {
               to="/"
               className={`text-2xl font-bold ${isHome ? 'text-white' : 'text-coffee-800'}`}
             >
-              CafeXpress
+              cafeXpress
             </Link>
           </div>
 

@@ -1,4 +1,4 @@
-import { cosineSimilarity } from './math';
+import { cosineSimilarity } from './math.js';
 
 export class SimilarityCalculator {
   static async calculateKeywordMatch(

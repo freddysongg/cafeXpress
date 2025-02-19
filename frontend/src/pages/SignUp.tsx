@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Coffee, Mail, Lock, User } from 'lucide-react';
-import { useAuth } from '../components/AuthContext';
 
 const SignUp = () => {
   const [firstName, setFirstName] = useState('');
@@ -10,7 +9,6 @@ const SignUp = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
-  const { login } = useAuth(); // Assuming you have a login function in your AuthContext
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,16 +22,8 @@ const SignUp = () => {
         body: JSON.stringify(userData),
       });
 
-      const data = await response.json();
-
       if (response.ok) {
-        // Assuming the response contains user data and token on successful signup
-        const { token, userId } = data.data;
-        // Store token and user data in local storage (or in the state using context)
-        login(userId, token); // Call the login function from AuthContext to update the global state
-        navigate('/'); // Redirect user upon successful signup
-      } else {
-        // Handle signup failure
+        navigate('/signin'); // Redirect user upon successful signup
       }
     } catch (error) {
       console.error('Signup error:', error);

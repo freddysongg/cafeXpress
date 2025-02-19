@@ -14,8 +14,7 @@ export const cafesRoutes = async (app: FastifyInstance) => {
     }
   });
 
-  // Get cafe details by ID
-  app.get<{ Params: CafeParams }>('/:cafeId', async (req, reply) => {
+  app.get<{ Params: CafeParams }>('/:id', async (req, reply) => {
     try {
       const response = await getCafeById(req, reply);
       reply.send(response);
