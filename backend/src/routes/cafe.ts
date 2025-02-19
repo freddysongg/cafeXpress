@@ -13,8 +13,9 @@ export const cafesRoutes = async (app: FastifyInstance) => {
       reply.status(500).send({ status: 'error', message: 'Internal server error' });
     }
   });
-
-  app.get<{ Params: CafeParams }>('/:id', async (req, reply) => {
+  
+  // Get cafe details by ID
+  app.get<{ Params: CafeParams }>('/:cafeId', async (req, reply) => {
     try {
       const response = await getCafeById(req, reply);
       reply.send(response);
