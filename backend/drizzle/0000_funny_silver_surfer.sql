@@ -7,13 +7,25 @@ CREATE TABLE "cafes" (
 	"city" varchar(50) NOT NULL,
 	"state" varchar(50) NOT NULL,
 	"zip_code" varchar(10) NOT NULL,
-	"ambiance" jsonb DEFAULT '[]'::jsonb,
-	"dietary_options" jsonb DEFAULT '[]'::jsonb,
+	"ambiance" jsonb DEFAULT '{}'::jsonb,
+	"dietary_options" jsonb DEFAULT '{}'::jsonb,
 	"location" jsonb,
 	"keywords" jsonb DEFAULT '[]'::jsonb,
 	"photos" jsonb DEFAULT '[]'::jsonb,
 	"hours" jsonb DEFAULT '[]'::jsonb,
+	"rating" numeric(2, 2) DEFAULT 4.5,
+	"status" varchar(20) DEFAULT 'open',
+	"num_of_ratings" integer DEFAULT 0,
 	CONSTRAINT "cafes_address_unique" UNIQUE("address")
+);
+--> statement-breakpoint
+CREATE TABLE "preferences" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" uuid,
+	"favorite_cafes" jsonb,
+	"dietary_restrictions" jsonb,
+	"ambiance" jsonb,
+	"created_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
 CREATE TABLE "reviews" (
@@ -43,5 +55,6 @@ CREATE TABLE "users" (
 	"updated_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
+ALTER TABLE "preferences" ADD CONSTRAINT "preferences_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "reviews" ADD CONSTRAINT "reviews_cafe_id_cafes_id_fk" FOREIGN KEY ("cafe_id") REFERENCES "public"."cafes"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "reviews" ADD CONSTRAINT "reviews_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;

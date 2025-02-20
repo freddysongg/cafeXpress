@@ -19,7 +19,7 @@ async function searchGooglePhotos(query: string): Promise<string[]> {
     key: GOOGLE_API_KEY,
     cx: GOOGLE_ENGINE_ID,
     searchType: 'image',
-    num: 8 // Number of images to retrieve
+    num: 6 // Number of images to retrieve
   };
 
   try {
@@ -78,6 +78,7 @@ export async function fetchCafes(
     // Fetch details (including hours) and photos for each cafe
     const cafesData = await Promise.all(
       response.data.businesses.map(async (cafe: any) => {
+        console.log(cafe);
         try {
           // Fetch details for the cafe
           const detailsResponse = await axios.get(`https://api.yelp.com/v3/businesses/${cafe.id}`, {
@@ -86,11 +87,13 @@ export async function fetchCafes(
 
           // Extract and format hours
           const hours = detailsResponse.data.hours?.[0]?.open || [];
+          const isOpenNow = detailsResponse.data.is_open_now ? 'open' : 'closed';
           const formattedHours = formatBusinessHours(hours);
 
           // Search for additional photos using Google Custom Search API
+
           const googlePhotos = await searchGooglePhotos(
-            `${cafe.name} ${cafe.location.city} inside photos`
+            `${cafe.name} ${cafe.location.city} photos`
           );
 
           // Combine Yelp profile photo with Google photos
@@ -111,7 +114,10 @@ export async function fetchCafes(
             },
             keywords: cafe.categories.map((category: any) => category.title),
             photos, // Combine Yelp and Google photos
-            hours: formattedHours // Store hours in readable format
+            hours: formattedHours, // Store hours in readable format
+            rating: cafe.rating,
+            status: isOpenNow,
+            numOfRatings: cafe.review_count || 0 
           };
         } catch (error) {
           console.error(`Error fetching details for cafe ${cafe.id}:`, {
@@ -145,7 +151,10 @@ export async function fetchCafes(
           location: cafe.location,
           keywords: cafe.keywords,
           photos: cafe.photos,
-          hours: cafe.hours
+          hours: cafe.hours,
+          rating: cafe.rating, // Insert avgRating
+          status: cafe.status, // Insert status (open/closed)
+          numOfRatings: cafe.numOfRatings // Insert number of ratings
         })
         .onConflictDoUpdate({
           target: cafes.address,
@@ -159,7 +168,10 @@ export async function fetchCafes(
             location: cafe.location,
             keywords: cafe.keywords,
             photos: cafe.photos,
-            hours: cafe.hours
+            hours: cafe.hours,
+            rating: cafe.rating, // Insert avgRating
+            status: cafe.status, // Insert status (open/closed)
+            numOfRatings: cafe.numOfRatings // Insert number of ratings
           }
         });
     }

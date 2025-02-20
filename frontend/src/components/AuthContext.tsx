@@ -44,25 +44,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const data = await response.json();
       console.log('User data fetched:', data); // Debugging
 
-      // const fetchedUser: User = { // broke
-      //   username: data.username,
-      //   email: data.email,
-      //   description: data.description || '',
-      //   create
-      // };
-
       setUser(data.data); // Set user details
     } catch (error) {
       console.error('Error fetching user data:', error);
     }
   };
 
-  // const fetchedUser: User = { // broke
-  //   username: data.username,
-  //   email: data.email,
-  //   description: data.description || '',
-  //   create
-  // };
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -82,7 +69,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const login = (userId: string, token: string) => {
     console.log('Logging in with userId:', userId, 'and token:', token); // Debugging
 
-    localStorage.setItem('userId', userId);
+    // localStorage.setItem('userId', userId);
     localStorage.setItem('token', token);
     setIsAuthenticated(true);
     fetchUserData(userId, token);

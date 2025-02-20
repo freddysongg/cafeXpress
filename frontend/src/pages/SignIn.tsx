@@ -2,6 +2,13 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Coffee, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { jwtDecode } from "jwt-decode";
+
+interface DecodedToken {
+  id: string;
+  email: string;
+  role: string;
+}
 
 function SignIn() {
   const [email, setEmail] = useState('');
@@ -28,13 +35,16 @@ function SignIn() {
       console.log('Login Response:', data); // Debugging line
 
       if (response.ok && data.status === 'success') {
-        // localStorage.setItem('token', data.data.token);
-        // localStorage.setItem('userId', data.data.userId);
-        const { token, userId } = data.data;
-
-        if (!userId || !token) {
-          throw new Error('User ID or Token is missing in the response.');
+        console.log(data); // This will show the entire response object
+        if (data.token) {
+          const decoded = jwtDecode<DecodedToken>(data.token);
+          const userId = decoded.id; // Assuming `id` is the field where `userId` is stored
+        
+          console.log("User ID from token:", userId);
+        } else {
+          console.log("No token found.");
         }
+        const { token, userId } = data.data;
 
         login(userId, token);
         navigate('/');
