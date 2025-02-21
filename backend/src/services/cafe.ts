@@ -74,7 +74,11 @@ export async function getCafeById(
         dietaryOptions: cafes.dietaryOptions,
         location: cafes.location,
         createdAt: cafes.createdAt,
-        photos: cafes.photos
+        photos: cafes.photos,
+        hours: cafes.hours,
+        rating: cafes.rating,
+        status: cafes.status,
+        numOfRatings: cafes.numOfRatings
       })
       .from(cafes)
       .where(eq(cafes.id, cafeId))
