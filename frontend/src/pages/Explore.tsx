@@ -185,12 +185,12 @@ function Explore() {
 
     // Add cafe markers
     cafes.forEach((cafe) => {
-      if (cafe.metadata?.location?.coordinates) {
+      if (cafe.location?.coordinates) {
         const marker = new google.maps.Marker({
           map,
           position: {
-            lat: cafe.metadata.location.coordinates[1],
-            lng: cafe.metadata.location.coordinates[0],
+            lat: cafe.location.coordinates[1],
+            lng: cafe.location.coordinates[0],
           },
           title: cafe.name,
           icon: {
@@ -200,6 +200,7 @@ function Explore() {
 
         // Add click listener to navigate to cafe page
         marker.addListener('click', () => {
+          console.log("Navigating to cafe:", cafe);
           navigate(`/restaurant/${cafe.id}`);
         });
 
@@ -226,10 +227,10 @@ function Explore() {
     setMarkers(newMarkers);
 
     // Center map on first cafe or user location
-    if (cafes.length > 0 && cafes[0].metadata?.location?.coordinates) {
+    if (cafes.length > 0 && cafes[0].location?.coordinates) {
       map.setCenter({
-        lat: cafes[0].metadata.location.coordinates[1],
-        lng: cafes[0].metadata.location.coordinates[0],
+        lat: cafes[0].location.coordinates[1],
+        lng: cafes[0].location.coordinates[0],
       });
     } else if (userLocation) {
       map.setCenter({
@@ -467,13 +468,13 @@ function Explore() {
                   cafe={{
                     id: cafe.id,
                     name: cafe.name,
-                    image: cafe.metadata.photos?.[0] || 'default-image-url',
-                    rating: cafe.metadata.rating || 0,
-                    reviews: cafe.metadata.reviewCount || 0,
+                    image: cafe.photos?.[0] || 'default-image-url',
+                    rating: cafe.rating || 0,
+                    reviews: cafe.reviewCount || 0,
                     distance: cafe.distance?.toFixed(1) || '0',
-                    address: cafe.metadata.address || '',
+                    address: cafe.address || '',
                     isOpen: true,
-                    tags: cafe.metadata.keywords || [],
+                    tags: cafe.keywords || [],
                     matchingKeywords: cafe.matchingKeywords,
                   }}
                 />

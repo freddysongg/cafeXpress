@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Star, Phone, MapPin, Heart, Share2 } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { useCafe } from '../hooks/useCafe';
@@ -10,6 +10,13 @@ function Restaurant() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [newReview, setNewReview] = useState('');
   const [rating, setRating] = useState(0);
+
+  useEffect(() => {
+    // Log the values to the console for debugging
+    console.log('useParams (id):', id); // Log the id from useParams
+    console.log('useCafe result:', { cafe, loading, error }); // Log the data from useCafe
+  }, [id, cafe, loading, error]); // Run this effect whenever any of these values change
+
 
   if (loading)
     return (
@@ -50,10 +57,10 @@ function Restaurant() {
               <div className="flex items-center">
                 <Star className="w-5 h-5 text-coffee-400 fill-current" />
                 <span className="ml-1 font-semibold">
-                  {cafe.metadata.rating}
+                  {cafe.rating}
                 </span>
                 <span className="text-coffee-500 ml-1">
-                  ({cafe.metadata.reviewCount} reviews)
+                  ({cafe.reviewCount} reviews)
                 </span>
               </div>
               <span className="text-coffee-400">•</span>
@@ -83,7 +90,7 @@ function Restaurant() {
 
         {/* Image Gallery */}
         <div className="grid grid-cols-3 gap-4 mb-8">
-          {cafe.metadata.photos?.map((image: string, index: number) => (
+          {cafe.photos?.map((image: string, index: number) => (
             <img
               key={index}
               src={image}
@@ -112,7 +119,7 @@ function Restaurant() {
                 Keywords
               </h2>
               <div className="flex flex-wrap gap-2 mb-6">
-                {cafe.metadata.keywords?.map(
+                {cafe.keywords?.map(
                   (keyword: string, index: number) => (
                     <span
                       key={index}

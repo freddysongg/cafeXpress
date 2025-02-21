@@ -38,17 +38,14 @@ export interface CafeRecommendation {
   matchingKeywords: KeywordMatch[];
   score: number;
   distance?: number;
-  metadata: {
-    rating: number;
-    reviewCount: number;
-    keywords: string[];
-    address: string;
-    location: {
-      coordinates: [number, number];
-      type: 'Point';
-    };
-    photos?: string[];
+  rating: number;
+  reviewCount: number;
+  keywords: string[];
+  location: {
+    coordinates: [number, number];
+    type: 'Point';
   };
+  photos?: string[];
 }
 
 export interface RecommendationResponse {
