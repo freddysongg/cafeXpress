@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Edit3, Star, Bookmark } from 'lucide-react';
 
 
+
 // EXAMPLES for reviews and collections info
 // const recentReviews = [
 //   {
@@ -127,7 +128,9 @@ function Profile() {
                       <Edit3 className="w-5 h-5" />
                     </button>
                   </div>
-                  <p className="text-coffee-600 mb-2">Member since {user.joinedDate}</p>
+                  <p className="text-coffee-600 mb-2">
+  Member since {new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+</p>
                   <p className="text-coffee-500 mb-4">{user.location}</p>
 
                   <div className="flex justify-center gap-6 border-t border-coffee-100 pt-4">
@@ -137,7 +140,7 @@ function Profile() {
                     </div>
                     <div className="text-center">
                       <p className="text-2xl font-bold text-coffee-800">{user.collections?.length || 0}</p>
-                      <p className="text-coffee-600">Collections</p>
+                      <p className="text-coffee-600">Favorites</p>
                     </div>
                   </div>
                 </div>
@@ -167,7 +170,7 @@ function Profile() {
                     : 'text-coffee-600 hover:text-coffee-800'
                 }`}
               >
-                Collections
+                Favorites
               </button>
             </div>
 
