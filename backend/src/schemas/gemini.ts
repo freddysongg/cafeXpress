@@ -33,3 +33,13 @@ export interface GeminiResponse {
   generatedAt: string;
   modelVersion: string;
 }
+
+export interface GeminiReviewResponse {
+  candidates: {
+    content: {
+      parts: {
+        text: string;
+      }[];
+    };
+  }[];
+}
