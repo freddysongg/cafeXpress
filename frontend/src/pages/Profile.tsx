@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Edit3, Star, Bookmark } from 'lucide-react';
@@ -85,6 +86,7 @@ function Profile() {
         } else {
           setError('Failed to fetch profile. Please try again.');
         }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
         setError('Error fetching profile data.');
       } finally {
