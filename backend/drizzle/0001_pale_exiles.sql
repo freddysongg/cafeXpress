@@ -1,0 +1,1 @@
+ALTER TABLE "cafes" ALTER COLUMN "rating" SET DATA TYPE numeric(4, 2);

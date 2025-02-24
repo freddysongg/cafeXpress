@@ -28,6 +28,7 @@ export interface CafeBody {
       updatedAt: Date;
     };
   };
+  photos?: string[];
 }
 
 // Define the schema for the request body
@@ -49,18 +50,7 @@ export const CafeSchema = z.object({
       type: 'Point' as const,
       coordinates: [longitude, latitude] as [number, number]
     })),
-  semanticEmbedding: z
-    .object({
-      vector: z.array(z.number()),
-      metadata: z.object({
-        type: z.literal('cafe'),
-        id: z.string(),
-        keywords: z.array(z.string()),
-        createdAt: z.date(),
-        updatedAt: z.date()
-      })
-    })
-    .optional()
+  photos: z.array(z.string().url()).optional()
 });
 
 // Infer the TypeScript type from the schema

@@ -36,13 +36,11 @@
     "drizzle-orm": "^0.39.1",
     "fastify": "^5.2.1",
     "fastify-plugin": "^5.0.1",
-    "i": "^0.3.7",
     "jsonwebtoken": "^9.0.2",
     "langchain": "^0.3.12",
-    "module": "^1.1.0",
     "pg": "^8.13.1",
+    "pino-pretty": "^13.0.0",
     "redis": "^4.7.0",
-    "require": "^0.4.4",
     "zod": "^3.24.1"
   },
   "devDependencies": {
@@ -62,7 +60,6 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-react": "^7.37.3",
     "eslint-plugin-react-hooks": "^5.1.0",
-    "is-glob": "^4.0.3",
     "prettier": "^3.4.2",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",

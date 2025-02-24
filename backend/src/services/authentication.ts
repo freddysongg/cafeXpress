@@ -94,7 +94,13 @@ export async function loginUser(
 
     // Generate JWT
     const token = jwt.sign(
-      { userId: user[0].id, email: user[0].email },
+      {
+        id: user[0].id,
+        firstName: user[0].firstName,
+        lastName: user[0].lastName,
+        email: user[0].email,
+        role: user[0].role
+      },
       process.env.JWT_SECRET!, // Use a strong secret key
       { expiresIn: '1h' } // Token expires in 1 hour
     );
@@ -102,7 +108,10 @@ export async function loginUser(
     return reply.status(200).send({
       status: 'success',
       message: 'Login successful',
-      data: { token }
+      data: {
+        token
+        //userId: user[0].id
+      }
     });
   } catch (error) {
     const err = error as Error;

@@ -1,10 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from 'react';
+import { createContext, useState, useEffect, ReactNode } from 'react';
 
 interface User {
   // location: string;
@@ -21,7 +15,9 @@ interface AuthContextType {
   logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(
+  undefined
+);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
@@ -48,25 +44,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const data = await response.json();
       console.log('User data fetched:', data); // Debugging
 
-      // const fetchedUser: User = { // broke
-      //   username: data.username,
-      //   email: data.email,
-      //   description: data.description || '',
-      //   create
-      // };
-
       setUser(data.data); // Set user details
     } catch (error) {
       console.error('Error fetching user data:', error);
     }
   };
 
-  // const fetchedUser: User = { // broke
-  //   username: data.username,
-  //   email: data.email,
-  //   description: data.description || '',
-  //   create
-  // };
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -86,7 +69,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const login = (userId: string, token: string) => {
     console.log('Logging in with userId:', userId, 'and token:', token); // Debugging
 
-    localStorage.setItem('userId', userId);
+    // localStorage.setItem('userId', userId);
     localStorage.setItem('token', token);
     setIsAuthenticated(true);
     fetchUserData(userId, token);
@@ -104,12 +87,4 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 };

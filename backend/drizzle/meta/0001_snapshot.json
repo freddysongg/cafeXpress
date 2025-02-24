@@ -1,6 +1,6 @@
 {
-  "id": "8f9f0058-d36a-40f6-b824-6314c29f0f77",
-  "prevId": "1ca5599a-741f-41cd-aee5-073551e757c4",
+  "id": "4da06c58-5806-481a-a27e-1e3ea0824e62",
+  "prevId": "c27c8a45-fe2c-4763-ac9d-73a438f6e027",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -63,23 +63,17 @@
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false,
-          "default": "'{}'"
+          "default": "'{}'::jsonb"
         },
         "dietary_options": {
           "name": "dietary_options",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false,
-          "default": "'{}'"
+          "default": "'{}'::jsonb"
         },
         "location": {
           "name": "location",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "semantic_embedding": {
-          "name": "semantic_embedding",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false
@@ -90,19 +84,47 @@
           "primaryKey": false,
           "notNull": false,
           "default": "'[]'::jsonb"
+        },
+        "photos": {
+          "name": "photos",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'::jsonb"
+        },
+        "hours": {
+          "name": "hours",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'::jsonb"
+        },
+        "rating": {
+          "name": "rating",
+          "type": "numeric(4, 2)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "4.5"
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'open'"
+        },
+        "num_of_ratings": {
+          "name": "num_of_ratings",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
         }
       },
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "cafes_name_unique": {
-          "name": "cafes_name_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "name"
-          ]
-        },
         "cafes_address_unique": {
           "name": "cafes_address_unique",
           "nullsNotDistinct": false,
@@ -146,12 +168,6 @@
         },
         "ambiance": {
           "name": "ambiance",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "semantic_embedding": {
-          "name": "semantic_embedding",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false
@@ -215,39 +231,15 @@
           "primaryKey": false,
           "notNull": true
         },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "description": {
           "name": "description",
           "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "comment": {
-          "name": "comment",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "text": {
-          "name": "text",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "sentiment_score": {
-          "name": "sentiment_score",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "entities": {
-          "name": "entities",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "processed_at": {
-          "name": "processed_at",
-          "type": "timestamp",
           "primaryKey": false,
           "notNull": false
         },
@@ -305,6 +297,13 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'user'"
+        },
         "username": {
           "name": "username",
           "type": "text",
@@ -353,8 +352,14 @@
           "primaryKey": false,
           "notNull": false
         },
-        "preferences_embedding": {
-          "name": "preferences_embedding",
+        "preferences": {
+          "name": "preferences",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "favorite_cafes": {
+          "name": "favorite_cafes",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false
