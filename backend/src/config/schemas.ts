@@ -30,6 +30,9 @@ export const users = pgTable('users', {
     activities: string[];
   }>(),
   favoriteCafes: jsonb('favorite_cafes').$type<string[]>(),
+  recentSearches: jsonb('recent_searches')
+    .$type<Array<{ query: string; timestamp: string }>>()
+    .default(sql`'[]'::jsonb`),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow()
 });

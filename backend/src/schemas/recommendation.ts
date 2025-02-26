@@ -18,8 +18,31 @@ export const UserPreferencesSchema = z.object({
 
 export const KeywordMatchSchema = z.object({
   keyword: z.string(),
-  confidence: z.number().min(0).max(1),
-  category: z.enum(['ambiance', 'dietary', 'activity', 'general'])
+  confidence: z.number().min(-1).max(1),
+  category: z.enum(['ambiance', 'dietary', 'activity', 'general']),
+  isNegated: z.boolean().default(false),
+  importance: z.number().min(0).max(2).default(1),
+  context: z
+    .object({
+      isExplicit: z.boolean().default(false),
+      isHistorical: z.boolean().default(false),
+      isPriority: z.boolean().default(false),
+      grammarGroup: z.string().optional(),
+      uncertainty: z
+        .object({
+          isUncertain: z.boolean().default(false),
+          modifier: z.string().optional(),
+          strength: z.number().min(0).max(1).default(1)
+        })
+        .default({}),
+      matchDetails: z
+        .object({
+          matchedTerms: z.array(z.string()).default([]),
+          similarityScore: z.number().min(0).max(1).default(0)
+        })
+        .default({})
+    })
+    .default({})
 });
 
 // Request schema

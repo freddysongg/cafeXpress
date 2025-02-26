@@ -1,66 +1,137 @@
 import type { KeywordMatch, UserPreferences, CafeRecommendation } from '@schemas/recommendation.js';
 
-const WEIGHTS = {
-  search: 0.5, // User search query weight
-  preferences: 0.3, // User preferences weight
-  rating: 0.1, // Cafe rating weight
-  distance: 0.1 // Location distance weight
+const BASE_WEIGHTS = {
+  preferences: 0.6,
+  search: 0.3,
+  rating: 0.05,
+  distance: 0.05
 };
 
-/**
- * Calculates cafe score based on matching keywords and other factors
- */
+function calculateDynamicWeights(hasPreferences: boolean, hasSearchQuery: boolean) {
+  const weights = { ...BASE_WEIGHTS };
+
+  if (hasPreferences && hasSearchQuery) {
+    weights.preferences = 0.7;
+    weights.search = 0.2;
+    weights.rating = 0.05;
+    weights.distance = 0.05;
+  } else if (hasPreferences) {
+    weights.preferences = 0.8;
+    weights.search = 0;
+    weights.rating = 0.1;
+    weights.distance = 0.1;
+  } else if (hasSearchQuery) {
+    weights.preferences = 0;
+    weights.search = 0.9;
+    weights.rating = 0.05;
+    weights.distance = 0.05;
+  } else {
+    weights.preferences = 0;
+    weights.search = 0;
+    weights.rating = 0.2;
+    weights.distance = 0.8;
+  }
+
+  return weights;
+}
+
 export const calculateScore = (
   cafe: any,
   keywords: KeywordMatch[],
   userPrefs?: UserPreferences,
   hasSearchQuery: boolean = false
 ): number => {
-  const searchKeywords = keywords.filter((k) => k.confidence > 1.0);
-  const prefKeywords = keywords.filter((k) => k.confidence <= 1.0);
+  const weights = calculateDynamicWeights(!!userPrefs, hasSearchQuery);
 
-  // Calculate component scores
-  const searchScore =
-    searchKeywords.length > 0
-      ? searchKeywords.reduce((sum, k) => sum + k.confidence, 0) / searchKeywords.length
-      : 0;
+  const groupedKeywords = keywords.reduce(
+    (groups, k) => {
+      const group = k.context.isExplicit ? 'search' : 'preferences';
+      if (!groups[group]) groups[group] = [];
+      groups[group].push(k);
+      return groups;
+    },
+    {} as Record<string, KeywordMatch[]>
+  );
 
-  const prefScore =
-    prefKeywords.length > 0
-      ? prefKeywords.reduce((sum, k) => sum + k.confidence, 0) / prefKeywords.length
-      : 0;
+  const searchScore = groupedKeywords.search?.length
+    ? calculateGroupScore(groupedKeywords.search)
+    : 0;
+  const prefScore = groupedKeywords.preferences?.length
+    ? calculateGroupScore(groupedKeywords.preferences)
+    : 0;
 
   const ratingScore = (cafe.rating - 3.5) / 1.5;
   const distanceScore = Math.max(0, 1 - (cafe.distance || 0) / 10);
 
-  // Adjust weights based on context
-  const adjustedWeights = { ...WEIGHTS };
-  if (!hasSearchQuery) adjustedWeights.search = 0;
-  if (!userPrefs) adjustedWeights.preferences = 0;
-
-  // Normalize weights
-  const totalWeight = Object.values(adjustedWeights).reduce((sum, w) => sum + w, 0);
-  Object.keys(adjustedWeights).forEach((key) => {
-    adjustedWeights[key as keyof typeof WEIGHTS] /= totalWeight;
-  });
-
-  // Calculate final score
   return Math.max(
     0,
     Math.min(
       1,
-      searchScore * adjustedWeights.search +
-        prefScore * adjustedWeights.preferences +
-        ratingScore * adjustedWeights.rating +
-        distanceScore * adjustedWeights.distance
+      searchScore * weights.search +
+        prefScore * weights.preferences +
+        ratingScore * weights.rating +
+        distanceScore * weights.distance
     )
   );
 };
 
-/**
- * Ranks cafes based on distance only
- * Used when no keywords or preferences are provided
- */
+function calculateGroupScore(keywords: KeywordMatch[]): number {
+  const sortedKeywords = [...keywords].sort((a, b) => {
+    const aCertainty = a.context.uncertainty?.strength || 0;
+    const bCertainty = b.context.uncertainty?.strength || 0;
+    if (aCertainty !== bCertainty) return bCertainty - aCertainty;
+    return b.importance - a.importance;
+  });
+
+  let totalScore = 0;
+  let weightSum = 0;
+
+  const negationGroups = new Map<string, KeywordMatch[]>();
+  sortedKeywords.forEach((kw) => {
+    const key = kw.context.grammarGroup || 'default';
+    if (!negationGroups.has(key)) {
+      negationGroups.set(key, []);
+    }
+    negationGroups.get(key)!.push(kw);
+  });
+
+  for (const [groupKey, group] of negationGroups) {
+    const isCompoundNegation = group.length > 1 && group[0].isNegated;
+    const isAndGroup = groupKey.includes('and');
+
+    group.forEach((keyword, index) => {
+      let score = Math.abs(keyword.confidence) * keyword.importance;
+
+      if (keyword.context.uncertainty?.isUncertain) {
+        const strength = keyword.context.uncertainty.strength;
+        score *= strength;
+      }
+
+      // Handle different types of negations
+      if (isCompoundNegation && isAndGroup) {
+        // For "not A and B", both terms should be negated
+        score = 1 - score;
+      } else if (isCompoundNegation && !isAndGroup) {
+        // For "not A but B", only negate the first term
+        if (index === 0 || keyword.isNegated) {
+          score = 1 - score;
+        }
+      } else if (keyword.isNegated) {
+        // Handle individual negations
+        score = 1 - score;
+      }
+
+      const positionWeight = 1 - index * 0.1;
+      const contextualWeight = keyword.context.isPriority ? 1.2 : 1.0;
+
+      totalScore += score * positionWeight * contextualWeight;
+      weightSum += positionWeight * contextualWeight;
+    });
+  }
+
+  return weightSum > 0 ? totalScore / weightSum : 0;
+}
+
 export const rankByDistance = (cafes: any[]): CafeRecommendation[] => {
   return cafes
     .map((cafe) => ({
@@ -69,7 +140,7 @@ export const rankByDistance = (cafes: any[]): CafeRecommendation[] => {
       description: cafe.description,
       address: cafe.address,
       distance: Number(cafe.distance),
-      matchingKeywords: [], // No keywords for distance-only ranking
+      matchingKeywords: [],
       score: 1 / (cafe.distance + 1),
       metadata: {
         rating: cafe.rating,
@@ -89,15 +160,26 @@ export const rankByDistance = (cafes: any[]): CafeRecommendation[] => {
     .slice(0, 20);
 };
 
-/**
- * Ranks and scores cafes based on matching keywords and user preferences
- * @param cafes - Array of cafe data to rank
- * @param keywords - Array of keyword matches to consider
- * @param getMatchingKeywords - Function to get matching keywords for a cafe
- * @param userPrefs - Optional user preferences
- * @param hasSearchQuery - Whether there was a search query
- * @returns Sorted array of cafe recommendations
- */
+function createMatchResult(keyword: KeywordMatch, matchedTerms: string[]): KeywordMatch {
+  return {
+    keyword: keyword.keyword,
+    confidence: keyword.confidence,
+    category: keyword.category,
+    isNegated: keyword.isNegated,
+    importance: keyword.importance,
+    context: {
+      isExplicit: keyword.context.isExplicit,
+      isHistorical: keyword.context.isHistorical || false,
+      isPriority: keyword.context.isPriority,
+      uncertainty: keyword.context.uncertainty,
+      matchDetails: {
+        matchedTerms,
+        similarityScore: Math.abs(keyword.confidence)
+      }
+    }
+  };
+}
+
 export const rankAndScoreCafes = (
   cafes: any[],
   keywords: KeywordMatch[],
@@ -107,10 +189,9 @@ export const rankAndScoreCafes = (
 ): CafeRecommendation[] => {
   return cafes
     .map((cafe) => {
-      const matchingKeywords = getMatchingKeywords(cafe, keywords).map((keyword) => ({
-        ...keyword,
-        confidence: keyword.confidence * (cafe.rating / 5.0)
-      }));
+      const matchingKeywords = getMatchingKeywords(cafe, keywords).map((match) =>
+        createMatchResult(match, match.context.matchDetails?.matchedTerms || [])
+      );
 
       const score = calculateScore(cafe, matchingKeywords, userPrefs, hasSearchQuery);
 
