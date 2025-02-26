@@ -9,13 +9,13 @@ export async function generateRoutes(fastify: FastifyInstance) {
       //const allCafes = await db.select().from(cafes);
       const firstCafe = await db.select().from(cafes).limit(1); // Get only the first cafe
 
-      //   if (allCafes.length === 0) {
-      //     return reply.status(404).send({ message: 'No cafes found in the database.' });
-      //   }
+        // if (allCafes.length === 0) {
+        //   return reply.status(404).send({ message: 'No cafes found in the database.' });
+        // }
 
-      //   for (const cafe of allCafes) {
-      //     await generateReviewsForCafe(cafe);
-      //   }
+        // for (const cafe of allCafes) {
+        //   await generateReviewsForCafe(cafe);
+        // }
       await generateReviewsForCafe(firstCafe[0]);
 
       return reply.status(200).send({ message: 'Fake reviews generated for all cafes.' });
