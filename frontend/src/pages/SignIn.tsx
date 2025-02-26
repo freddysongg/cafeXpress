@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Coffee, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { jwtDecode } from "jwt-decode";
+import { jwtDecode } from 'jwt-decode';
 
 interface DecodedToken {
   id: string;
@@ -39,10 +39,10 @@ function SignIn() {
         if (data.token) {
           const decoded = jwtDecode<DecodedToken>(data.token);
           const userId = decoded.id; // Assuming `id` is the field where `userId` is stored
-        
-          console.log("User ID from token:", userId);
+
+          console.log('User ID from token:', userId);
         } else {
-          console.log("No token found.");
+          console.log('No token found.');
         }
         const { token, userId } = data.data;
 

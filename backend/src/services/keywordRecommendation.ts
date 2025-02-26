@@ -55,26 +55,22 @@ class KeywordRecommendationService {
         filters: request.filters
       });
 
-      // Get search keywords
       const searchKeywords = request.query ? await this.analyzeQueryKeywords(request.query) : [];
       console.log('Analyzed search keywords:', searchKeywords);
 
       let userPrefs: UserPreferences | undefined;
       let preferenceKeywords: KeywordMatch[] = [];
 
-      // Get user preferences if userId provided
       if (request.userId) {
         userPrefs = await this.getUserPreferences(request.userId);
         preferenceKeywords = await this.convertPreferencesToKeywords(userPrefs);
         console.log('User preference keywords:', preferenceKeywords);
       }
 
-      // Combine keywords with proper weights
       const combinedKeywords = [...searchKeywords, ...preferenceKeywords];
 
       console.log('Combined keywords before semantic analysis:', combinedKeywords);
 
-      // If no keywords, do distance-based ranking
       if (combinedKeywords.length === 0) {
         console.log('No keywords found, using distance-based ranking');
         const { results: cafes, pagination } = await this.fetchCafesWithKeywords(
@@ -88,7 +84,6 @@ class KeywordRecommendationService {
         return this.createSuccessResponse(recommendations, pagination, 'location');
       }
 
-      // Get or generate semantic scores
       const cacheKey = CacheKeys.semanticAnalysis(combinedKeywords, request.userId);
       const cachedScores = await this.cache.get<KeywordMatch[]>(cacheKey);
 
@@ -101,7 +96,6 @@ class KeywordRecommendationService {
         const response = await this.geminiClient.generateContent(prompt);
 
         try {
-          // Extract JSON content between the first { and last }
           const responseText = response.text().trim();
           const jsonStart = responseText.indexOf('{');
           const jsonEnd = responseText.lastIndexOf('}') + 1;
@@ -113,9 +107,8 @@ class KeywordRecommendationService {
           const jsonContent = responseText.slice(jsonStart, jsonEnd);
           semanticScores = JSON.parse(jsonContent) as KeywordMatch[];
 
-          // Validate the parsed scores
           if (!Array.isArray(semanticScores)) {
-            semanticScores = [semanticScores]; // Convert single object to array
+            semanticScores = [semanticScores];
           }
 
           console.log('Generated new semantic scores:', semanticScores);
@@ -123,7 +116,6 @@ class KeywordRecommendationService {
         } catch (error) {
           console.error('Failed to parse semantic analysis response:', error);
           console.log('Raw response:', response.text());
-          // Fallback to using original keywords with default scores
           semanticScores = combinedKeywords.map((k) => ({
             ...k,
             confidence: k.confidence || 0.5
@@ -131,7 +123,6 @@ class KeywordRecommendationService {
         }
       }
 
-      // Fetch cafes and apply scoring
       const { results: cafes, pagination } = await this.fetchCafesWithKeywords(
         semanticScores,
         location,
@@ -210,7 +201,6 @@ class KeywordRecommendationService {
   private async convertPreferencesToKeywords(prefs: UserPreferences): Promise<KeywordMatch[]> {
     const keywords: KeywordMatch[] = [];
 
-    // Get user's historical search patterns
     const historicalPreferences = await this.getUserHistoricalPreferences(prefs.userId);
 
     for (const category of ['dietary', 'ambiance', 'activities'] as const) {
@@ -391,7 +381,6 @@ class KeywordRecommendationService {
   private getMatchingKeywords(cafe: any, keywords: KeywordMatch[]): KeywordMatch[] {
     const matches: KeywordMatch[] = [];
 
-    // Parse cafe attributes correctly based on schema types
     const cafeKeywords = new Set<string>(cafe.keywords || []);
     const cafeAmbiance = Array.isArray(cafe.ambiance)
       ? cafe.ambiance.map((k: string) => k.toLowerCase())
@@ -413,7 +402,6 @@ class KeywordRecommendationService {
       let matchedTerms: string[] = [];
       const searchTerm = keyword.keyword.toLowerCase();
 
-      // Handle uncertainty modifiers
       const matchStrength = keyword.context?.uncertainty?.isUncertain
         ? Math.max(0.3, keyword.context.uncertainty.strength)
         : 1.0;
@@ -452,10 +440,9 @@ class KeywordRecommendationService {
           break;
       }
 
-      // For negated terms, we want to match when the term IS present (because we're looking for places that are NOT cozy)
       if (keyword.isNegated) {
         if (isMatch) {
-          // If the term is found and we're looking for NOT that term, add it with negative confidence
+          matchedTerms = [keyword.keyword];
           matchedTerms = [keyword.keyword];
           const adjustedConfidence = -1.0 * matchStrength * keyword.importance;
 
@@ -483,7 +470,6 @@ class KeywordRecommendationService {
           });
         }
       } else if (isMatch) {
-        // For non-negated terms, only add when there's a match
         matchedTerms = [keyword.keyword];
         const adjustedConfidence = matchStrength * keyword.importance;
 

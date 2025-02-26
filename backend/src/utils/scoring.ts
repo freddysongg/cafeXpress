@@ -61,18 +61,29 @@ export const calculateScore = (
     : 0;
 
   const ratingScore = (cafe.rating - 3.5) / 1.5;
+
   const distanceScore = Math.max(0, 1 - (cafe.distance || 0) / 10);
 
-  return Math.max(
+  const matchPriorityScore =
+    keywords.reduce((score, k) => {
+      const matchImportance = k.importance || 1;
+      const matchConfidence = Math.abs(k.confidence);
+      return score + matchConfidence * matchImportance;
+    }, 0) / Math.max(1, keywords.length);
+
+  const finalScore = Math.max(
     0,
     Math.min(
       1,
       searchScore * weights.search +
         prefScore * weights.preferences +
         ratingScore * weights.rating +
-        distanceScore * weights.distance
+        distanceScore * weights.distance +
+        matchPriorityScore * 0.2
     )
   );
+
+  return finalScore;
 };
 
 function calculateGroupScore(keywords: KeywordMatch[]): number {
@@ -107,17 +118,13 @@ function calculateGroupScore(keywords: KeywordMatch[]): number {
         score *= strength;
       }
 
-      // Handle different types of negations
       if (isCompoundNegation && isAndGroup) {
-        // For "not A and B", both terms should be negated
         score = 1 - score;
       } else if (isCompoundNegation && !isAndGroup) {
-        // For "not A but B", only negate the first term
         if (index === 0 || keyword.isNegated) {
           score = 1 - score;
         }
       } else if (keyword.isNegated) {
-        // Handle individual negations
         score = 1 - score;
       }
 
@@ -195,6 +202,12 @@ export const rankAndScoreCafes = (
 
       const score = calculateScore(cafe, matchingKeywords, userPrefs, hasSearchQuery);
 
+      const matchPriority = matchingKeywords.reduce((priority, match) => {
+        const isPositiveMatch = match.confidence > 0;
+        const matchValue = isPositiveMatch ? match.confidence : 0;
+        return priority + matchValue * (match.importance || 1);
+      }, 0);
+
       return {
         id: cafe.id,
         name: cafe.name,
@@ -203,6 +216,7 @@ export const rankAndScoreCafes = (
         distance: Number(cafe.distance),
         matchingKeywords,
         score: Number(score.toFixed(2)),
+        matchPriority,
         metadata: {
           rating: cafe.rating,
           reviewCount: cafe.reviewCount,
@@ -218,6 +232,17 @@ export const rankAndScoreCafes = (
         }
       };
     })
-    .sort((a, b) => b.score - a.score)
+    .sort((a, b) => {
+      if (b.score !== a.score) {
+        return b.score - a.score;
+      }
+      if (b.matchPriority !== a.matchPriority) {
+        return b.matchPriority - a.matchPriority;
+      }
+      if (b.metadata.rating !== a.metadata.rating) {
+        return b.metadata.rating - a.metadata.rating;
+      }
+      return (a.distance || 0) - (b.distance || 0);
+    })
     .slice(0, 20);
 };

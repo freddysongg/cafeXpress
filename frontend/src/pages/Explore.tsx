@@ -9,7 +9,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
-import CafeCard from '../components/CafeCard';
 import {
   getRecommendations,
   type CafeRecommendation,
@@ -83,7 +82,6 @@ function Explore() {
           });
 
           callbacks.setCafes(recommendations);
-          // Extract all unique matching keywords
           const allKeywords = recommendations.flatMap(
             (cafe) => cafe.matchingKeywords
           );
@@ -151,7 +149,6 @@ function Explore() {
     [selectedFilters]
   );
 
-  // Initialize map
   useEffect(() => {
     const initMap = async () => {
       try {
@@ -175,15 +172,12 @@ function Explore() {
     initMap();
   }, []);
 
-  // Update markers when cafes change
   useEffect(() => {
     if (!map) return;
 
-    // Clear existing markers
     markers.forEach((marker) => marker.setMap(null));
     const newMarkers: google.maps.Marker[] = [];
 
-    // Add cafe markers
     cafes.forEach((cafe) => {
       if (cafe.metadata?.location?.coordinates) {
         const marker = new google.maps.Marker({
@@ -198,7 +192,6 @@ function Explore() {
           },
         });
 
-        // Add click listener to navigate to cafe page
         marker.addListener('click', () => {
           navigate(`/restaurant/${cafe.id}`);
         });
@@ -207,7 +200,6 @@ function Explore() {
       }
     });
 
-    // Add user location marker if available
     if (userLocation) {
       const userMarker = new google.maps.Marker({
         map,
@@ -225,7 +217,6 @@ function Explore() {
 
     setMarkers(newMarkers);
 
-    // Center map on first cafe or user location
     if (cafes.length > 0 && cafes[0].metadata?.location?.coordinates) {
       map.setCenter({
         lat: cafes[0].metadata.location.coordinates[1],
@@ -370,6 +361,27 @@ function Explore() {
     </DropdownMenu>
   );
 
+  // Update category color helper
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'ambiance':
+        return 'bg-violet-50 text-violet-700 border border-violet-200';
+      case 'dietary':
+        return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+      case 'activity':
+        return 'bg-amber-50 text-amber-700 border border-amber-200';
+      default:
+        return 'bg-sky-50 text-sky-700 border border-sky-200';
+    }
+  };
+
+  // Update confidence indicator helper
+  const getConfidenceIndicator = (confidence: number) => {
+    if (confidence >= 0.8) return '●●●';
+    if (confidence >= 0.6) return '●●○';
+    return '●○○';
+  };
+
   return (
     <div className="flex h-screen pt-16">
       {/* Map Section */}
@@ -391,7 +403,7 @@ function Explore() {
             className="mb-6"
           />
           {/* Filter Buttons */}
-          <div className="flex gap-4 mb-6">
+          <div className="flex gap-4 mb-6 flex-wrap">
             <FilterButton category="distance" />
             <FilterButton category="ambiance" />
             <FilterButton category="dietary" />
@@ -403,7 +415,7 @@ function Explore() {
               {Object.entries(selectedFilters).map(([category, value]) => (
                 <div
                   key={category}
-                  className="bg-white text-black font-normal px-3 py-1 rounded-full text-sm flex items-center gap-2 shadow-md"
+                  className="bg-white text-black font-normal px-3 py-1 rounded-full text-sm flex items-center gap-2 shadow-sm"
                 >
                   {value}
                   <button
@@ -416,29 +428,27 @@ function Explore() {
               ))}
             </div>
           )}
-          {/* Matching Keywords Section */}
+          {/* Matching Keywords Section - Updated with category colors */}
           {matchingKeywords.length > 0 && (
-            <div className="mb-6">
-              <h3 className="text-sm font-semibold text-coffee-700 mb-2">
-                Matching Keywords:
+            <div className="mb-6 bg-white/50 rounded-lg p-4 backdrop-blur-sm">
+              <h3 className="text-sm font-medium text-coffee-700 mb-2">
+                Matching Preferences
               </h3>
               <div className="flex flex-wrap gap-2">
-                {matchingKeywords.map((keyword, index) => (
-                  <span
-                    key={`${keyword.category}-${keyword.keyword}-${index}`}
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      keyword.category === 'ambiance'
-                        ? 'bg-blue-100 text-blue-800'
-                        : keyword.category === 'dietary'
-                          ? 'bg-green-100 text-green-800'
-                          : keyword.category === 'activity'
-                            ? 'bg-purple-100 text-purple-800'
-                            : 'bg-gray-100 text-gray-800'
-                    }`}
-                  >
-                    {keyword.keyword}
-                  </span>
-                ))}
+                {matchingKeywords.map((keyword, index) => {
+                  const categoryColor = getCategoryColor(keyword.category);
+                  return (
+                    <div
+                      key={`${keyword.category}-${keyword.keyword}-${index}`}
+                      className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1.5 ${categoryColor} transition-colors duration-150`}
+                    >
+                      <span>{keyword.keyword}</span>
+                      <span className="text-xs opacity-75 tracking-wider">
+                        {getConfidenceIndicator(keyword.confidence)}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -453,7 +463,7 @@ function Explore() {
               <p>{error}</p>
             </div>
           )}
-          {/* Café Cards */}
+          {/* Café Cards - Updated with inline keyword matches */}
           {!loading && !error && cafes.length === 0 && (
             <div className="text-center py-8 text-coffee-600">
               <p>No cafes found matching your search criteria</p>
@@ -462,21 +472,75 @@ function Explore() {
           {!loading && !error && cafes.length > 0 && (
             <div className="space-y-6">
               {cafes.map((cafe) => (
-                <CafeCard
+                <div
                   key={cafe.id}
-                  cafe={{
-                    id: cafe.id,
-                    name: cafe.name,
-                    image: cafe.metadata.photos?.[0] || 'default-image-url',
-                    rating: cafe.metadata.rating || 0,
-                    reviews: cafe.metadata.reviewCount || 0,
-                    distance: cafe.distance?.toFixed(1) || '0',
-                    address: cafe.metadata.address || '',
-                    isOpen: true,
-                    tags: cafe.metadata.keywords || [],
-                    matchingKeywords: cafe.matchingKeywords,
-                  }}
-                />
+                  className="bg-white rounded-lg shadow-sm overflow-hidden"
+                >
+                  <div className="flex">
+                    {/* Image container with fixed dimensions */}
+                    <div className="w-48 h-48 flex-shrink-0">
+                      <img
+                        src={cafe.metadata.photos?.[0] || 'default-image-url'}
+                        alt={cafe.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    {/* Content container */}
+                    <div className="flex-1 p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="text-xl font-semibold text-coffee-800">
+                          {cafe.name}
+                        </h3>
+                        <div className="flex items-center gap-1">
+                          <span className="text-amber-500">★</span>
+                          <span>{cafe.metadata.rating}</span>
+                          <span className="text-gray-500">
+                            ({cafe.metadata.reviewCount})
+                          </span>
+                        </div>
+                      </div>
+                      {/* Location and status */}
+                      <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
+                        <span className="flex items-center gap-1">
+                          <span>{cafe.distance?.toFixed(1)} mi</span>
+                        </span>
+                        <span className="text-green-600">Open Now</span>
+                      </div>
+                      {/* Categories */}
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {cafe.metadata.keywords?.map((tag) => (
+                          <span
+                            key={tag}
+                            className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                      {/* Matching keywords */}
+                      {cafe.matchingKeywords?.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {cafe.matchingKeywords.map((match, idx) => {
+                            const categoryColor = getCategoryColor(
+                              match.category
+                            );
+                            return (
+                              <div
+                                key={`${match.category}-${match.keyword}-${idx}`}
+                                className={`px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1 ${categoryColor}`}
+                              >
+                                <span>{match.keyword}</span>
+                                <span className="opacity-75 text-[10px] tracking-wider">
+                                  {getConfidenceIndicator(match.confidence)}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           )}
