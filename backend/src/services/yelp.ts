@@ -117,7 +117,7 @@ export async function fetchCafes(
             hours: formattedHours, // Store hours in readable format
             rating: cafe.rating,
             status: isOpenNow,
-            numOfRatings: cafe.review_count || 0 
+            numOfRatings: cafe.review_count || 0
           };
         } catch (error) {
           console.error(`Error fetching details for cafe ${cafe.id}:`, {

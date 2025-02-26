@@ -19,11 +19,26 @@ export interface SearchRequest {
   userId?: string;
 }
 
-export interface KeywordMatch {
+export type KeywordMatch = {
   keyword: string;
   confidence: number;
   category: 'ambiance' | 'dietary' | 'activity' | 'general';
-}
+  isNegated: boolean;
+  importance: number;
+  context?: {
+    isExplicit?: boolean;
+    isHistorical?: boolean;
+    isPriority?: boolean;
+    uncertainty?: {
+      isUncertain: boolean;
+      strength: number;
+    };
+    matchDetails?: {
+      matchedTerms: string[];
+      similarityScore: number;
+    };
+  };
+};
 
 export interface CafeRecommendation {
   id: string;
