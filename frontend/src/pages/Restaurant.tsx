@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Star, Phone, MapPin, Heart, Share2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Star, Phone, MapPin, Heart, Share2, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { useCafe } from '../hooks/useCafe';
 import { KeywordMatch } from '../services/api';
@@ -10,36 +10,56 @@ function Restaurant() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [newReview, setNewReview] = useState('');
   const [rating, setRating] = useState(0);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Log the values to the console for debugging
-    console.log('useParams (id):', id); // Log the id from useParams
-    console.log('useCafe result:', { cafe, loading, error }); // Log the data from useCafe
-  }, [id, cafe, loading, error]); // Run this effect whenever any of these values change
+    setCurrentImageIndex(0);
+  }, [cafe]);
 
+  if (loading) return (
+    <div className="min-h-screen pt-20 flex items-center justify-center">
+      Loading...
+    </div>
+  );
+  if (error) return (
+    <div className="min-h-screen pt-20 flex items-center justify-center text-red-500">
+      {error}
+    </div>
+  );
+  if (!cafe || !cafe.photos) return (
+    <div className="min-h-screen pt-20 flex items-center justify-center">
+      No photos available
+    </div>
+  );
 
-  if (loading)
-    return (
-      <div className="min-h-screen pt-20 flex items-center justify-center">
-        Loading...
-      </div>
-    );
-  if (error)
-    return (
-      <div className="min-h-screen pt-20 flex items-center justify-center text-red-500">
-        {error}
-      </div>
-    );
-  if (!cafe)
-    return (
-      <div className="min-h-screen pt-20 flex items-center justify-center">
-        Cafe not found
-      </div>
-    );
+  const handleSlide = (direction: 'prev' | 'next') => {
+    if (isTransitioning || !cafe.photos) return;
+
+    setIsTransitioning(true);
+    
+    setCurrentImageIndex(prevIndex => {
+      if (!cafe?.photos || cafe.photos.length === 0) {
+        return 0; // or handle the case when there are no photos
+      }
+    
+      if (direction === 'next') {
+        return prevIndex >= cafe.photos.length - 1 ? 0 : prevIndex + 1;
+      } else {
+        return prevIndex <= 0 ? cafe.photos.length - 1 : prevIndex - 1;
+      }
+    });
+    
+
+    // Reset transition state after animation
+    setTimeout(() => {
+      setIsTransitioning(false);
+    }, 300);
+  };
 
   const handleSubmitReview = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement review submission
     setNewReview('');
     setRating(0);
   };
@@ -50,37 +70,25 @@ function Restaurant() {
         {/* Header */}
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-coffee-800 mb-2">
-              {cafe.name}
-            </h1>
+            <h1 className="text-3xl font-bold text-coffee-800 mb-2">{cafe.name}</h1>
             <div className="flex items-center gap-2">
               <div className="flex items-center">
                 <Star className="w-5 h-5 text-coffee-400 fill-current" />
-                <span className="ml-1 font-semibold">
-                  {cafe.rating}
-                </span>
-                <span className="text-coffee-500 ml-1">
-                  ({cafe.reviewCount} reviews)
-                </span>
+                <span className="ml-1 font-semibold">{cafe.rating}</span>
+                <span className="text-coffee-500 ml-1">({cafe.reviewCount} reviews)</span>
               </div>
               <span className="text-coffee-400">•</span>
-              <span className="text-coffee-600">
-                {cafe.hours?.today || 'Hours not available'}
-              </span>
+              <span className="text-coffee-600">{cafe.hours?.today || 'Hours not available'}</span>
             </div>
           </div>
           <div className="flex gap-4">
             <button
               onClick={() => setIsFavorite(!isFavorite)}
               className={`p-2 rounded-full ${
-                isFavorite
-                  ? 'bg-coffee-100 text-coffee-600'
-                  : 'bg-white text-coffee-400'
+                isFavorite ? 'bg-coffee-100 text-coffee-600' : 'bg-white text-coffee-400'
               } hover:bg-coffee-100 transition-colors`}
             >
-              <Heart
-                className={`w-6 h-6 ${isFavorite ? 'fill-current' : ''}`}
-              />
+              <Heart className={`w-6 h-6 ${isFavorite ? 'fill-current' : ''}`} />
             </button>
             <button className="p-2 rounded-full bg-white text-coffee-400 hover:bg-coffee-100 transition-colors">
               <Share2 className="w-6 h-6" />
@@ -89,15 +97,46 @@ function Restaurant() {
         </div>
 
         {/* Image Gallery */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          {cafe.photos?.map((image: string, index: number) => (
-            <img
-              key={index}
-              src={image}
-              alt={`${cafe.name} ${index + 1}`}
-              className="w-full h-64 object-cover rounded-xl"
-            />
-          ))}
+        <div className="relative overflow-hidden mb-8">
+          {/* Navigation Buttons */}
+          <button
+            onClick={() => handleSlide('prev')}
+            className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 p-2 bg-black/20 text-white rounded-full hover:bg-black/30 transition-colors backdrop-blur-sm"
+            disabled={isTransitioning}
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+
+          <button
+            onClick={() => handleSlide('next')}
+            className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 p-2 bg-black/20 text-white rounded-full hover:bg-black/30 transition-colors backdrop-blur-sm"
+            disabled={isTransitioning}
+          >
+            <ArrowRight className="w-6 h-6" />
+          </button>
+
+          {/* Carousel Container */}
+          <div 
+            ref={carouselRef}
+            className="flex transition-transform duration-300 ease-in-out"
+            style={{
+              transform: `translateX(-${currentImageIndex * (100 / 3)}%)`,
+            }}
+          >
+            {cafe.photos.map((photo, index) => (
+              <div
+                key={index}
+                className="w-1/3 flex-shrink-0 px-2"
+              >
+                <img
+                  src={photo}
+                  alt={`Cafe photo ${index + 1}`}
+                  className="w-full h-64 object-cover rounded-xl"
+                  loading="lazy"
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-8">
@@ -105,30 +144,22 @@ function Restaurant() {
           <div className="col-span-2 space-y-8">
             {/* Description */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-coffee-800 mb-4">
-                About
-              </h2>
-              <p className="text-coffee-600">
-                {cafe.description || 'No description available'}
-              </p>
+              <h2 className="text-xl font-semibold text-coffee-800 mb-4">About</h2>
+              <p className="text-coffee-600">{cafe.description || 'No description available'}</p>
             </div>
 
             {/* Vibes & Dietary Options */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-coffee-800 mb-4">
-                Keywords
-              </h2>
+              <h2 className="text-xl font-semibold text-coffee-800 mb-4">Keywords</h2>
               <div className="flex flex-wrap gap-2 mb-6">
-                {cafe.keywords?.map(
-                  (keyword: string, index: number) => (
-                    <span
-                      key={index}
-                      className="px-4 py-2 bg-coffee-50 text-coffee-600 rounded-full text-sm"
-                    >
-                      {keyword}
-                    </span>
-                  )
-                )}
+                {cafe.keywords?.map((keyword: string, index: number) => (
+                  <span
+                    key={index}
+                    className="px-4 py-2 bg-coffee-50 text-coffee-600 rounded-full text-sm"
+                  >
+                    {keyword}
+                  </span>
+                ))}
               </div>
               {cafe.matchingKeywords && cafe.matchingKeywords.length > 0 && (
                 <>
@@ -136,17 +167,14 @@ function Restaurant() {
                     Matching Keywords
                   </h2>
                   <div className="flex flex-wrap gap-2">
-                    {cafe.matchingKeywords.map(
-                      (keyword: KeywordMatch, index: number) => (
-                        <span
-                          key={index}
-                          className="px-4 py-2 bg-coffee-50 text-coffee-600 rounded-full text-sm"
-                        >
-                          {keyword.keyword} (
-                          {Math.round(keyword.confidence * 66.67)}%)
-                        </span>
-                      )
-                    )}
+                    {cafe.matchingKeywords.map((keyword: KeywordMatch, index: number) => (
+                      <span
+                        key={index}
+                        className="px-4 py-2 bg-coffee-50 text-coffee-600 rounded-full text-sm"
+                      >
+                        {keyword.keyword} ({Math.round(keyword.confidence * 66.67)}%)
+                      </span>
+                    ))}
                   </div>
                 </>
               )}
@@ -154,9 +182,7 @@ function Restaurant() {
 
             {/* Review Form */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-coffee-800 mb-4">
-                Write a Review
-              </h2>
+              <h2 className="text-xl font-semibold text-coffee-800 mb-4">Write a Review</h2>
               <form onSubmit={handleSubmitReview}>
                 <div className="flex items-center mb-4">
                   {[1, 2, 3, 4, 5].map((star) => (
@@ -168,9 +194,7 @@ function Restaurant() {
                     >
                       <Star
                         className={`w-6 h-6 ${
-                          star <= rating
-                            ? 'text-coffee-400 fill-current'
-                            : 'text-coffee-200'
+                          star <= rating ? 'text-coffee-400 fill-current' : 'text-coffee-200'
                         }`}
                       />
                     </button>
@@ -198,9 +222,7 @@ function Restaurant() {
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <div className="flex items-center gap-3 mb-4">
                 <Phone className="w-5 h-5 text-coffee-500" />
-                <span className="text-coffee-600">
-                  {cafe.phone || 'Phone not available'}
-                </span>
+                <span className="text-coffee-600">{cafe.phone || 'Phone not available'}</span>
               </div>
               <div className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-coffee-500 mt-1" />

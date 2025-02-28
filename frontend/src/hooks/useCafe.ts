@@ -16,7 +16,6 @@ export const useCafe = (id: string | undefined) => {
 
       try {
         const url = `http://localhost:8000/cafe/${id}`;
-        console.log("Fetching from:", url);
 
         const response = await fetch(url, {
           method: 'GET', // Explicitly using GET request
@@ -27,8 +26,8 @@ export const useCafe = (id: string | undefined) => {
         }
 
         const data = await response.json();
-        console.log("API Response:", data)
         if (data.data) {
+          console.log('useCafe result in useCafe.ts:', { cafe }); // Log the data from useCafe
           setCafe(data.data as CafeRecommendation); // Ensure the type matches
         } else {
           setError('Cafe data not found');
