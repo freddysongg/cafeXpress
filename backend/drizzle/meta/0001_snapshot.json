@@ -1,6 +1,6 @@
 {
-  "id": "3679a5d1-a2cf-410a-847d-75619103edb8",
-  "prevId": "caf499a4-57ce-47b5-a4d4-68bd92bde6fd",
+  "id": "4da06c58-5806-481a-a27e-1e3ea0824e62",
+  "prevId": "c27c8a45-fe2c-4763-ac9d-73a438f6e027",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -98,6 +98,27 @@
           "primaryKey": false,
           "notNull": false,
           "default": "'[]'::jsonb"
+        },
+        "rating": {
+          "name": "rating",
+          "type": "numeric(4, 2)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "4.5"
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'open'"
+        },
+        "num_of_ratings": {
+          "name": "num_of_ratings",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
         }
       },
       "indexes": {},

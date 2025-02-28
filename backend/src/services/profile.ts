@@ -17,6 +17,7 @@ export async function getProfile(req: FastifyRequest, reply: FastifyReply): Prom
 
     const user = await db
       .select({
+        createdAt: users.createdAt,
         username: users.username,
         email: users.email,
         firstName: users.firstName,
