@@ -13,6 +13,7 @@ function Restaurant() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
+  
 
   useEffect(() => {
     setCurrentImageIndex(0);
@@ -38,21 +39,19 @@ function Restaurant() {
     if (isTransitioning || !cafe.photos) return;
 
     setIsTransitioning(true);
-    
+
     setCurrentImageIndex(prevIndex => {
       if (!cafe?.photos || cafe.photos.length === 0) {
-        return 0; // or handle the case when there are no photos
+        return 0;
       }
-    
+
       if (direction === 'next') {
         return prevIndex >= cafe.photos.length - 1 ? 0 : prevIndex + 1;
       } else {
         return prevIndex <= 0 ? cafe.photos.length - 1 : prevIndex - 1;
       }
     });
-    
 
-    // Reset transition state after animation
     setTimeout(() => {
       setIsTransitioning(false);
     }, 300);
@@ -63,6 +62,18 @@ function Restaurant() {
     setNewReview('');
     setRating(0);
   };
+
+  const getCurrentDay = () => {
+    const daysOfWeek = [
+      "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
+    ];
+    const today = new Date().getDay(); // getDay() returns a number from 0 (Sunday) to 6 (Saturday)
+    return daysOfWeek[today];
+  };
+  
+  const currentDay = getCurrentDay();
+  const hoursToday = cafe.hours ? cafe.hours[currentDay] : null;
+  console.log(cafe.keywords); // Check the data in the console
 
   return (
     <div className="min-h-screen bg-coffee-50 pt-20">
@@ -75,18 +86,18 @@ function Restaurant() {
               <div className="flex items-center">
                 <Star className="w-5 h-5 text-coffee-400 fill-current" />
                 <span className="ml-1 font-semibold">{cafe.rating}</span>
-                <span className="text-coffee-500 ml-1">({cafe.reviewCount} reviews)</span>
+                <span className="text-coffee-500 ml-1">({cafe.numOfRatings} reviews)</span>
               </div>
               <span className="text-coffee-400">•</span>
-              <span className="text-coffee-600">{cafe.hours?.today || 'Hours not available'}</span>
+              <span className="text-coffee-600">
+                {cafe.status ? `${cafe.status.charAt(0).toUpperCase() + cafe.status.slice(1)}: ${hoursToday}` : `Status not available: ${hoursToday}`}
+              </span>
             </div>
           </div>
           <div className="flex gap-4">
             <button
               onClick={() => setIsFavorite(!isFavorite)}
-              className={`p-2 rounded-full ${
-                isFavorite ? 'bg-coffee-100 text-coffee-600' : 'bg-white text-coffee-400'
-              } hover:bg-coffee-100 transition-colors`}
+              className={`p-2 rounded-full ${isFavorite ? 'bg-coffee-100 text-coffee-600' : 'bg-white text-coffee-400'} hover:bg-coffee-100 transition-colors`}
             >
               <Heart className={`w-6 h-6 ${isFavorite ? 'fill-current' : ''}`} />
             </button>
@@ -142,13 +153,7 @@ function Restaurant() {
         <div className="grid grid-cols-3 gap-8">
           {/* Main Info */}
           <div className="col-span-2 space-y-8">
-            {/* Description */}
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-coffee-800 mb-4">About</h2>
-              <p className="text-coffee-600">{cafe.description || 'No description available'}</p>
-            </div>
-
-            {/* Vibes & Dietary Options */}
+            {/* Keywords Section */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <h2 className="text-xl font-semibold text-coffee-800 mb-4">Keywords</h2>
               <div className="flex flex-wrap gap-2 mb-6">
@@ -163,9 +168,7 @@ function Restaurant() {
               </div>
               {cafe.matchingKeywords && cafe.matchingKeywords.length > 0 && (
                 <>
-                  <h2 className="text-xl font-semibold text-coffee-800 mb-4">
-                    Matching Keywords
-                  </h2>
+                  <h2 className="text-xl font-semibold text-coffee-800 mb-4">Matching Keywords</h2>
                   <div className="flex flex-wrap gap-2">
                     {cafe.matchingKeywords.map((keyword: KeywordMatch, index: number) => (
                       <span
@@ -178,6 +181,35 @@ function Restaurant() {
                   </div>
                 </>
               )}
+            </div>
+
+            {/* Vibes & Dietary Options */}
+            <div className="bg-white rounded-xl p-6 shadow-sm">
+              <h2 className="text-xl font-semibold text-coffee-800 mb-4">Vibes & Dietary Options</h2>
+              <div className="mb-6">
+                <p className="text-coffee-600 font-semibold">Ambiance:</p>
+                <p className="text-coffee-500">
+                {Array.isArray(cafe.ambiance) && cafe.ambiance.length > 0
+                  ? cafe.ambiance
+                      .map((item) => item.charAt(0).toUpperCase() + item.slice(1)) // Capitalize first letter
+                      .join(', ') // Join with commas
+                  : cafe.ambiance
+                    ? cafe.ambiance.charAt(0).toUpperCase() + cafe.ambiance.slice(1) // Capitalize first letter for string
+                    : 'Not specified'}
+                </p>
+              </div>
+              <div className="mb-6">
+                <p className="text-coffee-600 font-semibold">Dietary Options:</p>
+                <p className="text-coffee-500">
+                {Array.isArray(cafe.dietaryOptions) && cafe.dietaryOptions.length > 0
+                  ? cafe.dietaryOptions
+                      .map((item) => item.charAt(0).toUpperCase() + item.slice(1)) // Capitalize first letter
+                      .join(', ') // Join with commas
+                  : cafe.dietaryOptions
+                    ? cafe.dietaryOptions.charAt(0).toUpperCase() + cafe.dietaryOptions.slice(1) // Capitalize first letter for string
+                    : 'Not specified'}
+                </p>
+              </div>
             </div>
 
             {/* Review Form */}
@@ -230,13 +262,27 @@ function Restaurant() {
               </div>
             </div>
 
+            {/* Hours of Operation */}
+            <div className="bg-white rounded-xl p-6 shadow-sm">
+              <h2 className="text-xl font-semibold text-coffee-800 mb-4">Hours of Operation</h2>
+              <ul className="space-y-2">
+                {cafe.hours ? Object.entries(cafe.hours).map(([day, hours]) => (
+                  <li key={day} className="flex justify-between">
+                    <span className="text-coffee-600 font-medium">{day}</span>
+                    <span className="text-coffee-500">{hours || 'Closed'}</span>
+                  </li>
+                )) : (
+                  <li className="text-coffee-500">No hours available</li>
+                )}
+              </ul>
+            </div>
+
+
             {/* Map */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <div className="h-64 bg-coffee-100 rounded-lg">
                 {/* TODO: Implement Google Maps integration */}
-                <div className="w-full h-full flex items-center justify-center text-coffee-500">
-                  Map placeholder
-                </div>
+                <div className="w-full h-full flex items-center justify-center text-coffee-400">Map</div>
               </div>
             </div>
           </div>

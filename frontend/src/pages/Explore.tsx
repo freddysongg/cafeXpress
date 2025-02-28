@@ -89,10 +89,12 @@ function Explore() {
           );
           const uniqueKeywords = Array.from(
             new Map(
-              allKeywords.map((k) => [`${k.category}:${k.keyword}`, k])
+              allKeywords
+                .filter((k) => k !== undefined) // Filter out undefined values
+                .map((k) => [`${k!.category}:${k!.keyword}`, k]) // Use the non-null assertion operator (!)
             ).values()
           );
-          callbacks.setMatchingKeywords(uniqueKeywords);
+          callbacks.setMatchingKeywords(uniqueKeywords);          
 
           if (query) callbacks.setSearchParams({ q: query });
         } catch (error) {
@@ -470,7 +472,7 @@ function Explore() {
                     name: cafe.name,
                     image: cafe.photos?.[0] || 'default-image-url',
                     rating: cafe.rating || 0,
-                    reviews: cafe.reviewCount || 0,
+                    reviews: cafe.numOfRatings || 0,
                     distance: cafe.distance?.toFixed(1) || '0',
                     address: cafe.address || '',
                     isOpen: true,

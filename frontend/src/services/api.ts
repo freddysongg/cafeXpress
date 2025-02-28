@@ -30,23 +30,33 @@ export interface CafeRecommendation {
   name: string;
   description?: string;
   address: string;
-  phone?: string;
-  hours?: {
-    today?: string;
-    [key: string]: string | undefined;
-  };
-  matchingKeywords: KeywordMatch[];
-  score: number;
-  distance?: number;
-  rating: number;
-  reviewCount: number;
-  keywords: string[];
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  ambiance?: string;
+  dietaryOptions?: string;
   location: {
     coordinates: [number, number];
     type: 'Point';
   };
   photos?: string[];
+  hours?: {
+    today?: string;
+    [key: string]: string | undefined;
+  };
+  rating: number;
+  numOfRatings: number;
+  status?: string;
+  createdAt?: string; // Optional as per your database return
+  phone?: string;
+  keywords: string[];
+  matchKeywords?: string[];
+  matchingKeywords?: KeywordMatch[];
+  score?: number;
+  distance?: number;
 }
+
+
 
 export interface RecommendationResponse {
   status: 'success' | 'error';
