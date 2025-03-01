@@ -118,7 +118,7 @@ export async function fetchCafes(
             rating: cafe.rating,
             status: isOpenNow,
             numOfRatings: cafe.review_count || 0,
-            phone: detailsResponse.data.phone || cafe.phone
+            phone: detailsResponse.data.phone || cafe.phone || null
           };
         } catch (error) {
           console.error(`Error fetching details for cafe ${cafe.id}:`, {
