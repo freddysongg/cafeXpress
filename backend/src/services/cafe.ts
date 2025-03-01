@@ -78,7 +78,8 @@ export async function getCafeById(
         hours: cafes.hours,
         rating: cafes.rating,
         status: cafes.status,
-        numOfRatings: cafes.numOfRatings
+        numOfRatings: cafes.numOfRatings,
+        phone: cafes.phone 
       })
       .from(cafes)
       .where(eq(cafes.id, cafeId))
@@ -122,7 +123,8 @@ export async function getAllCafes(req: FastifyRequest, reply: FastifyReply): Pro
         state: cafes.state,
         zipCode: cafes.zipCode,
         createdAt: cafes.createdAt,
-        photos: cafes.photos
+        photos: cafes.photos,
+        phone: cafes.phone
       })
       .from(cafes);
 
