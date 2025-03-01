@@ -1,7 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Edit3, Star, Bookmark } from 'lucide-react';
-
 
 // EXAMPLES for reviews and collections info
 // const recentReviews = [
@@ -52,7 +52,9 @@ import { Edit3, Star, Bookmark } from 'lucide-react';
 // ];
 
 function Profile() {
-  const [activeTab, setActiveTab] = useState<'reviews' | 'collections'>('reviews');
+  const [activeTab, setActiveTab] = useState<'reviews' | 'collections'>(
+    'reviews'
+  );
   const [user, setUser] = useState<any>(null); // Profile data
   const [loading, setLoading] = useState<boolean>(true); // Loading state
   const [error, setError] = useState<string | null>(null); // Error state
@@ -61,7 +63,7 @@ function Profile() {
   useEffect(() => {
     const fetchUserProfile = async () => {
       const token = localStorage.getItem('token');
-      
+
       // if (!token) {
       //   navigate('/signin'); // Redirect to login if no token
       //   return;
@@ -70,7 +72,7 @@ function Profile() {
       try {
         const response = await fetch('http://localhost:8000/profile', {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         });
 
@@ -85,6 +87,7 @@ function Profile() {
         } else {
           setError('Failed to fetch profile. Please try again.');
         }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
         setError('Error fetching profile data.');
       } finally {
@@ -122,21 +125,29 @@ function Profile() {
 
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-2 mb-2">
-                    <h1 className="text-2xl font-bold text-coffee-800">{user.firstName} {user.lastName}</h1>
+                    <h1 className="text-2xl font-bold text-coffee-800">
+                      {user.firstName} {user.lastName}
+                    </h1>
                     <button className="text-coffee-500 hover:text-coffee-600">
                       <Edit3 className="w-5 h-5" />
                     </button>
                   </div>
-                  <p className="text-coffee-600 mb-2">Member since {user.joinedDate}</p>
+                  <p className="text-coffee-600 mb-2">
+                    Member since {user.joinedDate}
+                  </p>
                   <p className="text-coffee-500 mb-4">{user.location}</p>
 
                   <div className="flex justify-center gap-6 border-t border-coffee-100 pt-4">
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-coffee-800">{user.reviews?.length || 0}</p>
+                      <p className="text-2xl font-bold text-coffee-800">
+                        {user.reviews?.length || 0}
+                      </p>
                       <p className="text-coffee-600">Reviews</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-coffee-800">{user.collections?.length || 0}</p>
+                      <p className="text-2xl font-bold text-coffee-800">
+                        {user.collections?.length || 0}
+                      </p>
                       <p className="text-coffee-600">Collections</p>
                     </div>
                   </div>
@@ -175,7 +186,10 @@ function Profile() {
             {activeTab === 'reviews' && (
               <div className="space-y-6">
                 {user.reviews?.map((review: any) => (
-                  <div key={review.id} className="bg-white rounded-xl shadow-sm p-6">
+                  <div
+                    key={review.id}
+                    className="bg-white rounded-xl shadow-sm p-6"
+                  >
                     <div className="flex items-start gap-4">
                       <img
                         src={review.image || 'https://via.placeholder.com/150'}
@@ -185,7 +199,9 @@ function Profile() {
                       <div className="flex-1">
                         <div className="flex justify-between items-start">
                           <div>
-                            <h3 className="text-lg font-semibold text-coffee-800">{review.cafeName}</h3>
+                            <h3 className="text-lg font-semibold text-coffee-800">
+                              {review.cafeName}
+                            </h3>
                             <div className="flex items-center gap-2 mt-1">
                               <div className="flex">
                                 {[...Array(5)].map((_, i) => (
@@ -199,7 +215,9 @@ function Profile() {
                                   />
                                 ))}
                               </div>
-                              <span className="text-coffee-500 text-sm">{review.date}</span>
+                              <span className="text-coffee-500 text-sm">
+                                {review.date}
+                              </span>
                             </div>
                           </div>
                           <button className="text-coffee-400 hover:text-coffee-500">
@@ -218,17 +236,27 @@ function Profile() {
             {activeTab === 'collections' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {user.collections?.map((collection: any) => (
-                  <div key={collection.id} className="bg-white rounded-xl shadow-sm overflow-hidden group cursor-pointer">
+                  <div
+                    key={collection.id}
+                    className="bg-white rounded-xl shadow-sm overflow-hidden group cursor-pointer"
+                  >
                     <div className="relative h-48">
                       <img
-                        src={collection.image || 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&q=80'}
+                        src={
+                          collection.image ||
+                          'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&q=80'
+                        }
                         alt={collection.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                       <div className="absolute bottom-0 left-0 p-4 text-white">
-                        <h3 className="text-xl font-semibold mb-1">{collection.name}</h3>
-                        <p className="text-sm opacity-90">{collection.places} places</p>
+                        <h3 className="text-xl font-semibold mb-1">
+                          {collection.name}
+                        </h3>
+                        <p className="text-sm opacity-90">
+                          {collection.places} places
+                        </p>
                       </div>
                     </div>
                   </div>
