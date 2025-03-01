@@ -23,7 +23,7 @@ const routes = async (app: FastifyInstance) => {
   app.register(profileRoutes, { prefix: '/profile' });
   app.register(recommendationRoutes, { prefix: '/recommendations' });
   app.register(generateRoutes, { prefix: '/generateReviews' });
-  app.register(favoriteCafeRoutes, {prefix: '/favoriteCafe' })
+  app.register(favoriteCafeRoutes, { prefix: '/favoriteCafe' });
 };
 
 export default routes;

@@ -59,11 +59,7 @@ export async function getUserById(
     const userId = req.params.userId;
 
     // Fetch user details
-    const user = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
+    const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
     if (!user.length) {
       reply.status(404).send({
@@ -99,9 +95,7 @@ export async function getUserById(
 export async function getAllUsers(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
     // Fetch all users
-    const usersList = await db
-      .select()
-      .from(users);
+    const usersList = await db.select().from(users);
 
     reply.send({
       status: 'success',

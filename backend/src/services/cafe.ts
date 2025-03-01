@@ -61,11 +61,7 @@ export async function getCafeById(
     const cafeId = req.params.cafeId;
 
     // Fetch cafe details
-    const cafe = await db
-      .select()
-      .from(cafes)
-      .where(eq(cafes.id, cafeId))
-      .limit(1);
+    const cafe = await db.select().from(cafes).where(eq(cafes.id, cafeId)).limit(1);
 
     if (!cafe.length) {
       reply.status(404).send({
