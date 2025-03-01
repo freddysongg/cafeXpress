@@ -62,25 +62,7 @@ export async function getCafeById(
 
     // Fetch cafe details
     const cafe = await db
-      .select({
-        id: cafes.id,
-        name: cafes.name,
-        description: cafes.description,
-        address: cafes.address,
-        city: cafes.city,
-        state: cafes.state,
-        zipCode: cafes.zipCode,
-        ambiance: cafes.ambiance,
-        dietaryOptions: cafes.dietaryOptions,
-        location: cafes.location,
-        createdAt: cafes.createdAt,
-        photos: cafes.photos,
-        hours: cafes.hours,
-        rating: cafes.rating,
-        status: cafes.status,
-        numOfRatings: cafes.numOfRatings,
-        phone: cafes.phone 
-      })
+      .select()
       .from(cafes)
       .where(eq(cafes.id, cafeId))
       .limit(1);
