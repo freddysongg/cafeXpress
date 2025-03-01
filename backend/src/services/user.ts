@@ -60,12 +60,7 @@ export async function getUserById(
 
     // Fetch user details
     const user = await db
-      .select({
-        username: users.username,
-        email: users.email,
-        description: users.description,
-        createdAt: users.createdAt
-      })
+      .select()
       .from(users)
       .where(eq(users.id, userId))
       .limit(1);
@@ -105,12 +100,7 @@ export async function getAllUsers(req: FastifyRequest, reply: FastifyReply): Pro
   try {
     // Fetch all users
     const usersList = await db
-      .select({
-        id: users.id,
-        username: users.username,
-        email: users.email,
-        createdAt: users.createdAt
-      })
+      .select()
       .from(users);
 
     reply.send({

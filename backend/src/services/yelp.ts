@@ -117,7 +117,8 @@ export async function fetchCafes(
             hours: formattedHours, // Store hours in readable format
             rating: cafe.rating,
             status: isOpenNow,
-            numOfRatings: cafe.review_count || 0
+            numOfRatings: cafe.review_count || 0,
+            phone: detailsResponse.data.phone || cafe.phone || null
           };
         } catch (error) {
           console.error(`Error fetching details for cafe ${cafe.id}:`, {
@@ -154,7 +155,8 @@ export async function fetchCafes(
           hours: cafe.hours,
           rating: cafe.rating, // Insert avgRating
           status: cafe.status, // Insert status (open/closed)
-          numOfRatings: cafe.numOfRatings // Insert number of ratings
+          numOfRatings: cafe.numOfRatings, // Insert number of ratings
+          phone: cafe.phone
         })
         .onConflictDoUpdate({
           target: cafes.address,
@@ -171,7 +173,8 @@ export async function fetchCafes(
             hours: cafe.hours,
             rating: cafe.rating, // Insert avgRating
             status: cafe.status, // Insert status (open/closed)
-            numOfRatings: cafe.numOfRatings // Insert number of ratings
+            numOfRatings: cafe.numOfRatings, // Insert number of ratings
+            phone: cafe.phone
           }
         });
     }

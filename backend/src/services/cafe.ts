@@ -62,20 +62,7 @@ export async function getCafeById(
 
     // Fetch cafe details
     const cafe = await db
-      .select({
-        id: cafes.id,
-        name: cafes.name,
-        description: cafes.description,
-        address: cafes.address,
-        city: cafes.city,
-        state: cafes.state,
-        zipCode: cafes.zipCode,
-        ambiance: cafes.ambiance,
-        dietaryOptions: cafes.dietaryOptions,
-        location: cafes.location,
-        createdAt: cafes.createdAt,
-        photos: cafes.photos
-      })
+      .select()
       .from(cafes)
       .where(eq(cafes.id, cafeId))
       .limit(1);
@@ -118,7 +105,8 @@ export async function getAllCafes(req: FastifyRequest, reply: FastifyReply): Pro
         state: cafes.state,
         zipCode: cafes.zipCode,
         createdAt: cafes.createdAt,
-        photos: cafes.photos
+        photos: cafes.photos,
+        phone: cafes.phone
       })
       .from(cafes);
 
