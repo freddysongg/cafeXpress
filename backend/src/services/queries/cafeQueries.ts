@@ -27,12 +27,18 @@ export const buildKeywordConditions = (keywords: KeywordMatch[]) => {
     .filter((k) => k.category === 'general')
     .map((k) => k.keyword.toLowerCase());
 
+  console.log('Building keyword conditions:', {
+    ambianceKeywords,
+    dietaryKeywords,
+    generalKeywords
+  });
+
   return sql`(
         ${
           ambianceKeywords.length > 0
             ? sql`EXISTS (
                 SELECT 1 FROM jsonb_array_elements_text(${cafes.ambiance}) AS a
-                WHERE LOWER(a::text) = ANY(${sql`ARRAY[${sql.join(ambianceKeywords, sql`, `)}]::text[]`})
+                WHERE LOWER(a) = ANY(${sql`ARRAY[${sql.join(ambianceKeywords, sql`, `)}]::text[]`})
             )`
             : sql`TRUE`
         }
@@ -41,7 +47,7 @@ export const buildKeywordConditions = (keywords: KeywordMatch[]) => {
           dietaryKeywords.length > 0
             ? sql`EXISTS (
                 SELECT 1 FROM jsonb_array_elements_text(${cafes.dietaryOptions}) AS d
-                WHERE LOWER(d::text) = ANY(${sql`ARRAY[${sql.join(dietaryKeywords, sql`, `)}]::text[]`})
+                WHERE LOWER(d) = ANY(${sql`ARRAY[${sql.join(dietaryKeywords, sql`, `)}]::text[]`})
             )`
             : sql`TRUE`
         }
@@ -50,7 +56,7 @@ export const buildKeywordConditions = (keywords: KeywordMatch[]) => {
           generalKeywords.length > 0
             ? sql`EXISTS (
                 SELECT 1 FROM jsonb_array_elements_text(${cafes.keywords}) AS k
-                WHERE LOWER(k::text) = ANY(${sql`ARRAY[${sql.join(generalKeywords, sql`, `)}]::text[]`})
+                WHERE LOWER(k) = ANY(${sql`ARRAY[${sql.join(generalKeywords, sql`, `)}]::text[]`})
             )`
             : sql`TRUE`
         }
@@ -58,20 +64,21 @@ export const buildKeywordConditions = (keywords: KeywordMatch[]) => {
 };
 
 export const calculateDistance = (latitude: number, longitude: number) =>
-  sql<number>`GREATEST(
-        ROUND(
-            CAST(
-                111.111 * 
-                SQRT(
-                    POW(${latitude} - CAST(CAST(${cafes.location}->>'coordinates' AS json)->>1 AS float), 2) +
-                    POW(${longitude} - CAST(CAST(${cafes.location}->>'coordinates' AS json)->>0 AS float), 2)
-                )
-            AS numeric
-            ),
-            2
-        ),
-        0.01
-    ) AS calc_distance`;
+  sql<number>`
+    ROUND(
+      CAST(
+        3959 * 2 * asin(
+          sqrt(
+            power(sin(radians(${latitude} - CAST(CAST(${cafes.location}->>'coordinates' AS json)->>1 AS float)) / 2), 2) +
+            cos(radians(${latitude})) *
+            cos(radians(CAST(CAST(${cafes.location}->>'coordinates' AS json)->>1 AS float))) *
+            power(sin(radians(${longitude} - CAST(CAST(${cafes.location}->>'coordinates' AS json)->>0 AS float)) / 2), 2)
+          )
+        )
+      AS numeric),
+      2
+    ) AS calc_distance
+  `;
 
 export const getCafesWithKeywords = (
   keywordConditions: ReturnType<typeof buildKeywordConditions>,

@@ -48,7 +48,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-
   useEffect(() => {
     const token = localStorage.getItem('token');
     // const userId = localStorage.getItem('userId');
