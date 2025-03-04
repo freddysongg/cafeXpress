@@ -33,8 +33,8 @@ export interface CafeRecommendation {
   city?: string;
   state?: string;
   zipCode?: string;
-  ambiance?: string;
-  dietaryOptions?: string;
+  ambiance?: string | string[] | null; // Now ambiance can be a string or an array of strings
+  dietaryOptions?: string | string[] | null;
   location: {
     coordinates: [number, number];
     type: 'Point';

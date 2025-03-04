@@ -73,7 +73,6 @@ function Restaurant() {
   
   const currentDay = getCurrentDay();
   const hoursToday = cafe.hours ? cafe.hours[currentDay] : null;
-  console.log(cafe.keywords); // Check the data in the console
 
   return (
     <div className="min-h-screen bg-coffee-50 pt-20">
@@ -90,7 +89,9 @@ function Restaurant() {
               </div>
               <span className="text-coffee-400">•</span>
               <span className="text-coffee-600">
-                {cafe.status ? `${cafe.status.charAt(0).toUpperCase() + cafe.status.slice(1)}: ${hoursToday}` : `Status not available: ${hoursToday}`}
+                {cafe.status && typeof cafe.status === "string"
+                  ? `${cafe.status.charAt(0).toUpperCase()}${cafe.status.slice(1)}: ${hoursToday}`
+                  : `Status not available: ${hoursToday}`}
               </span>
             </div>
           </div>
@@ -189,26 +190,29 @@ function Restaurant() {
               <div className="mb-6">
                 <p className="text-coffee-600 font-semibold">Ambiance:</p>
                 <p className="text-coffee-500">
-                {Array.isArray(cafe.ambiance) && cafe.ambiance.length > 0
-                  ? cafe.ambiance
-                      .map((item) => item.charAt(0).toUpperCase() + item.slice(1)) // Capitalize first letter
-                      .join(', ') // Join with commas
-                  : cafe.ambiance
-                    ? cafe.ambiance.charAt(0).toUpperCase() + cafe.ambiance.slice(1) // Capitalize first letter for string
-                    : 'Not specified'}
+                  {cafe.ambiance && 
+                    (typeof cafe.ambiance === 'string' 
+                      ? cafe.ambiance.charAt(0).toUpperCase() + cafe.ambiance.slice(1) // Capitalize first letter for string
+                      : Array.isArray(cafe.ambiance) && cafe.ambiance.length > 0
+                      ? cafe.ambiance
+                          .map(item => item.charAt(0).toUpperCase() + item.slice(1)) // Capitalize first letter for array items
+                          .join(', ') // Join with commas
+                      : 'Not specified')}
                 </p>
-              </div>
-              <div className="mb-6">
-                <p className="text-coffee-600 font-semibold">Dietary Options:</p>
-                <p className="text-coffee-500">
-                {Array.isArray(cafe.dietaryOptions) && cafe.dietaryOptions.length > 0
-                  ? cafe.dietaryOptions
-                      .map((item) => item.charAt(0).toUpperCase() + item.slice(1)) // Capitalize first letter
-                      .join(', ') // Join with commas
-                  : cafe.dietaryOptions
-                    ? cafe.dietaryOptions.charAt(0).toUpperCase() + cafe.dietaryOptions.slice(1) // Capitalize first letter for string
-                    : 'Not specified'}
-                </p>
+
+                <div className="mb-6">
+                  <p className="text-coffee-600 font-semibold">Dietary Options:</p>
+                  <p className="text-coffee-500">
+                    {cafe.dietaryOptions && 
+                      (typeof cafe.dietaryOptions === 'string'
+                        ? cafe.dietaryOptions.charAt(0).toUpperCase() + cafe.dietaryOptions.slice(1) // Capitalize first letter for string
+                        : Array.isArray(cafe.dietaryOptions) && cafe.dietaryOptions.length > 0
+                        ? cafe.dietaryOptions
+                            .map(item => item.charAt(0).toUpperCase() + item.slice(1)) // Capitalize first letter for array items
+                            .join(', ') // Join with commas
+                        : 'Not specified')}
+                  </p>
+                </div>
               </div>
             </div>
 

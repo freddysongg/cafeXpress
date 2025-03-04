@@ -27,7 +27,6 @@ export const useCafe = (id: string | undefined) => {
 
         const data = await response.json();
         if (data.data) {
-          console.log('useCafe result in useCafe.ts:', { cafe }); // Log the data from useCafe
           setCafe(data.data as CafeRecommendation); // Ensure the type matches
         } else {
           setError('Cafe data not found');
