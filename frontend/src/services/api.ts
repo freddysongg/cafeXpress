@@ -71,8 +71,6 @@ export interface CafeRecommendation {
   distance?: number;
 }
 
-
-
 export interface RecommendationResponse {
   status: 'success' | 'error';
   data: CafeRecommendation[];

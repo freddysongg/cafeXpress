@@ -18,12 +18,12 @@ interface CafeCardProps {
 }
 
 const CafeCard = ({ cafe }: CafeCardProps) => {
-  console.log("Cafe data:", cafe);
+  console.log('Cafe data:', cafe);
   const navigate = useNavigate();
 
   const handleClick = () => {
     if (!cafe.id) {
-      console.error("Error: Cafe ID is missing, cannot navigate.");
+      console.error('Error: Cafe ID is missing, cannot navigate.');
       return;
     }
     console.log(`Navigating to /restaurant/${cafe.id}`);
@@ -70,25 +70,36 @@ const CafeCard = ({ cafe }: CafeCardProps) => {
           <div className="flex items-center text-sm text-coffee-500 mb-2">
             <MapPin className="w-4 h-4 mr-1" />
             <span>{cafe.address || 'Address not available'}</span>
-            {cafe.distance && <><span className="mx-2">•</span><span>{cafe.distance} mi</span></>}
+            {cafe.distance && (
+              <>
+                <span className="mx-2">•</span>
+                <span>{cafe.distance} mi</span>
+              </>
+            )}
           </div>
 
           <div className="flex items-center mb-3">
             <Clock className="w-4 h-4 mr-1" />
-            <span className={`text-sm ${cafe.isOpen ? 'text-green-600' : 'text-red-500'}`}>
+            <span
+              className={`text-sm ${cafe.isOpen ? 'text-green-600' : 'text-red-500'}`}
+            >
               {cafe.isOpen ? 'Open Now' : 'Closed'}
             </span>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {cafe.tags.length > 0 ? cafe.tags.map((tag, index) => (
-              <span
-                key={index}
-                className="px-2 py-1 text-xs bg-coffee-50 text-coffee-600 rounded-full border border-coffee-100"
-              >
-                {tag}
-              </span>
-            )) : <span className="text-xs text-coffee-400">No tags available</span>}
+            {cafe.tags.length > 0 ? (
+              cafe.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="px-2 py-1 text-xs bg-coffee-50 text-coffee-600 rounded-full border border-coffee-100"
+                >
+                  {tag}
+                </span>
+              ))
+            ) : (
+              <span className="text-xs text-coffee-400">No tags available</span>
+            )}
           </div>
 
           {/* Matching keywords section */}

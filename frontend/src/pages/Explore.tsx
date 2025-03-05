@@ -92,7 +92,7 @@ function Explore() {
                 .map((k) => [`${k!.category}:${k!.keyword}`, k]) // Use the non-null assertion operator (!)
             ).values()
           );
-          callbacks.setMatchingKeywords(uniqueKeywords);          
+          callbacks.setMatchingKeywords(uniqueKeywords);
 
           if (query) callbacks.setSearchParams({ q: query });
         } catch (error) {
@@ -195,7 +195,7 @@ function Explore() {
         });
 
         marker.addListener('click', () => {
-          console.log("Navigating to cafe:", cafe);
+          console.log('Navigating to cafe:', cafe);
           navigate(`/restaurant/${cafe.id}`);
         });
 

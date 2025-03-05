@@ -52,7 +52,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     const token = localStorage.getItem('token');
     // const userId = localStorage.getItem('userId');
 
-
     if (!token) {
       console.error('Token is missing');
       return;
