@@ -41,7 +41,7 @@ function Profile() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [userArchetype, setUserArchetype] = useState(userArchetypes[4]); // Default to Adventurer
+  const [userArchetype, setUserArchetype] = useState(null); 
   const [imageLoaded, setImageLoaded] = useState(false);
   const navigate = useNavigate();
 
@@ -69,11 +69,16 @@ function Profile() {
         if (response.ok) {
           const data = await response.json();
           setUser(data.data);
-          
-          // Here we would normally determine the user archetype based on their favorites
-          // For now, we'll just use a random one for demonstration
-          const randomIndex = Math.floor(Math.random() * userArchetypes.length);
-          setUserArchetype(userArchetypes[randomIndex]);
+          if (data.data.favorites && data.data.favorites.length >= 5) {
+            const randomIndex = Math.floor(Math.random() * userArchetypes.length);
+            setUserArchetype(userArchetypes[randomIndex]);
+          } else {
+            setUserArchetype({
+              title: "Discover Your Cafe Personality!",
+              description: "Get your Cafe Personality by favoriting 5 cafes!",
+              icon: "⭐"
+            });
+          }
         } else {
           setError('Failed to fetch profile. Please try again.');
         }
@@ -210,7 +215,7 @@ function Profile() {
                 
                 {/* Text content - With improved spacing */}
                 <div className="text-center relative z-10 mt-auto pt-2">
-                  <h3 className="text-xl font-semibold text-coffee-800 mb-3">You are an: {userArchetype.title}!</h3>
+                  <h3 className="text-xl font-semibold text-coffee-800 mb-3">You are a: {userArchetype.title}!</h3>
                   <p className="text-sm text-coffee-600">{userArchetype.description}</p>
                 </div>
               </div>
