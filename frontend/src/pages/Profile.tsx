@@ -298,7 +298,9 @@ function Profile() {
                     <Coffee className="w-12 h-12 mb-4 text-coffee-200" />
                     <h3 className="text-xl font-medium text-coffee-600 mb-2">No reviews yet</h3>
                     <p className="text-coffee-400 mb-6">Go write some reviews!</p>
-                    <button className="px-6 py-2.5 bg-coffee-600 text-white rounded-full hover:bg-coffee-700 transition-colors flex items-center gap-2">
+                    <button 
+                      onClick={() => navigate('/explore')} // Redirect to /explore
+                      className="px-6 py-2.5 bg-coffee-600 text-white rounded-full hover:bg-coffee-700 transition-colors flex items-center gap-2">
                       <Search className="w-4 h-4" />
                       <span>Find cafes to review</span>
                     </button>
@@ -338,7 +340,9 @@ function Profile() {
                     <Heart className="w-12 h-12 mb-4 text-coffee-200" />
                     <h3 className="text-xl font-medium text-coffee-600 mb-2">No favorites yet</h3>
                     <p className="text-coffee-400 mb-6">Go favorite some cafes!</p>
-                    <button className="px-6 py-2.5 bg-coffee-600 text-white rounded-full hover:bg-coffee-700 transition-colors flex items-center gap-2">
+                    <button 
+                    onClick={() => navigate('/explore')} // Redirect to /explore
+                    className="px-6 py-2.5 bg-coffee-600 text-white rounded-full hover:bg-coffee-700 transition-colors flex items-center gap-2">
                       <Search className="w-4 h-4" />
                       <span>Discover cafes</span>
                     </button>
