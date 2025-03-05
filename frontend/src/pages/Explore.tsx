@@ -87,7 +87,9 @@ function Explore() {
           );
           const uniqueKeywords = Array.from(
             new Map(
-              allKeywords.map((k) => [`${k.category}:${k.keyword}`, k])
+              allKeywords
+                .filter((k) => k !== undefined) // Filter out undefined values
+                .map((k) => [`${k!.category}:${k!.keyword}`, k]) // Use the non-null assertion operator (!)
             ).values()
           );
           callbacks.setMatchingKeywords(uniqueKeywords);
@@ -179,12 +181,12 @@ function Explore() {
     const newMarkers: google.maps.Marker[] = [];
 
     cafes.forEach((cafe) => {
-      if (cafe.metadata?.location?.coordinates) {
+      if (cafe.location?.coordinates) {
         const marker = new google.maps.Marker({
           map,
           position: {
-            lat: cafe.metadata.location.coordinates[1],
-            lng: cafe.metadata.location.coordinates[0],
+            lat: cafe.location.coordinates[1],
+            lng: cafe.location.coordinates[0],
           },
           title: cafe.name,
           icon: {
@@ -193,6 +195,7 @@ function Explore() {
         });
 
         marker.addListener('click', () => {
+          console.log('Navigating to cafe:', cafe);
           navigate(`/restaurant/${cafe.id}`);
         });
 
@@ -217,10 +220,11 @@ function Explore() {
 
     setMarkers(newMarkers);
 
-    if (cafes.length > 0 && cafes[0].metadata?.location?.coordinates) {
+    // Center map on first cafe or user location
+    if (cafes.length > 0 && cafes[0].location?.coordinates) {
       map.setCenter({
-        lat: cafes[0].metadata.location.coordinates[1],
-        lng: cafes[0].metadata.location.coordinates[0],
+        lat: cafes[0].location.coordinates[1],
+        lng: cafes[0].location.coordinates[0],
       });
     } else if (userLocation) {
       map.setCenter({
@@ -475,12 +479,13 @@ function Explore() {
                 <div
                   key={cafe.id}
                   className="bg-white rounded-lg shadow-sm overflow-hidden"
+                  onClick={() => navigate(`/restaurant/${cafe.id}`)}
                 >
                   <div className="flex">
                     {/* Image container with fixed dimensions */}
                     <div className="w-48 h-48 flex-shrink-0">
                       <img
-                        src={cafe.metadata.photos?.[0] || 'default-image-url'}
+                        src={cafe.photos?.[0] || 'default-image-url'}
                         alt={cafe.name}
                         className="w-full h-full object-cover"
                       />
@@ -493,9 +498,9 @@ function Explore() {
                         </h3>
                         <div className="flex items-center gap-1">
                           <span className="text-amber-500">★</span>
-                          <span>{cafe.metadata.rating}</span>
+                          <span>{cafe.rating}</span>
                           <span className="text-gray-500">
-                            ({cafe.metadata.reviewCount})
+                            ({cafe.numOfRatings})
                           </span>
                         </div>
                       </div>
@@ -508,7 +513,7 @@ function Explore() {
                       </div>
                       {/* Categories */}
                       <div className="flex flex-wrap gap-2 mb-3">
-                        {cafe.metadata.keywords?.map((tag) => (
+                        {cafe.keywords?.map((tag) => (
                           <span
                             key={tag}
                             className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs"
@@ -518,9 +523,9 @@ function Explore() {
                         ))}
                       </div>
                       {/* Matching keywords */}
-                      {cafe.matchingKeywords?.length > 0 && (
+                      {(cafe.matchingKeywords?.length ?? 0) > 0 && (
                         <div className="flex flex-wrap gap-1.5 mt-2">
-                          {cafe.matchingKeywords.map((match, idx) => {
+                          {cafe.matchingKeywords?.map((match, idx) => {
                             const categoryColor = getCategoryColor(
                               match.category
                             );

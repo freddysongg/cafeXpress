@@ -28,7 +28,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   // Fetch user data from API
   const fetchUserData = async (userId: string, token: string) => {
     try {
-      console.log('Fetching user data...'); // Debugging
       const response = await fetch(`http://localhost:8000/user/${userId}`, {
         method: 'GET',
         headers: {
@@ -42,7 +41,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       }
 
       const data = await response.json();
-      console.log('User data fetched:', data); // Debugging
 
       setUser(data.data); // Set user details
     } catch (error) {
@@ -52,17 +50,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const userId = localStorage.getItem('userId');
+    // const userId = localStorage.getItem('userId');
 
-    console.log('useEffect - token:', token, 'userId:', userId); // Debugging
-
-    if (!token || !userId) {
-      console.error('Token or userId is missing');
+    if (!token) {
+      console.error('Token is missing');
       return;
     }
 
     setIsAuthenticated(true);
-    fetchUserData(userId, token);
+    // fetchUserData(userId, token);
   }, []);
 
   const login = (userId: string, token: string) => {

@@ -2,15 +2,30 @@ import React from 'react';
 import { User, Menu, Settings } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { jwtDecode } from 'jwt-decode';
 
 const Navbar = () => {
   const location = useLocation();
   const isAuth =
     location.pathname === '/signin' || location.pathname === '/signup';
   const isHome = location.pathname === '/';
-  const { isAuthenticated, user, logout } = useAuth();
 
-  console.log('Navbar - user:', user); // Debugging
+  // Retrieve token from localStorage
+  const token = localStorage.getItem('token');
+  let userFirstName = '';
+  let userLastName = '';
+
+  if (token) {
+    try {
+      const decoded: any = jwtDecode(token); // Decode JWT
+      userFirstName = decoded.firstName;
+      userLastName = decoded.lastName;
+    } catch (error) {
+      console.error('Error decoding token:', error);
+    }
+  }
+
+  const { isAuthenticated, logout } = useAuth();
 
   // Don't show navbar on auth pages
   if (isAuth) return null;
@@ -47,7 +62,7 @@ const Navbar = () => {
                 <span
                   className={`transition-colors duration-300 ${isHome ? 'text-white' : 'text-coffee-700 hover:text-coffee-900'}`}
                 >
-                  Welcome, {user?.username}!
+                  Welcome, {userFirstName} {userLastName}!
                 </span>
                 <button
                   onClick={logout}
@@ -64,12 +79,6 @@ const Navbar = () => {
                 Sign In
               </Link>
             )}
-            {/* <Link
-              to="/signin"
-              className="bg-coffee-500 text-white px-6 py-2 rounded-full hover:bg-coffee-600 transition-all duration-300"
-            >
-              Sign In
-            </Link> */}
           </div>
 
           {/* Mobile Menu Button */}

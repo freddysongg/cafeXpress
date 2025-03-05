@@ -1,8 +1,17 @@
-import React, { useState } from 'react';
-import { Star, Phone, MapPin, Heart, Share2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Star,
+  Phone,
+  MapPin,
+  Heart,
+  Share2,
+  ArrowLeft,
+  ArrowRight,
+} from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { useCafe } from '../hooks/useCafe';
 import { KeywordMatch } from '../services/api';
+import { jwtDecode } from 'jwt-decode';
 
 function Restaurant() {
   const { id } = useParams();
@@ -10,6 +19,62 @@ function Restaurant() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [newReview, setNewReview] = useState('');
   const [rating, setRating] = useState(0);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const carouselRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setCurrentImageIndex(0);
+  }, [cafe]);
+
+  interface DecodedToken {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: string;
+  }
+
+  const toggleFavorite = async () => {
+    try {
+      // Retrieve token from localStorage
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('User not logged in');
+      }
+
+      // Decode the token to get userId
+      const decoded = jwtDecode<DecodedToken>(token);
+      const userId = decoded.id; // Assuming `id` is the field where `userId` is stored
+
+      if (!userId) {
+        throw new Error('User ID not found in token');
+      }
+
+      // Proceed with the favorite toggling
+      const url = `http://localhost:8000/favoriteCafe/${isFavorite ? 'delete' : 'add'}`;
+      const method = isFavorite ? 'DELETE' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, cafeId: id }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update favorite status');
+      }
+
+      const data = await response.json();
+      setIsFavorite(!isFavorite); // Toggle favorite status
+
+      console.log(data.message); // Optional: Log the message returned from the backend
+    } catch (error) {
+      console.error('Error favoriting cafe:', error);
+    }
+  };
 
   if (loading)
     return (
@@ -23,19 +88,57 @@ function Restaurant() {
         {error}
       </div>
     );
-  if (!cafe)
+  if (!cafe || !cafe.photos)
     return (
       <div className="min-h-screen pt-20 flex items-center justify-center">
-        Cafe not found
+        No photos available
       </div>
     );
 
+  const handleSlide = (direction: 'prev' | 'next') => {
+    if (isTransitioning || !cafe.photos) return;
+
+    setIsTransitioning(true);
+
+    setCurrentImageIndex((prevIndex) => {
+      if (!cafe?.photos || cafe.photos.length === 0) {
+        return 0;
+      }
+
+      if (direction === 'next') {
+        return prevIndex >= cafe.photos.length - 1 ? 0 : prevIndex + 1;
+      } else {
+        return prevIndex <= 0 ? cafe.photos.length - 1 : prevIndex - 1;
+      }
+    });
+
+    setTimeout(() => {
+      setIsTransitioning(false);
+    }, 300);
+  };
+
   const handleSubmitReview = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement review submission
     setNewReview('');
     setRating(0);
   };
+
+  const getCurrentDay = () => {
+    const daysOfWeek = [
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+    ];
+    const today = new Date().getDay(); // getDay() returns a number from 0 (Sunday) to 6 (Saturday)
+    return daysOfWeek[today];
+  };
+
+  const currentDay = getCurrentDay();
+  const hoursToday = cafe.hours ? cafe.hours[currentDay] : null;
 
   return (
     <div className="min-h-screen bg-coffee-50 pt-20">
@@ -49,27 +152,23 @@ function Restaurant() {
             <div className="flex items-center gap-2">
               <div className="flex items-center">
                 <Star className="w-5 h-5 text-coffee-400 fill-current" />
-                <span className="ml-1 font-semibold">
-                  {cafe.metadata.rating}
-                </span>
+                <span className="ml-1 font-semibold">{cafe.rating}</span>
                 <span className="text-coffee-500 ml-1">
-                  ({cafe.metadata.reviewCount} reviews)
+                  ({cafe.numOfRatings} reviews)
                 </span>
               </div>
               <span className="text-coffee-400">•</span>
               <span className="text-coffee-600">
-                {cafe.hours?.today || 'Hours not available'}
+                {cafe.status && typeof cafe.status === 'string'
+                  ? `${cafe.status.charAt(0).toUpperCase()}${cafe.status.slice(1)}: ${hoursToday}`
+                  : `Status not available: ${hoursToday}`}
               </span>
             </div>
           </div>
           <div className="flex gap-4">
             <button
-              onClick={() => setIsFavorite(!isFavorite)}
-              className={`p-2 rounded-full ${
-                isFavorite
-                  ? 'bg-coffee-100 text-coffee-600'
-                  : 'bg-white text-coffee-400'
-              } hover:bg-coffee-100 transition-colors`}
+              onClick={toggleFavorite}
+              className={`p-2 rounded-full ${isFavorite ? 'bg-coffee-100 text-coffee-600' : 'bg-white text-coffee-400'} hover:bg-coffee-100 transition-colors`}
             >
               <Heart
                 className={`w-6 h-6 ${isFavorite ? 'fill-current' : ''}`}
@@ -82,46 +181,62 @@ function Restaurant() {
         </div>
 
         {/* Image Gallery */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          {cafe.metadata.photos?.map((image: string, index: number) => (
-            <img
-              key={index}
-              src={image}
-              alt={`${cafe.name} ${index + 1}`}
-              className="w-full h-64 object-cover rounded-xl"
-            />
-          ))}
+        <div className="relative overflow-hidden mb-8">
+          {/* Navigation Buttons */}
+          <button
+            onClick={() => handleSlide('prev')}
+            className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 p-2 bg-black/20 text-white rounded-full hover:bg-black/30 transition-colors backdrop-blur-sm"
+            disabled={isTransitioning}
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+
+          <button
+            onClick={() => handleSlide('next')}
+            className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 p-2 bg-black/20 text-white rounded-full hover:bg-black/30 transition-colors backdrop-blur-sm"
+            disabled={isTransitioning}
+          >
+            <ArrowRight className="w-6 h-6" />
+          </button>
+
+          {/* Carousel Container */}
+          <div
+            ref={carouselRef}
+            className="flex transition-transform duration-300 ease-in-out"
+            style={{
+              transform: `translateX(-${currentImageIndex * (100 / 3)}%)`,
+            }}
+          >
+            {cafe.photos.map((photo, index) => (
+              <div key={index} className="w-1/3 flex-shrink-0 px-2">
+                <img
+                  src={photo}
+                  alt={`Cafe photo ${index + 1}`}
+                  className="w-full h-64 object-cover rounded-xl"
+                  loading="lazy"
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-8">
           {/* Main Info */}
           <div className="col-span-2 space-y-8">
-            {/* Description */}
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-coffee-800 mb-4">
-                About
-              </h2>
-              <p className="text-coffee-600">
-                {cafe.description || 'No description available'}
-              </p>
-            </div>
-
-            {/* Vibes & Dietary Options */}
+            {/* Keywords Section */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <h2 className="text-xl font-semibold text-coffee-800 mb-4">
                 Keywords
               </h2>
               <div className="flex flex-wrap gap-2 mb-6">
-                {cafe.metadata.keywords?.map(
-                  (keyword: string, index: number) => (
-                    <span
-                      key={index}
-                      className="px-4 py-2 bg-coffee-50 text-coffee-600 rounded-full text-sm"
-                    >
-                      {keyword}
-                    </span>
-                  )
-                )}
+                {cafe.keywords?.map((keyword: string, index: number) => (
+                  <span
+                    key={index}
+                    className="px-4 py-2 bg-coffee-50 text-coffee-600 rounded-full text-sm"
+                  >
+                    {keyword}
+                  </span>
+                ))}
               </div>
               {cafe.matchingKeywords && cafe.matchingKeywords.length > 0 && (
                 <>
@@ -143,6 +258,51 @@ function Restaurant() {
                   </div>
                 </>
               )}
+            </div>
+
+            {/* Vibes & Dietary Options */}
+            <div className="bg-white rounded-xl p-6 shadow-sm">
+              <h2 className="text-xl font-semibold text-coffee-800 mb-4">
+                Vibes & Dietary Options
+              </h2>
+              <div className="mb-6">
+                <p className="text-coffee-600 font-semibold">Ambiance:</p>
+                <p className="text-coffee-500">
+                  {cafe.ambiance &&
+                    (typeof cafe.ambiance === 'string'
+                      ? cafe.ambiance.charAt(0).toUpperCase() +
+                        cafe.ambiance.slice(1) // Capitalize first letter for string
+                      : Array.isArray(cafe.ambiance) && cafe.ambiance.length > 0
+                        ? cafe.ambiance
+                            .map(
+                              (item) =>
+                                item.charAt(0).toUpperCase() + item.slice(1)
+                            ) // Capitalize first letter for array items
+                            .join(', ') // Join with commas
+                        : 'Not specified')}
+                </p>
+
+                <div className="mb-6">
+                  <p className="text-coffee-600 font-semibold">
+                    Dietary Options:
+                  </p>
+                  <p className="text-coffee-500">
+                    {cafe.dietaryOptions &&
+                      (typeof cafe.dietaryOptions === 'string'
+                        ? cafe.dietaryOptions.charAt(0).toUpperCase() +
+                          cafe.dietaryOptions.slice(1) // Capitalize first letter for string
+                        : Array.isArray(cafe.dietaryOptions) &&
+                            cafe.dietaryOptions.length > 0
+                          ? cafe.dietaryOptions
+                              .map(
+                                (item) =>
+                                  item.charAt(0).toUpperCase() + item.slice(1)
+                              ) // Capitalize first letter for array items
+                              .join(', ') // Join with commas
+                          : 'Not specified')}
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Review Form */}
@@ -201,12 +361,33 @@ function Restaurant() {
               </div>
             </div>
 
+            {/* Hours of Operation */}
+            <div className="bg-white rounded-xl p-6 shadow-sm">
+              <h2 className="text-xl font-semibold text-coffee-800 mb-4">
+                Hours of Operation
+              </h2>
+              <ul className="space-y-2">
+                {cafe.hours ? (
+                  Object.entries(cafe.hours).map(([day, hours]) => (
+                    <li key={day} className="flex justify-between">
+                      <span className="text-coffee-600 font-medium">{day}</span>
+                      <span className="text-coffee-500">
+                        {hours || 'Closed'}
+                      </span>
+                    </li>
+                  ))
+                ) : (
+                  <li className="text-coffee-500">No hours available</li>
+                )}
+              </ul>
+            </div>
+
             {/* Map */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <div className="h-64 bg-coffee-100 rounded-lg">
                 {/* TODO: Implement Google Maps integration */}
-                <div className="w-full h-full flex items-center justify-center text-coffee-500">
-                  Map placeholder
+                <div className="w-full h-full flex items-center justify-center text-coffee-400">
+                  Map
                 </div>
               </div>
             </div>

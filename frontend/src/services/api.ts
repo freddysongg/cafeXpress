@@ -45,25 +45,30 @@ export interface CafeRecommendation {
   name: string;
   description?: string;
   address: string;
-  phone?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  ambiance?: string | string[] | null; // Now ambiance can be a string or an array of strings
+  dietaryOptions?: string | string[] | null;
+  location: {
+    coordinates: [number, number];
+    type: 'Point';
+  };
+  photos?: string[];
   hours?: {
     today?: string;
     [key: string]: string | undefined;
   };
-  matchingKeywords: KeywordMatch[];
-  score: number;
+  rating: number;
+  numOfRatings: number;
+  status?: string;
+  createdAt?: string; // Optional as per your database return
+  phone?: string;
+  keywords: string[];
+  matchKeywords?: string[];
+  matchingKeywords?: KeywordMatch[];
+  score?: number;
   distance?: number;
-  metadata: {
-    rating: number;
-    reviewCount: number;
-    keywords: string[];
-    address: string;
-    location: {
-      coordinates: [number, number];
-      type: 'Point';
-    };
-    photos?: string[];
-  };
 }
 
 export interface RecommendationResponse {
