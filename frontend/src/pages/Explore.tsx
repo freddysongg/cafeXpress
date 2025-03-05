@@ -45,6 +45,29 @@ const mapLoader = new Loader({
   libraries: ['places', 'marker'],
 });
 
+// Add this near the top of the file, after the imports
+const NEGATED_COLORS = {
+  background: '#FFF1F1',
+  border: '#FEE2E2',
+  text: '#991B1B',
+} as const;
+
+// Add this function before the Explore component
+function getKeywordStyle(keyword: KeywordMatch) {
+  if (keyword.isNegated) {
+    return `
+      background: ${NEGATED_COLORS.background};
+      color: ${NEGATED_COLORS.text};
+      border: 1px solid ${NEGATED_COLORS.border};
+    `;
+  }
+  return `
+    background: #FFF5EB;
+    color: #8B5E3C;
+    border: none;
+  `;
+}
+
 function Explore() {
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
@@ -63,6 +86,9 @@ function Explore() {
   const [matchingKeywords, setMatchingKeywords] = useState<KeywordMatch[]>([]);
   const [filterOptions, setFilterOptions] = useState(DEFAULT_FILTER_OPTIONS);
   const navigate = useNavigate();
+
+  // Add this state for persisting search results
+  const [lastSearchQuery, setLastSearchQuery] = useState<string | null>(null);
 
   const updateFilterOptions = useCallback((keywords: KeywordMatch[]) => {
     const analyzedKeywords = new Set(
@@ -130,8 +156,15 @@ function Explore() {
 
   const handleSearch = useCallback(
     (query: string, searchFilters?: SearchFilters) => {
+      // Don't search if it's the same query and we have results
+      if (query === lastSearchQuery && cafes.length > 0) {
+        return;
+      }
+
       setLoading(true);
       setError(null);
+      setLastSearchQuery(query);
+
       const filters = searchFilters || {
         dietary: selectedFilters.dietary
           ? [selectedFilters.dietary]
@@ -154,7 +187,14 @@ function Explore() {
         setLoading,
       });
     },
-    [selectedFilters, userLocation, debouncedSearchFn, setSearchParams]
+    [
+      selectedFilters,
+      userLocation,
+      debouncedSearchFn,
+      setSearchParams,
+      lastSearchQuery,
+      cafes.length,
+    ]
   );
 
   const searchFilters = useMemo(
@@ -286,18 +326,22 @@ function Explore() {
                     justify-content: center;
                     margin-bottom: 8px;
                   ">
-                    ${(cafe.metadata.keywords || cafe.keywords)
+                    ${(cafe.matchingKeywords || [])
                       ?.slice(0, 2)
                       .map(
-                        (tag) =>
+                        (kw) =>
                           `<span style="
-                        background: #FFF5EB;
-                        color: #8B5E3C;
-                        padding: 2px 8px;
-                        border-radius: 12px;
-                        font-size: 11px;
-                        font-weight: 500;
-                      ">${tag}</span>`
+                            ${getKeywordStyle(kw)}
+                            padding: 2px 8px;
+                            border-radius: 12px;
+                            font-size: 11px;
+                            font-weight: 500;
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 2px;
+                          ">
+                            ${kw.isNegated ? '✕ ' : ''}${kw.keyword}
+                          </span>`
                       )
                       .join('')}
                   </div>
@@ -372,10 +416,16 @@ function Explore() {
     };
 
     updateMarkers();
-  }, [map, cafes, navigate]);
+  }, [map, cafes, navigate, markers, infoWindows]);
 
   useEffect(() => {
     const searchQuery = searchParams.get('q');
+
+    // Don't trigger a new search if we already have results for this query
+    if (searchQuery === lastSearchQuery && cafes.length > 0) {
+      setLoading(false);
+      return;
+    }
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -403,8 +453,13 @@ function Explore() {
         }
       );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [
+    searchParams,
+    lastSearchQuery,
+    cafes.length,
+    handleSearch,
+    searchFilters,
+  ]);
 
   const handleFilterSelect = (category: string, value: string) => {
     setSelectedFilters((prev) => {
@@ -552,19 +607,14 @@ function Explore() {
   // Update category color helper with confidence-based opacity
   const getCategoryColor = (category: string, confidence: number) => {
     const isNegative = confidence < 0;
+    if (isNegative) {
+      return `bg-red-50/50 text-red-700/50 border-red-200/50`;
+    }
     const baseColors = {
-      ambiance: isNegative
-        ? 'bg-violet-50/50 text-violet-700/50 border-violet-200/50'
-        : 'bg-violet-50 text-violet-700 border-violet-200',
-      dietary: isNegative
-        ? 'bg-emerald-50/50 text-emerald-700/50 border-emerald-200/50'
-        : 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      activity: isNegative
-        ? 'bg-amber-50/50 text-amber-700/50 border-amber-200/50'
-        : 'bg-amber-50 text-amber-700 border-amber-200',
-      general: isNegative
-        ? 'bg-sky-50/50 text-sky-700/50 border-sky-200/50'
-        : 'bg-sky-50 text-sky-700 border-sky-200',
+      ambiance: 'bg-violet-50 text-violet-700 border-violet-200',
+      dietary: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      activity: 'bg-amber-50 text-amber-700 border-amber-200',
+      general: 'bg-sky-50 text-sky-700 border-sky-200',
     };
     return (
       baseColors[category as keyof typeof baseColors] || baseColors.general
