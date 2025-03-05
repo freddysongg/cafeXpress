@@ -479,6 +479,7 @@ function Explore() {
                 <div
                   key={cafe.id}
                   className="bg-white rounded-lg shadow-sm overflow-hidden"
+                  onClick={() => navigate(`/restaurant/${cafe.id}`)}
                 >
                   <div className="flex">
                     {/* Image container with fixed dimensions */}

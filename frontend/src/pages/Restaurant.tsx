@@ -3,6 +3,7 @@ import { Star, Phone, MapPin, Heart, Share2, ArrowLeft, ArrowRight } from 'lucid
 import { useParams } from 'react-router-dom';
 import { useCafe } from '../hooks/useCafe';
 import { KeywordMatch } from '../services/api';
+import { jwtDecode } from 'jwt-decode';
 
 function Restaurant() {
   const { id } = useParams();
@@ -18,6 +19,55 @@ function Restaurant() {
   useEffect(() => {
     setCurrentImageIndex(0);
   }, [cafe]);
+
+  interface DecodedToken {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: string;
+  }
+
+  const toggleFavorite = async () => {
+    try {
+        // Retrieve token from localStorage
+        const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('User not logged in');
+        }
+
+        // Decode the token to get userId
+        const decoded = jwtDecode<DecodedToken>(token);
+        const userId = decoded.id; // Assuming `id` is the field where `userId` is stored
+
+        if (!userId) {
+            throw new Error('User ID not found in token');
+        }
+
+        // Proceed with the favorite toggling
+        const url = `http://localhost:8000/favoriteCafe/${isFavorite ? 'delete' : 'add'}`;
+        const method = isFavorite ? 'DELETE' : 'POST';
+
+        const response = await fetch(url, {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ userId, cafeId: id }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update favorite status');
+        }
+
+        const data = await response.json();
+        setIsFavorite(!isFavorite); // Toggle favorite status
+
+        console.log(data.message); // Optional: Log the message returned from the backend
+    } catch (error) {
+        console.error('Error favoriting cafe:', error);
+    }
+};
 
   if (loading) return (
     <div className="min-h-screen pt-20 flex items-center justify-center">
@@ -97,7 +147,7 @@ function Restaurant() {
           </div>
           <div className="flex gap-4">
             <button
-              onClick={() => setIsFavorite(!isFavorite)}
+              onClick={toggleFavorite}
               className={`p-2 rounded-full ${isFavorite ? 'bg-coffee-100 text-coffee-600' : 'bg-white text-coffee-400'} hover:bg-coffee-100 transition-colors`}
             >
               <Heart className={`w-6 h-6 ${isFavorite ? 'fill-current' : ''}`} />
