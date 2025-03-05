@@ -48,8 +48,8 @@ export interface CafeRecommendation {
   city?: string;
   state?: string;
   zipCode?: string;
-  ambiance?: string | string[] | null; // Now ambiance can be a string or an array of strings
-  dietaryOptions?: string | string[] | null;
+  ambiance?: string[];
+  dietaryOptions?: string[];
   location: {
     coordinates: [number, number];
     type: 'Point';
@@ -62,13 +62,22 @@ export interface CafeRecommendation {
   rating: number;
   numOfRatings: number;
   status?: string;
-  createdAt?: string; // Optional as per your database return
+  createdAt?: string;
   phone?: string;
   keywords: string[];
-  matchKeywords?: string[];
   matchingKeywords?: KeywordMatch[];
-  score?: number;
+  score: number;
   distance?: number;
+  metadata: {
+    rating: number;
+    reviewCount: number;
+    keywords: string[];
+    location: {
+      coordinates: [number, number];
+      type: 'Point';
+    };
+    photos?: string[];
+  };
 }
 
 export interface RecommendationResponse {
