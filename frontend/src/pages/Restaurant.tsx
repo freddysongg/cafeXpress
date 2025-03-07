@@ -86,14 +86,15 @@ function Restaurant() {
                 const userRes = await fetch(`http://localhost:8000/user/${review.userId}`);
                 const userData = await userRes.json();
 
-                if (userData.status === "success") {
+                if (userData.status === "success" && userData.data && userData.data.length > 0) {
+                  const user = userData.data[0]; // Assuming that data contains an array and you want the first element
                   return {
                     ...review,
-                    firstName: userData.data.firstName,
-                    lastName: userData.data.lastName,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
                   };
                 } else {
-                  return review;
+                  return review; // If no user data is found or status is not success
                 }
               } catch (error) {
                 return review;
@@ -513,18 +514,20 @@ function Restaurant() {
                           alt="Default User Avatar"
                           className="w-10 h-10 rounded-full"
                         />
-                        <div>
-                          <p className="font-semibold">{review.firstName} {review.lastName}</p>
-                          <div className="flex items-center text-yellow-500">
-                            {[...Array(review.rating)].map((_, i) => (
-                              <Star key={i} size={16} fill="currentColor" />
-                            ))}
+                        <div className="flex justify-between w-full">
+                          <div className="ml-4"> {/* Added margin to the left */}
+                            <p className="font-semibold">{review.firstName} {review.lastName}</p>
+                            <div className="flex items-center text-yellow-500">
+                              {[...Array(review.rating)].map((_, i) => (
+                                <Star key={i} size={16} fill="currentColor" />
+                              ))}
+                            </div>
                           </div>
                           <p className="text-sm text-gray-500">{new Date(review.createdAt).toLocaleDateString()}</p>
                         </div>
                       </div>
-                      <p className="text-gray-700">{review.description}</p>
-                    </div>
+                    <p className="text-gray-700">{review.description}</p>
+                  </div>                  
                   ))
                 ) : (
                   <p className="text-gray-500">No reviews yet.</p>
