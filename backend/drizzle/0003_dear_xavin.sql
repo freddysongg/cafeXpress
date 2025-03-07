@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "recent_searches" jsonb DEFAULT '[]'::jsonb;
