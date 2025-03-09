@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
 import { Button } from '../components/ui/button';
 import { ChevronDown } from 'lucide-react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,7 +49,7 @@ const mapLoader = new Loader({
 const NEGATED_COLORS = {
   background: '#FFF1F1',
   border: '#FEE2E2',
-  text: '#991B1B',
+  text: '#991B1B'
 } as const;
 
 // Add this function before the Explore component
@@ -69,26 +69,29 @@ function getKeywordStyle(keyword: KeywordMatch) {
 }
 
 function Explore() {
+  const location = useLocation();
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [cafes, setCafes] = useState<CafeRecommendation[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [cafes, setCafes] = useState<CafeRecommendation[]>(
+    location.state?.cafes || []
+  );
+  const [loading, setLoading] = useState(!location.state?.cafes);
   const [error, setError] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<Location | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [selectedFilters, setSelectedFilters] = useState<
-    Record<string, string>
-  >({});
-  const [markers, setMarkers] = useState<
-    google.maps.marker.AdvancedMarkerElement[]
-  >([]);
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>(
+    location.state?.filters || {}
+  );
+  const [markers, setMarkers] = useState<google.maps.marker.AdvancedMarkerElement[]>([]);
   const [infoWindows, setInfoWindows] = useState<google.maps.InfoWindow[]>([]);
-  const [matchingKeywords, setMatchingKeywords] = useState<KeywordMatch[]>([]);
+  const [matchingKeywords, setMatchingKeywords] = useState<KeywordMatch[]>(
+    location.state?.keywords || []
+  );
   const [filterOptions, setFilterOptions] = useState(DEFAULT_FILTER_OPTIONS);
   const navigate = useNavigate();
-
-  // Add this state for persisting search results
-  const [lastSearchQuery, setLastSearchQuery] = useState<string | null>(null);
+  const [lastSearchQuery, setLastSearchQuery] = useState<string | null>(
+    location.state?.lastQuery || searchParams.get('q') || null
+  );
 
   const updateFilterOptions = useCallback((keywords: KeywordMatch[]) => {
     const analyzedKeywords = new Set(
@@ -187,14 +190,7 @@ function Explore() {
         setLoading,
       });
     },
-    [
-      selectedFilters,
-      userLocation,
-      debouncedSearchFn,
-      setSearchParams,
-      lastSearchQuery,
-      cafes.length,
-    ]
+    [selectedFilters, userLocation, debouncedSearchFn, setSearchParams, lastSearchQuery, cafes.length]
   );
 
   const searchFilters = useMemo(
@@ -346,7 +342,7 @@ function Explore() {
                       .join('')}
                   </div>
                   <button 
-                    onclick="window.location.href='/restaurant/${cafe.id}'"
+                    onclick="window.dispatchEvent(new CustomEvent('navigateToCafe', { detail: '${cafe.id}' }))"
                     style="
                       width: 100%;
                       background: #4A2C1C;
@@ -416,7 +412,7 @@ function Explore() {
     };
 
     updateMarkers();
-  }, [map, cafes, navigate, markers, infoWindows]);
+  }, [map, cafes, navigate]);
 
   useEffect(() => {
     const searchQuery = searchParams.get('q');
@@ -453,13 +449,7 @@ function Explore() {
         }
       );
     }
-  }, [
-    searchParams,
-    lastSearchQuery,
-    cafes.length,
-    handleSearch,
-    searchFilters,
-  ]);
+  }, [searchParams, lastSearchQuery, cafes.length]);
 
   const handleFilterSelect = (category: string, value: string) => {
     setSelectedFilters((prev) => {
@@ -614,11 +604,9 @@ function Explore() {
       ambiance: 'bg-violet-50 text-violet-700 border-violet-200',
       dietary: 'bg-emerald-50 text-emerald-700 border-emerald-200',
       activity: 'bg-amber-50 text-amber-700 border-amber-200',
-      general: 'bg-sky-50 text-sky-700 border-sky-200',
+      general: 'bg-sky-50 text-sky-700 border-sky-200'
     };
-    return (
-      baseColors[category as keyof typeof baseColors] || baseColors.general
-    );
+    return baseColors[category as keyof typeof baseColors] || baseColors.general;
   };
 
   // Format confidence score for display
@@ -626,6 +614,31 @@ function Explore() {
     const absConfidence = Math.abs(confidence);
     return `${(absConfidence * 100).toFixed(0)}%`;
   };
+
+  // Update the cafe card click handler
+  const handleCafeClick = (cafeId: string) => {
+    navigate(`/restaurant/${cafeId}`, {
+      state: {
+        returnTo: 'explore',
+        cafes,
+        keywords: matchingKeywords,
+        filters: selectedFilters,
+        lastQuery: lastSearchQuery
+      }
+    });
+  };
+
+  // Add event listener for custom navigation
+  useEffect(() => {
+    const handleNavigate = (event: CustomEvent<string>) => {
+      handleCafeClick(event.detail);
+    };
+
+    window.addEventListener('navigateToCafe', handleNavigate as EventListener);
+    return () => {
+      window.removeEventListener('navigateToCafe', handleNavigate as EventListener);
+    };
+  }, [cafes, matchingKeywords, selectedFilters, lastSearchQuery]);
 
   return (
     <div className="flex h-screen pt-16">
@@ -724,7 +737,7 @@ function Explore() {
                 <div
                   key={cafe.id}
                   className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200 cursor-pointer"
-                  onClick={() => navigate(`/restaurant/${cafe.id}`)}
+                  onClick={() => handleCafeClick(cafe.id)}
                 >
                   <div className="flex">
                     <div className="w-48 h-48 flex-shrink-0">
