@@ -1,22 +1,30 @@
 import { z } from 'zod';
 
 // Zod schema for preferences request
-export const CreatePreferencesSchema = z.object({
+export const PreferencesSchema = z.object({
   userId: z.string(),
-  favoriteCafes: z.array(z.string()),
-  dietaryRestrictions: z.array(z.string()),
-  ambiance: z.array(z.string()),
-  semanticEmbedding: z
-    .object({
-      vector: z.array(z.number()),
-      metadata: z.object({
-        type: z.enum(['user', 'preferences', 'cafe']),
-        id: z.string(),
-        createdAt: z.date().optional()
-      })
-    })
-    .nullable()
+  preferences: z.object({
+    dietary: z.array(z.string()),
+    ambiance: z.array(z.string()),
+    activities: z.array(z.string()),
+    drinks: z.array(z.string()),
+    vibes: z.array(z.string()),
+    coffee: z.array(z.string())
+  }),
+  createdAt: z.date().optional()
+});
+
+export const UpdatePreferencesSchema = z.object({
+  preferences: z.object({
+    dietary: z.array(z.string()),
+    ambiance: z.array(z.string()),
+    activities: z.array(z.string()),
+    drinks: z.array(z.string()),
+    vibes: z.array(z.string()),
+    coffee: z.array(z.string())
+  })
 });
 
 // TypeScript type inferred from the Zod schema
-export type PreferencesSchema = z.infer<typeof CreatePreferencesSchema>;
+export type PreferencesType = z.infer<typeof PreferencesSchema>;
+export type UpdatePreferencesType = z.infer<typeof UpdatePreferencesSchema>;

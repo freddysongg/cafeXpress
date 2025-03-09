@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
 import { Button } from '../components/ui/button';
@@ -49,7 +50,7 @@ const mapLoader = new Loader({
 const NEGATED_COLORS = {
   background: '#FFF1F1',
   border: '#FEE2E2',
-  text: '#991B1B'
+  text: '#991B1B',
 } as const;
 
 // Add this function before the Explore component
@@ -79,10 +80,12 @@ function Explore() {
   const [error, setError] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<Location | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>(
-    location.state?.filters || {}
-  );
-  const [markers, setMarkers] = useState<google.maps.marker.AdvancedMarkerElement[]>([]);
+  const [selectedFilters, setSelectedFilters] = useState<
+    Record<string, string>
+  >(location.state?.filters || {});
+  const [markers, setMarkers] = useState<
+    google.maps.marker.AdvancedMarkerElement[]
+  >([]);
   const [infoWindows, setInfoWindows] = useState<google.maps.InfoWindow[]>([]);
   const [matchingKeywords, setMatchingKeywords] = useState<KeywordMatch[]>(
     location.state?.keywords || []
@@ -190,7 +193,14 @@ function Explore() {
         setLoading,
       });
     },
-    [selectedFilters, userLocation, debouncedSearchFn, setSearchParams, lastSearchQuery, cafes.length]
+    [
+      selectedFilters,
+      userLocation,
+      debouncedSearchFn,
+      setSearchParams,
+      lastSearchQuery,
+      cafes.length,
+    ]
   );
 
   const searchFilters = useMemo(
@@ -604,9 +614,11 @@ function Explore() {
       ambiance: 'bg-violet-50 text-violet-700 border-violet-200',
       dietary: 'bg-emerald-50 text-emerald-700 border-emerald-200',
       activity: 'bg-amber-50 text-amber-700 border-amber-200',
-      general: 'bg-sky-50 text-sky-700 border-sky-200'
+      general: 'bg-sky-50 text-sky-700 border-sky-200',
     };
-    return baseColors[category as keyof typeof baseColors] || baseColors.general;
+    return (
+      baseColors[category as keyof typeof baseColors] || baseColors.general
+    );
   };
 
   // Format confidence score for display
@@ -623,8 +635,8 @@ function Explore() {
         cafes,
         keywords: matchingKeywords,
         filters: selectedFilters,
-        lastQuery: lastSearchQuery
-      }
+        lastQuery: lastSearchQuery,
+      },
     });
   };
 
@@ -636,7 +648,10 @@ function Explore() {
 
     window.addEventListener('navigateToCafe', handleNavigate as EventListener);
     return () => {
-      window.removeEventListener('navigateToCafe', handleNavigate as EventListener);
+      window.removeEventListener(
+        'navigateToCafe',
+        handleNavigate as EventListener
+      );
     };
   }, [cafes, matchingKeywords, selectedFilters, lastSearchQuery]);
 
