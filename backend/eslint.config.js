@@ -12,7 +12,8 @@ export default [
       '**/docs/*',
       '**/node_modules/*',
       '**/dist/*',
-      '**/*.config.ts'
+      '**/*.config.ts',
+      '**/drizzle/**/*'
     ],
     plugins: {
       '@typescript-eslint': tsPlugin
@@ -30,6 +31,25 @@ export default [
         NodeJS: 'readonly',
         setInterval: 'readonly',
         clearInterval: 'readonly'
+      }
+    },
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }
+      ],
+      'no-console': 'off'
+    }
+  },
+  {
+    files: ['**/drizzle/**/*.ts'],
+    plugins: {
+      '@typescript-eslint': tsPlugin
+    },
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        project: null
       }
     },
     rules: {

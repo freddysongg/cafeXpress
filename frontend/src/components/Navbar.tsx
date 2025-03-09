@@ -4,6 +4,15 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { jwtDecode } from 'jwt-decode';
 
+// Add type for decoded JWT data
+interface DecodedToken {
+  firstName: string;
+  lastName: string;
+  exp: number;
+  iat: number;
+  id: string;
+}
+
 const Navbar = () => {
   const location = useLocation();
   const isAuth =
@@ -17,7 +26,7 @@ const Navbar = () => {
 
   if (token) {
     try {
-      const decoded: any = jwtDecode(token); // Decode JWT
+      const decoded = jwtDecode<DecodedToken>(token); // Use the DecodedToken type
       userFirstName = decoded.firstName;
       userLastName = decoded.lastName;
     } catch (error) {
