@@ -19,30 +19,59 @@ export interface SearchRequest {
   userId?: string;
 }
 
-export interface KeywordMatch {
+export type KeywordMatch = {
   keyword: string;
   confidence: number;
   category: 'ambiance' | 'dietary' | 'activity' | 'general';
-}
+  isNegated: boolean;
+  importance: number;
+  context?: {
+    isExplicit?: boolean;
+    isHistorical?: boolean;
+    isPriority?: boolean;
+    uncertainty?: {
+      isUncertain: boolean;
+      strength: number;
+    };
+    matchDetails?: {
+      matchedTerms: string[];
+      similarityScore: number;
+    };
+  };
+};
 
 export interface CafeRecommendation {
   id: string;
   name: string;
   description?: string;
   address: string;
-  phone?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  ambiance?: string[];
+  dietaryOptions?: string[];
+  location: {
+    coordinates: [number, number];
+    type: 'Point';
+  };
+  photos?: string[];
   hours?: {
     today?: string;
     [key: string]: string | undefined;
   };
-  matchingKeywords: KeywordMatch[];
+  rating: number;
+  numOfRatings: number;
+  status?: string;
+  createdAt?: string;
+  phone?: string;
+  keywords: string[];
+  matchingKeywords?: KeywordMatch[];
   score: number;
   distance?: number;
   metadata: {
     rating: number;
     reviewCount: number;
     keywords: string[];
-    address: string;
     location: {
       coordinates: [number, number];
       type: 'Point';
