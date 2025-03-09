@@ -2,37 +2,39 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Edit3, Star, Bookmark, Coffee, Heart, Search } from 'lucide-react';
 
-// User archetype data based on favorites
+// New user archetype data based on favorites and keyword interests
 const userArchetypes = [
+  // Archetype for users who favorite at least 10 cafes
   {
     id: 1,
-    title: "Coffee Connoisseur",
-    description: "You appreciate fine coffee and know your beans!",
-    icon: "☕" // Coffee cup icon
+    title: "Cafe Aficionado",
+    description: "Your love for cafes is unmatched—you've favorited at least 10 spots!",
+    icon: "🌟" // Star icon
   },
+  // Combined archetype for ambiance and vibes
   {
     id: 2,
-    title: "Cafe Explorer",
-    description: "Always on the hunt for new and exciting cafe spots!",
-    icon: "🗺️" // Map icon
+    title: "Ambiance & Vibe Connoisseur",
+    description: "You appreciate the perfect setting and mood—whether it's quiet, cozy, study-friendly, or social.",
+    icon: "🎶" // Music note icon
   },
   {
     id: 3,
-    title: "Sweet Treat Seeker",
-    description: "You have a sweet tooth and appreciate fine pastries!",
-    icon: "🍰" // Cake icon
+    title: "Dietary Devotee",
+    description: "Your unique taste extends to dietary preferences and special menus.",
+    icon: "🥗" // Salad icon
   },
   {
     id: 4,
-    title: "Cozy Cafe Lover",
-    description: "You seek comfort and a relaxing atmosphere in your cafes!",
-    icon: "🛋️" // Couch icon
+    title: "Feature Fanatic",
+    description: "From wifi to live music, you love cafes with standout features.",
+    icon: "🎤" // Microphone icon
   },
   {
     id: 5,
-    title: "Adventurer",
-    description: "You're drawn to unique and interesting cafe concepts!",
-    icon: "🧭" // Compass icon
+    title: "Drink Aficionado",
+    description: "Your refined palate seeks everything from tea to craft cocktails.",
+    icon: "🍹" // Cocktail icon
   }
 ];
 
