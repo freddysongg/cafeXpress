@@ -45,19 +45,33 @@ export interface CafeRecommendation {
   name: string;
   description?: string;
   address: string;
-  phone?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  ambiance?: string[] | string;
+  dietaryOptions?: string[] | string;
+  location: {
+    coordinates: [number, number];
+    type: 'Point';
+  };
+  photos?: string[];
   hours?: {
     today?: string;
     [key: string]: string | undefined;
   };
-  matchingKeywords: KeywordMatch[];
+  rating: number;
+  numOfRatings: number;
+  status?: string;
+  createdAt?: string;
+  phone?: string;
+  keywords: string[];
+  matchingKeywords?: KeywordMatch[];
   score: number;
   distance?: number;
   metadata: {
     rating: number;
     reviewCount: number;
     keywords: string[];
-    address: string;
     location: {
       coordinates: [number, number];
       type: 'Point';

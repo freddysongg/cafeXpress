@@ -18,11 +18,9 @@ import {
 import SearchBar from '../components/SearchBar';
 import debounce from 'lodash.debounce';
 
-const filterOptions = {
-  distance: ['1', '5', '10', '20'],
-  ambiance: ['Cozy', 'Modern', 'Quiet', 'Lively'],
+const DEFAULT_FILTER_OPTIONS = {
+  ambiance: ['Modern', 'Rustic', 'Industrial', 'Traditional'],
   dietary: ['Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free'],
-  activities: ['Wifi', 'Study', 'Meeting', 'Games'],
 };
 
 type SearchFilters = {
@@ -34,11 +32,41 @@ type SearchFilters = {
 
 const RIVERSIDE_COORDINATES = { lat: 33.9806, lng: -117.3755 } as const;
 
+// Add the MarkerLibrary interface after the imports
+interface MarkerLibrary {
+  AdvancedMarkerElement: typeof google.maps.marker.AdvancedMarkerElement;
+  PinElement: typeof google.maps.marker.PinElement;
+}
+
+// Update the mapLoader configuration
 const mapLoader = new Loader({
   apiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
-  version: 'weekly',
-  libraries: ['places'],
+  version: 'beta', // Changed to beta for advanced markers
+  libraries: ['places', 'marker'],
 });
+
+// Add this near the top of the file, after the imports
+const NEGATED_COLORS = {
+  background: '#FFF1F1',
+  border: '#FEE2E2',
+  text: '#991B1B',
+} as const;
+
+// Add this function before the Explore component
+function getKeywordStyle(keyword: KeywordMatch) {
+  if (keyword.isNegated) {
+    return `
+      background: ${NEGATED_COLORS.background};
+      color: ${NEGATED_COLORS.text};
+      border: 1px solid ${NEGATED_COLORS.border};
+    `;
+  }
+  return `
+    background: #FFF5EB;
+    color: #8B5E3C;
+    border: none;
+  `;
+}
 
 function Explore() {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -51,9 +79,31 @@ function Explore() {
   const [selectedFilters, setSelectedFilters] = useState<
     Record<string, string>
   >({});
-  const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
+  const [markers, setMarkers] = useState<
+    google.maps.marker.AdvancedMarkerElement[]
+  >([]);
+  const [infoWindows, setInfoWindows] = useState<google.maps.InfoWindow[]>([]);
   const [matchingKeywords, setMatchingKeywords] = useState<KeywordMatch[]>([]);
+  const [filterOptions, setFilterOptions] = useState(DEFAULT_FILTER_OPTIONS);
   const navigate = useNavigate();
+
+  // Add this state for persisting search results
+  const [lastSearchQuery, setLastSearchQuery] = useState<string | null>(null);
+
+  const updateFilterOptions = useCallback((keywords: KeywordMatch[]) => {
+    const analyzedKeywords = new Set(
+      keywords.map((k) => k.keyword.toLowerCase())
+    );
+
+    setFilterOptions({
+      ambiance: DEFAULT_FILTER_OPTIONS.ambiance.filter(
+        (k) => !analyzedKeywords.has(k.toLowerCase())
+      ),
+      dietary: DEFAULT_FILTER_OPTIONS.dietary.filter(
+        (k) => !analyzedKeywords.has(k.toLowerCase())
+      ),
+    });
+  }, []);
 
   const debouncedSearchFn = useRef(
     debounce(
@@ -76,14 +126,13 @@ function Explore() {
             filters: {
               dietary: filters.dietary,
               ambiance: filters.ambiance,
-              activities: filters.activities,
               radius: filters.radius,
             },
           });
 
           callbacks.setCafes(recommendations);
           const allKeywords = recommendations.flatMap(
-            (cafe) => cafe.matchingKeywords
+            (cafe) => cafe.matchingKeywords || []
           );
           const uniqueKeywords = Array.from(
             new Map(
@@ -91,6 +140,7 @@ function Explore() {
             ).values()
           );
           callbacks.setMatchingKeywords(uniqueKeywords);
+          updateFilterOptions(uniqueKeywords);
 
           if (query) callbacks.setSearchParams({ q: query });
         } catch (error) {
@@ -106,8 +156,15 @@ function Explore() {
 
   const handleSearch = useCallback(
     (query: string, searchFilters?: SearchFilters) => {
+      // Don't search if it's the same query and we have results
+      if (query === lastSearchQuery && cafes.length > 0) {
+        return;
+      }
+
       setLoading(true);
       setError(null);
+      setLastSearchQuery(query);
+
       const filters = searchFilters || {
         dietary: selectedFilters.dietary
           ? [selectedFilters.dietary]
@@ -130,7 +187,14 @@ function Explore() {
         setLoading,
       });
     },
-    [selectedFilters, userLocation, debouncedSearchFn, setSearchParams]
+    [
+      selectedFilters,
+      userLocation,
+      debouncedSearchFn,
+      setSearchParams,
+      lastSearchQuery,
+      cafes.length,
+    ]
   );
 
   const searchFilters = useMemo(
@@ -157,9 +221,22 @@ function Explore() {
           const newMap = new Map(mapRef.current, {
             center: RIVERSIDE_COORDINATES,
             zoom: 13,
-            clickableIcons: true,
+            clickableIcons: false,
             disableDefaultUI: false,
             gestureHandling: 'auto',
+            mapId: import.meta.env.VITE_GOOGLE_MAPS_ID || '',
+            styles: [
+              {
+                featureType: 'poi',
+                elementType: 'labels',
+                stylers: [{ visibility: 'off' }],
+              },
+              {
+                featureType: 'transit',
+                elementType: 'labels',
+                stylers: [{ visibility: 'off' }],
+              },
+            ],
           });
           setMap(newMap);
         }
@@ -175,64 +252,180 @@ function Explore() {
   useEffect(() => {
     if (!map) return;
 
-    markers.forEach((marker) => marker.setMap(null));
-    const newMarkers: google.maps.Marker[] = [];
+    const updateMarkers = async () => {
+      try {
+        const { AdvancedMarkerElement, PinElement } =
+          (await google.maps.importLibrary('marker')) as MarkerLibrary;
 
-    cafes.forEach((cafe) => {
-      if (cafe.metadata?.location?.coordinates) {
-        const marker = new google.maps.Marker({
-          map,
-          position: {
-            lat: cafe.metadata.location.coordinates[1],
-            lng: cafe.metadata.location.coordinates[0],
-          },
-          title: cafe.name,
-          icon: {
-            url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
-          },
+        // Clear existing markers and info windows
+        markers.forEach((marker) => (marker.map = null));
+        infoWindows.forEach((window) => window.close());
+
+        const newMarkers: google.maps.marker.AdvancedMarkerElement[] = [];
+        const newInfoWindows: google.maps.InfoWindow[] = [];
+
+        // Create markers for top 5 cafes
+        cafes.slice(0, 5).forEach((cafe, index) => {
+          const coordinates =
+            cafe.metadata?.location?.coordinates || cafe.location?.coordinates;
+
+          if (coordinates) {
+            const position = {
+              lat: coordinates[1],
+              lng: coordinates[0],
+            };
+
+            const isTopResult = index === 0;
+
+            const pin = new PinElement({
+              background: isTopResult ? '#4A2C1C' : '#8B5E3C',
+              borderColor: isTopResult ? '#2C1810' : '#4A2C1C',
+              glyphColor: '#FFF5EB',
+              scale: isTopResult ? 1.4 : 1.2,
+              glyph: `${index + 1}`,
+            });
+
+            const marker = new AdvancedMarkerElement({
+              map,
+              position,
+              title: cafe.name,
+              content: pin.element,
+              zIndex: isTopResult ? 2 : 1,
+              collisionBehavior: google.maps.CollisionBehavior.REQUIRED,
+            });
+
+            const infoWindow = new google.maps.InfoWindow({
+              content: `
+                <div style="
+                  padding: 12px;
+                  max-width: 240px;
+                  font-family: system-ui, -apple-system, sans-serif;
+                  text-align: center;
+                ">
+                  <h3 style="
+                    margin: 0 0 8px 0;
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #4A2C1C;
+                  ">${cafe.name}</h3>
+                  <div style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 4px;
+                    margin-bottom: 8px;
+                    color: #8B5E3C;
+                  ">
+                    <span style="color: #D4A574">★</span>
+                    <span>${Number(cafe.metadata.rating || cafe.rating).toFixed(1)}</span>
+                  </div>
+                  <div style="
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 4px;
+                    justify-content: center;
+                    margin-bottom: 8px;
+                  ">
+                    ${(cafe.matchingKeywords || [])
+                      ?.slice(0, 2)
+                      .map(
+                        (kw) =>
+                          `<span style="
+                            ${getKeywordStyle(kw)}
+                            padding: 2px 8px;
+                            border-radius: 12px;
+                            font-size: 11px;
+                            font-weight: 500;
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 2px;
+                          ">
+                            ${kw.isNegated ? '✕ ' : ''}${kw.keyword}
+                          </span>`
+                      )
+                      .join('')}
+                  </div>
+                  <button 
+                    onclick="window.location.href='/restaurant/${cafe.id}'"
+                    style="
+                      width: 100%;
+                      background: #4A2C1C;
+                      color: #FFF5EB;
+                      border: none;
+                      padding: 6px 12px;
+                      border-radius: 6px;
+                      font-size: 12px;
+                      font-weight: 500;
+                      cursor: pointer;
+                      transition: background-color 0.2s;
+                    "
+                    onmouseover="this.style.backgroundColor='#2C1810'"
+                    onmouseout="this.style.backgroundColor='#4A2C1C'"
+                  >View Details</button>
+                </div>
+              `,
+              pixelOffset: new google.maps.Size(0, -5),
+              disableAutoPan: false,
+              maxWidth: 240,
+            });
+
+            // Add click event listener to marker
+            marker.addEventListener('click', () => {
+              // Close all other info windows first
+              infoWindows.forEach((window) => window.close());
+
+              // Open this info window
+              infoWindow.open({
+                anchor: marker,
+                map,
+                shouldFocus: true,
+              });
+
+              // Center the map on this marker with a slight offset for the info window
+              map.panTo(position);
+            });
+
+            newMarkers.push(marker);
+            newInfoWindows.push(infoWindow);
+          }
         });
 
-        marker.addListener('click', () => {
-          navigate(`/restaurant/${cafe.id}`);
-        });
+        setMarkers(newMarkers);
+        setInfoWindows(newInfoWindows);
 
-        newMarkers.push(marker);
+        // Center map on first cafe
+        if (cafes.length > 0) {
+          const firstCafe = cafes[0];
+          const firstCoords =
+            firstCafe.metadata?.location?.coordinates ||
+            firstCafe.location?.coordinates;
+
+          if (firstCoords) {
+            const center = {
+              lat: firstCoords[1],
+              lng: firstCoords[0],
+            };
+
+            map.setCenter(center);
+            map.setZoom(13);
+          }
+        }
+      } catch (error) {
+        console.error('Error updating markers:', error);
       }
-    });
+    };
 
-    if (userLocation) {
-      const userMarker = new google.maps.Marker({
-        map,
-        position: {
-          lat: userLocation.latitude,
-          lng: userLocation.longitude,
-        },
-        title: 'Your Location',
-        icon: {
-          url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
-        },
-      });
-      newMarkers.push(userMarker);
-    }
-
-    setMarkers(newMarkers);
-
-    if (cafes.length > 0 && cafes[0].metadata?.location?.coordinates) {
-      map.setCenter({
-        lat: cafes[0].metadata.location.coordinates[1],
-        lng: cafes[0].metadata.location.coordinates[0],
-      });
-    } else if (userLocation) {
-      map.setCenter({
-        lat: userLocation.latitude,
-        lng: userLocation.longitude,
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, cafes, userLocation, navigate]);
+    updateMarkers();
+  }, [map, cafes, navigate, markers, infoWindows]);
 
   useEffect(() => {
     const searchQuery = searchParams.get('q');
+
+    // Don't trigger a new search if we already have results for this query
+    if (searchQuery === lastSearchQuery && cafes.length > 0) {
+      setLoading(false);
+      return;
+    }
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -260,11 +453,30 @@ function Explore() {
         }
       );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [
+    searchParams,
+    lastSearchQuery,
+    cafes.length,
+    handleSearch,
+    searchFilters,
+  ]);
 
   const handleFilterSelect = (category: string, value: string) => {
     setSelectedFilters((prev) => {
+      if (category === 'distance') {
+        const isCurrentlySelected = prev.distance === value;
+        const newFilters = { ...prev };
+
+        if (isCurrentlySelected) {
+          delete newFilters.distance;
+        } else {
+          newFilters.distance = value;
+          setCafes((currentCafes) => sortCafes(currentCafes, newFilters));
+        }
+
+        return newFilters;
+      }
+
       const newFilters = {
         ...prev,
         [category]: value,
@@ -277,13 +489,8 @@ function Explore() {
           searchQuery,
           {
             dietary: newFilters.dietary ? [newFilters.dietary] : undefined,
-            activities: newFilters.activities
-              ? [newFilters.activities]
-              : undefined,
             ambiance: newFilters.ambiance ? [newFilters.ambiance] : undefined,
-            radius: newFilters.distance
-              ? parseFloat(newFilters.distance)
-              : undefined,
+            radius: undefined,
           },
           userLocation,
           {
@@ -335,6 +542,34 @@ function Explore() {
     });
   };
 
+  const sortCafes = useCallback(
+    (cafes: CafeRecommendation[], filters: Record<string, string>) => {
+      const sortedCafes = [...cafes];
+
+      if (filters.distance) {
+        return sortedCafes.sort(
+          (a, b) => (a.distance || 0) - (b.distance || 0)
+        );
+      }
+
+      return sortedCafes;
+    },
+    []
+  );
+
+  const DistanceButton = () => (
+    <Button
+      onClick={() => handleFilterSelect('distance', 'nearest')}
+      className={`
+        bg-white text-black font-medium
+        ${selectedFilters.distance ? 'bg-accent text-accent-foreground' : 'hover:bg-gray-100'}
+        flex items-center gap-2
+      `}
+    >
+      Sort by Distance
+    </Button>
+  );
+
   const FilterButton = ({ category }: { category: string }) => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -361,25 +596,35 @@ function Explore() {
     </DropdownMenu>
   );
 
-  // Update category color helper
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'ambiance':
-        return 'bg-violet-50 text-violet-700 border border-violet-200';
-      case 'dietary':
-        return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
-      case 'activity':
-        return 'bg-amber-50 text-amber-700 border border-amber-200';
-      default:
-        return 'bg-sky-50 text-sky-700 border border-sky-200';
-    }
-  };
-
   // Update confidence indicator helper
   const getConfidenceIndicator = (confidence: number) => {
-    if (confidence >= 0.8) return '●●●';
-    if (confidence >= 0.6) return '●●○';
+    const absConfidence = Math.abs(confidence);
+    if (absConfidence >= 0.8) return '●●●';
+    if (absConfidence >= 0.5) return '●●○';
     return '●○○';
+  };
+
+  // Update category color helper with confidence-based opacity
+  const getCategoryColor = (category: string, confidence: number) => {
+    const isNegative = confidence < 0;
+    if (isNegative) {
+      return `bg-red-50/50 text-red-700/50 border-red-200/50`;
+    }
+    const baseColors = {
+      ambiance: 'bg-violet-50 text-violet-700 border-violet-200',
+      dietary: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      activity: 'bg-amber-50 text-amber-700 border-amber-200',
+      general: 'bg-sky-50 text-sky-700 border-sky-200',
+    };
+    return (
+      baseColors[category as keyof typeof baseColors] || baseColors.general
+    );
+  };
+
+  // Format confidence score for display
+  const formatConfidence = (confidence: number) => {
+    const absConfidence = Math.abs(confidence);
+    return `${(absConfidence * 100).toFixed(0)}%`;
   };
 
   return (
@@ -404,10 +649,10 @@ function Explore() {
           />
           {/* Filter Buttons */}
           <div className="flex gap-4 mb-6 flex-wrap">
-            <FilterButton category="distance" />
-            <FilterButton category="ambiance" />
-            <FilterButton category="dietary" />
-            <FilterButton category="activities" />
+            <DistanceButton />
+            {Object.keys(filterOptions).map((category) => (
+              <FilterButton key={category} category={category} />
+            ))}
           </div>
           {/* Selected Filters */}
           {Object.keys(selectedFilters).length > 0 && (
@@ -428,7 +673,7 @@ function Explore() {
               ))}
             </div>
           )}
-          {/* Matching Keywords Section - Updated with category colors */}
+          {/* Matching Keywords Section */}
           {matchingKeywords.length > 0 && (
             <div className="mb-6 bg-white/50 rounded-lg p-4 backdrop-blur-sm">
               <h3 className="text-sm font-medium text-coffee-700 mb-2">
@@ -436,11 +681,15 @@ function Explore() {
               </h3>
               <div className="flex flex-wrap gap-2">
                 {matchingKeywords.map((keyword, index) => {
-                  const categoryColor = getCategoryColor(keyword.category);
+                  const categoryColor = getCategoryColor(
+                    keyword.category,
+                    keyword.confidence
+                  );
                   return (
                     <div
                       key={`${keyword.category}-${keyword.keyword}-${index}`}
                       className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1.5 ${categoryColor} transition-colors duration-150`}
+                      title={`Match confidence: ${formatConfidence(keyword.confidence)}`}
                     >
                       <span>{keyword.keyword}</span>
                       <span className="text-xs opacity-75 tracking-wider">
@@ -463,7 +712,7 @@ function Explore() {
               <p>{error}</p>
             </div>
           )}
-          {/* Café Cards - Updated with inline keyword matches */}
+          {/* Café Cards */}
           {!loading && !error && cafes.length === 0 && (
             <div className="text-center py-8 text-coffee-600">
               <p>No cafes found matching your search criteria</p>
@@ -474,18 +723,21 @@ function Explore() {
               {cafes.map((cafe) => (
                 <div
                   key={cafe.id}
-                  className="bg-white rounded-lg shadow-sm overflow-hidden"
+                  className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200 cursor-pointer"
+                  onClick={() => navigate(`/restaurant/${cafe.id}`)}
                 >
                   <div className="flex">
-                    {/* Image container with fixed dimensions */}
                     <div className="w-48 h-48 flex-shrink-0">
                       <img
-                        src={cafe.metadata.photos?.[0] || 'default-image-url'}
+                        src={
+                          cafe.metadata.photos?.[0] ||
+                          cafe.photos?.[0] ||
+                          '/default-cafe.jpg'
+                        }
                         alt={cafe.name}
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    {/* Content container */}
                     <div className="flex-1 p-4">
                       <div className="flex justify-between items-start mb-2">
                         <h3 className="text-xl font-semibold text-coffee-800">
@@ -493,51 +745,57 @@ function Explore() {
                         </h3>
                         <div className="flex items-center gap-1">
                           <span className="text-amber-500">★</span>
-                          <span>{cafe.metadata.rating}</span>
+                          <span>
+                            {Number(
+                              cafe.metadata.rating || cafe.rating
+                            ).toFixed(2)}
+                          </span>
                           <span className="text-gray-500">
-                            ({cafe.metadata.reviewCount})
+                            ({cafe.metadata.reviewCount || cafe.numOfRatings})
                           </span>
                         </div>
                       </div>
-                      {/* Location and status */}
                       <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
-                        <span className="flex items-center gap-1">
-                          <span>{cafe.distance?.toFixed(1)} mi</span>
+                        <span>{cafe.distance?.toFixed(1)} mi</span>
+                        <span className="text-green-600">
+                          {cafe.status || 'Open'}
                         </span>
-                        <span className="text-green-600">Open Now</span>
                       </div>
-                      {/* Categories */}
                       <div className="flex flex-wrap gap-2 mb-3">
-                        {cafe.metadata.keywords?.map((tag) => (
-                          <span
-                            key={tag}
-                            className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs"
-                          >
-                            {tag}
-                          </span>
-                        ))}
+                        {(cafe.metadata.keywords || cafe.keywords)
+                          ?.slice(0, 3)
+                          .map((tag) => (
+                            <span
+                              key={tag}
+                              className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs"
+                            >
+                              {tag}
+                            </span>
+                          ))}
                       </div>
-                      {/* Matching keywords */}
-                      {cafe.matchingKeywords?.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mt-2">
-                          {cafe.matchingKeywords.map((match, idx) => {
-                            const categoryColor = getCategoryColor(
-                              match.category
-                            );
-                            return (
-                              <div
-                                key={`${match.category}-${match.keyword}-${idx}`}
-                                className={`px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1 ${categoryColor}`}
-                              >
-                                <span>{match.keyword}</span>
-                                <span className="opacity-75 text-[10px] tracking-wider">
-                                  {getConfidenceIndicator(match.confidence)}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
+                      {cafe.matchingKeywords &&
+                        cafe.matchingKeywords.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mt-2">
+                            {cafe.matchingKeywords.map((match, idx) => {
+                              const categoryColor = getCategoryColor(
+                                match.category,
+                                match.confidence
+                              );
+                              return (
+                                <div
+                                  key={`${match.category}-${match.keyword}-${idx}`}
+                                  className={`px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1 ${categoryColor}`}
+                                  title={`Match confidence: ${formatConfidence(match.confidence)}`}
+                                >
+                                  <span>{match.keyword}</span>
+                                  <span className="opacity-75 text-[10px] tracking-wider">
+                                    {getConfidenceIndicator(match.confidence)}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                     </div>
                   </div>
                 </div>

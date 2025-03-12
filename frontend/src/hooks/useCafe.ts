@@ -15,14 +15,22 @@ export const useCafe = (id: string | undefined) => {
       }
 
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/recommendations/${id}`
-        );
+        const url = `http://localhost:8000/cafe/${id}`;
+
+        const response = await fetch(url, {
+          method: 'GET', // Explicitly using GET request
+        });
+
         if (!response.ok) {
           throw new Error('Failed to fetch cafe details');
         }
+
         const data = await response.json();
-        setCafe(data);
+        if (data.data) {
+          setCafe(data.data as CafeRecommendation); // Ensure the type matches
+        } else {
+          setError('Cafe data not found');
+        }
       } catch (err) {
         setError('Failed to load cafe details');
         console.error('Error fetching cafe:', err);
