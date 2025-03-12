@@ -209,10 +209,46 @@ function Restaurant() {
     }, 300);
   };
 
-  const handleSubmitReview = (e: React.FormEvent) => {
+  const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
     setNewReview('');
     setRating(0);
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('User not logged in');
+    }
+
+    const decoded = jwtDecode<DecodedToken>(token);
+    const userId = decoded.id; // Assuming `id` is the field where `userId` is stored
+
+    try {
+      const response = await fetch(`http://localhost:8000/review`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          cafeId: id,
+          rating,
+          description: newReview,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.status === 'success') {
+        alert('Review submitted successfully!');
+        setNewReview('');
+        setRating(0);
+      } else {
+        alert('Failed to submit review: ' + data.message);
+      }
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      alert('Failed to submit review. Please try again.');
+    }
+    
   };
 
   const getCurrentDay = () => {

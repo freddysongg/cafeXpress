@@ -91,7 +91,7 @@ export const reviews = pgTable('reviews', {
   cafeId: uuid('cafe_id').references(() => cafes.id),
   userId: uuid('user_id').references(() => users.id),
   rating: jsonb('rating').$type<number>().notNull(),
-  title: text('title').notNull(),
+  title: text('title'),
   description: text('description'),
   createdAt: timestamp('created_at').defaultNow()
 });
