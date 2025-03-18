@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Moon, Sun } from 'lucide-react';
-import bcrypt from 'bcryptjs';
 import { jwtDecode } from 'jwt-decode';
 
 function Settings() {
