@@ -134,9 +134,7 @@
         "cafes_address_unique": {
           "name": "cafes_address_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "address"
-          ]
+          "columns": ["address"]
         }
       },
       "policies": {},
@@ -160,20 +158,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "favorite_cafes": {
-          "name": "favorite_cafes",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "dietary_restrictions": {
-          "name": "dietary_restrictions",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "ambiance": {
-          "name": "ambiance",
+        "preferences": {
+          "name": "preferences",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false
@@ -192,12 +178,8 @@
           "name": "preferences_user_id_users_id_fk",
           "tableFrom": "preferences",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -263,12 +245,8 @@
           "name": "reviews_cafe_id_cafes_id_fk",
           "tableFrom": "reviews",
           "tableTo": "cafes",
-          "columnsFrom": [
-            "cafe_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["cafe_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -276,12 +254,8 @@
           "name": "reviews_user_id_users_id_fk",
           "tableFrom": "reviews",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -413,3 +387,4 @@
     "tables": {}
   }
 }
+

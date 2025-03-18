@@ -18,7 +18,9 @@
     "format:check": "prettier --check '**/*.{js,json,md,ts}'",
     "migrate": "drizzle-kit migrate",
     "generate": "drizzle-kit generate",
-    "drop": "drizzle-kit drop"
+    "drop": "drizzle-kit drop",
+    "pull": "drizzle-kit pull",
+    "push": "drizzle-kit push"
   },
   "type": "module",
   "dependencies": {
