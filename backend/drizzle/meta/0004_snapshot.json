@@ -1,6 +1,6 @@
 {
-  "id": "8770f366-4c14-4570-9397-2057905257c4",
-  "prevId": "bc195011-ee26-4e77-9446-295e5193eb5a",
+  "id": "3e5b490f-c796-4a87-a7c8-8c7a6b916705",
+  "prevId": "8770f366-4c14-4570-9397-2057905257c4",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -134,7 +134,9 @@
         "cafes_address_unique": {
           "name": "cafes_address_unique",
           "nullsNotDistinct": false,
-          "columns": ["address"]
+          "columns": [
+            "address"
+          ]
         }
       },
       "policies": {},
@@ -158,8 +160,20 @@
           "primaryKey": false,
           "notNull": false
         },
-        "preferences": {
-          "name": "preferences",
+        "favorite_cafes": {
+          "name": "favorite_cafes",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dietary_restrictions": {
+          "name": "dietary_restrictions",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ambiance": {
+          "name": "ambiance",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false
@@ -178,8 +192,12 @@
           "name": "preferences_user_id_users_id_fk",
           "tableFrom": "preferences",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -223,7 +241,7 @@
           "name": "title",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "description": {
           "name": "description",
@@ -245,8 +263,12 @@
           "name": "reviews_cafe_id_cafes_id_fk",
           "tableFrom": "reviews",
           "tableTo": "cafes",
-          "columnsFrom": ["cafe_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "cafe_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -254,8 +276,12 @@
           "name": "reviews_user_id_users_id_fk",
           "tableFrom": "reviews",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -387,4 +413,3 @@
     "tables": {}
   }
 }
-

@@ -72,12 +72,7 @@ export async function getUserById(
     reply.send({
       status: 'success',
       message: 'User data retrieved',
-      data: {
-        username: user[0].username,
-        email: user[0].email,
-        description: user[0].description,
-        createdAt: user[0].createdAt
-      }
+      data: user
     });
   } catch (error) {
     const err = error as Error;

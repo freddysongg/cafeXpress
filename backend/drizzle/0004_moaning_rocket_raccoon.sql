@@ -1,0 +1,1 @@
+ALTER TABLE "reviews" ALTER COLUMN "title" DROP NOT NULL;
