@@ -119,15 +119,14 @@ export async function updateUser(
 ): Promise<void> {
   try {
     const userId = req.params.userId;
-    const { username, email, description, location } = req.body;
+    const { email, location, password } = req.body;
 
     // Update user
     const updatedUser = await db
       .update(users)
       .set({
-        username,
         email,
-        description,
+        password,
         location: location ? sql`${JSON.stringify(location)}` : null
       })
       .where(eq(users.id, userId))

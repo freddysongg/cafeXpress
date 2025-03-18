@@ -1,21 +1,105 @@
 import React, { useState } from 'react';
 import { Moon, Sun } from 'lucide-react';
+import bcrypt from 'bcryptjs';
+import { jwtDecode } from 'jwt-decode';
 
 function Settings() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
-  const [email, setEmail] = useState('sarah.johnson@example.com');
+  const [email, setEmail] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const handleUpdateEmail = (e: React.FormEvent) => {
+  // Get user ID from token on component mount
+  React.useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const decoded = jwtDecode<{ id: string }>(token);
+      setUserId(decoded.id); // Set the user ID from the token
+    } else {
+      console.error('User not logged in');
+    }
+  }, []);
+
+  const handleUpdateEmail = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement email update logic
+
+    if (!userId) {
+      console.error('User ID is missing');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('User not logged in');
+        return;
+      }
+
+      const response = await fetch(`http://localhost:8000/user/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ email }), // Send only the new email
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update email');
+      }
+
+      alert('Email updated successfully!');
+      setEmail(''); // Clear the email input field
+    } catch (error) {
+      console.error('Error updating email:', error);
+      alert('Failed to update email. Please try again.');
+    }
   };
 
-  const handleUpdatePassword = (e: React.FormEvent) => {
+  const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement password update logic
+
+    if (!userId) {
+      console.error('User ID is missing');
+      return;
+    }
+
+    if (!currentPassword || !newPassword) {
+      alert('Please fill in both current and new passwords.');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('User not logged in');
+        return;
+      }
+
+      // Send both current and new passwords to the backend
+      const response = await fetch(`http://localhost:8000/auth/updatePassword/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update password');
+      }
+
+      alert('Password updated successfully!');
+      setCurrentPassword(''); // Clear the current password field
+      setNewPassword(''); // Clear the new password field
+    } catch (error) {
+      console.error('Error updating password:', error);
+      alert('Current password incorrect');
+    }
   };
 
   return (
@@ -58,6 +142,7 @@ function Settings() {
             <div className="flex gap-4">
               <input
                 type="email"
+                placeholder="New email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="flex-1 px-4 py-2 border border-coffee-200 rounded-lg focus:ring-2 focus:ring-coffee-400 focus:border-transparent"
