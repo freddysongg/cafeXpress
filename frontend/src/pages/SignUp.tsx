@@ -59,6 +59,14 @@ const SignUp = () => {
     }
   };
 
+  const togglePasswordVisibility = () => {
+    setPasswordVisible(!passwordVisible);
+  };
+
+  const navigateToSignIn = () => {
+    navigate('/signin');
+  };
+
   return (
     <div className="min-h-screen bg-coffee-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
@@ -138,6 +146,7 @@ const SignUp = () => {
                 placeholder="Choose a username"
               />
             </div>
+            <p className="mt-1 text-xs text-coffee-500">Numbers and special characters allowed.</p>
           </div>
 
           <div>
@@ -159,6 +168,7 @@ const SignUp = () => {
                 placeholder="Enter your email"
               />
             </div>
+            <p className="mt-1 text-xs text-coffee-500">You will use this email to sign in.</p>
           </div>
 
           <div>
@@ -226,6 +236,18 @@ const SignUp = () => {
           >
             Create account
           </button>
+
+          <div className="text-center mt-4">
+            <p className="text-sm text-coffee-600">
+              Already have an account?{" "}
+              <button
+                onClick={() => navigate('/signin')} // Redirect to sign in page 
+                className="font-medium text-coffee-600 hover:underline"
+              >
+                Sign in
+              </button>
+            </p>
+          </div>
         </form>
       </div>
     </div>
