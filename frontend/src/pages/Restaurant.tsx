@@ -25,6 +25,14 @@ interface Review {
   lastName?: string;
 }
 
+interface DecodedToken {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+}
+
 function Restaurant() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -102,15 +110,50 @@ function Restaurant() {
 
     fetchReviews();
   }, [id]);
+  
+   // Check if the cafe is favorited when the component mounts or `cafeId` changes
+   useEffect(() => {
+    const checkIfFavorited = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('User not logged in');
+        return;
+      }
 
-  interface DecodedToken {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    role: string;
-  }
+      const decoded = jwtDecode<DecodedToken>(token);
+      const userId = decoded.id; // Assuming `id` is the field where `userId` is stored
+      if (!userId || !id) return;
 
+      try {
+        const response = await fetch(
+          `http://localhost:8000/favoriteCafe/isFavorited/${userId}/${id}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error('Failed to check favorite status');
+        }
+
+        const data = await response.json(); // Parse the response body as JSON
+        console.log('Backend Response:', data); // Debugging: Log the response
+
+        // Ensure data.isFavorited is a boolean
+        const isFavorited = Boolean(data.isFavorited);
+        console.log('Parsed isFavorited:', isFavorited); // Debugging: Log the parsed value
+
+        setIsFavorite(isFavorited); // Update the isFavorite state
+      } catch (error) {
+        console.error('Error checking if cafe is favorited:', error);
+      }
+    };
+
+    checkIfFavorited();
+  }, [id]); // Re-run when `cafeId` changes
   const toggleFavorite = async () => {
     try {
       // Retrieve token from localStorage
@@ -142,13 +185,25 @@ function Restaurant() {
       if (!response.ok) {
         throw new Error('Failed to update favorite status');
       }
+      // Re-fetch the favorite status to ensure the UI is up-to-date
+      const checkResponse = await fetch(
+        `http://localhost:8000/favoriteCafe/isFavorited/${userId}/${id}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
-      const data = await response.json();
-      setIsFavorite(!isFavorite); // Toggle favorite status
+      if (!checkResponse.ok) {
+        throw new Error('Failed to check favorite status');
+      }
 
-      console.log(data.message); // Optional: Log the message returned from the backend
+      const data = await checkResponse.json();
+      setIsFavorite(data.isFavorited); // Update the isFavorite state
     } catch (error) {
-      console.error('Error favoriting cafe:', error);
+      console.error('Error toggling favorite:', error);
     }
   };
 
@@ -288,13 +343,27 @@ function Restaurant() {
             </div>
           </div>
           <div className="flex gap-4">
-            <button
+            {/* <button
               onClick={toggleFavorite}
               className={`p-2 rounded-full ${isFavorite ? 'bg-coffee-100 text-coffee-600' : 'bg-white text-coffee-400'} hover:bg-coffee-100 transition-colors`}
             >
               <Heart
                 className={`w-6 h-6 ${isFavorite ? 'fill-current' : ''}`}
               />
+            </button> */}
+                <button
+      onClick={toggleFavorite}
+      className={`p-2 rounded-full ${isFavorite ? 'bg-coffee-100 text-coffee-600' : 'bg-white text-coffee-400'} hover:bg-coffee-100 transition-colors`}
+    >
+      <Heart
+        className="w-6 h-6"
+        fill={isFavorite ? 'currentColor' : 'none'} // Explicitly set fill
+        stroke="currentColor" // Ensure the stroke matches the text color
+      />
+    </button>
+            <button className="p-2 rounded-full bg-white text-coffee-400 hover:bg-coffee-100 transition-colors">
+              <Share2 className="w-6 h-6" />
+
             </button>
           </div>
         </div>
