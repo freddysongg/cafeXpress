@@ -8,7 +8,8 @@ const Navbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
-  const isAuth = location.pathname === '/signin' || location.pathname === '/signup';
+  const isAuth =
+    location.pathname === '/signin' || location.pathname === '/signup';
   const isHome = location.pathname === '/';
 
   // Retrieve token from localStorage
@@ -31,7 +32,10 @@ const Navbar = () => {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsDropdownOpen(false);
       }
     };
@@ -44,20 +48,25 @@ const Navbar = () => {
   if (isAuth) return null;
 
   return (
-    <nav className={`fixed w-full z-50 ${isHome ? 'bg-transparent' : 'bg-coffee-100/95 backdrop-blur-sm shadow-sm'}`}>
+    <nav
+      className={`fixed w-full z-50 ${isHome ? 'bg-transparent' : 'bg-coffee-100/95 backdrop-blur-sm shadow-sm'}`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           <div className="flex items-center space-x-4">
             <img src="/icon.png" alt="CafeXpress Logo" className="w-6 h-6" />
-            <Link to="/" className={`text-2xl font-bold ${isHome ? 'text-white' : 'text-coffee-800'}`}>
+            <Link
+              to="/"
+              className={`text-2xl font-bold ${isHome ? 'text-white' : 'text-coffee-800'}`}
+            >
               cafeXpress
             </Link>
             <NavLink
               href="/explore"
               isHome={isHome}
               className={`transition-colors duration-300 flex items-center px-4 py-2 rounded-full ${
-                isHome 
-                  ? 'text-white hover:text-white/80 bg-white/20 hover:bg-white/30' 
+                isHome
+                  ? 'text-white hover:text-white/80 bg-white/20 hover:bg-white/30'
                   : 'text-coffee-700 hover:text-coffee-900 hover:bg-coffee-100 bg-coffee-50/50'
               }`}
             >
@@ -75,20 +84,22 @@ const Navbar = () => {
                 <button
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   className={`transition-colors duration-300 flex items-center px-4 py-2 rounded-full ${
-                    isHome 
-                      ? 'text-white hover:text-white/80 bg-white/20 hover:bg-white/30' 
+                    isHome
+                      ? 'text-white hover:text-white/80 bg-white/20 hover:bg-white/30'
                       : 'text-coffee-700 hover:text-coffee-900 hover:bg-coffee-100 bg-coffee-50/50'
                   }`}
                 >
                   <User className="w-5 h-5" />
                 </button>
-                
+
                 {/* Dropdown Menu */}
                 {isDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50">
                     <div className="px-4 py-2 border-b border-gray-200">
                       <p className="text-sm text-gray-600">Welcome,</p>
-                      <p className="font-medium text-gray-900">{userFirstName} {userLastName}</p>
+                      <p className="font-medium text-gray-900">
+                        {userFirstName} {userLastName}
+                      </p>
                     </div>
                     <Link
                       to="/profile"
@@ -145,7 +156,7 @@ const NavLink = ({
   href,
   children,
   isHome,
-  className = '',  // Accept className with a default value of an empty string
+  className = '', // Accept className with a default value of an empty string
 }: {
   href: string;
   children: React.ReactNode;

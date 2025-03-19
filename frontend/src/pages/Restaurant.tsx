@@ -11,7 +11,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useCafe } from '../hooks/useCafe';
 import { KeywordMatch } from '../services/api';
 import { jwtDecode } from 'jwt-decode';
-import GoogleMapComponent from "../components/GoogleMapComponent"; // Adjust path if needed
+import GoogleMapComponent from '../components/GoogleMapComponent'; // Adjust path if needed
 
 interface Review {
   id: string;
@@ -46,19 +46,26 @@ function Restaurant() {
       try {
         const res = await fetch(`http://localhost:8000/review/${id}/all`);
         const textResponse = await res.text(); // Get the response as text
-        
+
         // Check if the response contains JSON
         if (res.ok) {
           const reviewsData = JSON.parse(textResponse); // Parse it as JSON
-    
+
           // Process user details
           const reviewsWithUserDetails = await Promise.all(
-            reviewsData.data.map(async (review: Review) => { // Access 'data' property which contains reviews
+            reviewsData.data.map(async (review: Review) => {
+              // Access 'data' property which contains reviews
               try {
-                const userRes = await fetch(`http://localhost:8000/user/${review.userId}`);
+                const userRes = await fetch(
+                  `http://localhost:8000/user/${review.userId}`
+                );
                 const userData = await userRes.json();
 
-                if (userData.status === "success" && userData.data && userData.data.length > 0) {
+                if (
+                  userData.status === 'success' &&
+                  userData.data &&
+                  userData.data.length > 0
+                ) {
                   const user = userData.data[0]; // Assuming that data contains an array and you want the first element
                   return {
                     ...review,
@@ -73,24 +80,29 @@ function Restaurant() {
               }
             })
           );
-    
+
           // Now set the state with reviews with user details
-          if (reviewsData.status === 'success' && Array.isArray(reviewsData.data)) {
-            setReviews(reviewsWithUserDetails);  // Update your state with the reviews with user details
+          if (
+            reviewsData.status === 'success' &&
+            Array.isArray(reviewsData.data)
+          ) {
+            setReviews(reviewsWithUserDetails); // Update your state with the reviews with user details
           } else {
-            console.error("No reviews data found or unexpected response structure");
+            console.error(
+              'No reviews data found or unexpected response structure'
+            );
           }
         } else {
-          console.error("Failed to fetch reviews. Status:", res.status);
+          console.error('Failed to fetch reviews. Status:', res.status);
         }
       } catch (error) {
-        console.error("Error fetching reviews:", error);
+        console.error('Error fetching reviews:', error);
       }
     };
-    
-    fetchReviews();    
+
+    fetchReviews();
   }, [id]);
-  
+
   interface DecodedToken {
     id: string;
     firstName: string;
@@ -226,7 +238,6 @@ function Restaurant() {
       console.error('Error submitting review:', error);
       alert('Failed to submit review. Please try again.');
     }
-    
   };
 
   const getCurrentDay = () => {
@@ -247,8 +258,8 @@ function Restaurant() {
   const hoursToday = cafe.hours ? cafe.hours[currentDay] : null;
 
   //Sort reviews by date (most recent first)
-  const sortedReviews = [...reviews].sort((a, b) => 
-    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  const sortedReviews = [...reviews].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
   return (
@@ -469,7 +480,7 @@ function Restaurant() {
               </div>
             </div>
 
-           {/* Hours of Operation */}
+            {/* Hours of Operation */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <h2 className="text-xl font-semibold text-coffee-800 mb-4">
                 Hours of Operation
@@ -477,11 +488,20 @@ function Restaurant() {
               <ul className="space-y-2">
                 {cafe.hours ? (
                   // Loop through all days of the week
-                  ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+                  [
+                    'Monday',
+                    'Tuesday',
+                    'Wednesday',
+                    'Thursday',
+                    'Friday',
+                    'Saturday',
+                    'Sunday',
+                  ].map((day) => (
                     <li key={day} className="flex justify-between">
                       <span className="text-coffee-600 font-medium">{day}</span>
                       <span className="text-coffee-500">
-                        {cafe.hours?.[day] ?? 'Closed'} {/* Default to 'Closed' if no hours for the day */}
+                        {cafe.hours?.[day] ?? 'Closed'}{' '}
+                        {/* Default to 'Closed' if no hours for the day */}
                       </span>
                     </li>
                   ))
@@ -494,7 +514,7 @@ function Restaurant() {
             {/* Map */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <div className="h-64 bg-coffee-100 rounded-lg">
-              {cafe?.location?.coordinates?.[0] !== undefined &&
+                {cafe?.location?.coordinates?.[0] !== undefined &&
                 cafe?.location?.coordinates?.[1] !== undefined ? (
                   <GoogleMapComponent
                     lat={cafe.location.coordinates[1]} // Latitude
@@ -526,19 +546,25 @@ function Restaurant() {
                           className="w-10 h-10 rounded-full"
                         />
                         <div className="flex justify-between w-full">
-                          <div className="ml-4"> {/* Added margin to the left */}
-                            <p className="font-semibold">{review.firstName} {review.lastName}</p>
+                          <div className="ml-4">
+                            {' '}
+                            {/* Added margin to the left */}
+                            <p className="font-semibold">
+                              {review.firstName} {review.lastName}
+                            </p>
                             <div className="flex items-center text-yellow-500">
                               {[...Array(review.rating)].map((_, i) => (
                                 <Star key={i} size={16} fill="currentColor" />
                               ))}
                             </div>
                           </div>
-                          <p className="text-sm text-gray-500">{new Date(review.createdAt).toLocaleDateString()}</p>
+                          <p className="text-sm text-gray-500">
+                            {new Date(review.createdAt).toLocaleDateString()}
+                          </p>
                         </div>
                       </div>
-                    <p className="text-gray-700">{review.description}</p>
-                  </div>                  
+                      <p className="text-gray-700">{review.description}</p>
+                    </div>
                   ))
                 ) : (
                   <p className="text-gray-500">No reviews yet.</p>
