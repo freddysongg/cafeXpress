@@ -8,6 +8,7 @@ const SignUp = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -28,6 +29,14 @@ const SignUp = () => {
     } catch (error) {
       console.error('Signup error:', error);
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setPasswordVisible(!passwordVisible);
+  };
+
+  const navigateToSignIn = () => {
+    navigate('/signin');
   };
 
   return (
@@ -109,6 +118,7 @@ const SignUp = () => {
                 placeholder="Choose a username"
               />
             </div>
+            <p className="mt-1 text-xs text-coffee-500">Numbers and special characters allowed.</p>
           </div>
 
           <div>
@@ -130,6 +140,7 @@ const SignUp = () => {
                 placeholder="Enter your email"
               />
             </div>
+            <p className="mt-1 text-xs text-coffee-500">You will use this email to sign in.</p>
           </div>
 
           <div>
@@ -143,14 +154,22 @@ const SignUp = () => {
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-coffee-400 w-5 h-5" />
               <input
                 id="password"
-                type="password"
+                type={passwordVisible ? "text" : "password"}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="pl-10 w-full px-4 py-2 border border-coffee-200 rounded-lg focus:ring-2 focus:ring-coffee-400 focus:border-transparent"
                 placeholder="Create a password"
               />
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-coffee-400 hover:text-coffee-600"
+              >
+                {passwordVisible ? "Hide" : "Show"}
+              </button>
             </div>
+            <p className="mt-1 text-xs text-coffee-500">Use 8+ characters with a mix of uppercase letters, numbers & symbols for better security.</p>
           </div>
 
           <button
@@ -159,6 +178,18 @@ const SignUp = () => {
           >
             Create account
           </button>
+
+          <div className="text-center mt-4">
+            <p className="text-sm text-coffee-600">
+              Already have an account?{" "}
+              <button
+                onClick={() => navigate('/signin')} // Redirect to sign in page 
+                className="font-medium text-coffee-600 hover:underline"
+              >
+                Sign in
+              </button>
+            </p>
+          </div>
         </form>
       </div>
     </div>
