@@ -1,6 +1,6 @@
 {
-  "id": "4da06c58-5806-481a-a27e-1e3ea0824e62",
-  "prevId": "c27c8a45-fe2c-4763-ac9d-73a438f6e027",
+  "id": "3e5b490f-c796-4a87-a7c8-8c7a6b916705",
+  "prevId": "8770f366-4c14-4570-9397-2057905257c4",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -119,6 +119,12 @@
           "primaryKey": false,
           "notNull": false,
           "default": 0
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -128,7 +134,9 @@
         "cafes_address_unique": {
           "name": "cafes_address_unique",
           "nullsNotDistinct": false,
-          "columns": ["address"]
+          "columns": [
+            "address"
+          ]
         }
       },
       "policies": {},
@@ -184,8 +192,12 @@
           "name": "preferences_user_id_users_id_fk",
           "tableFrom": "preferences",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -229,7 +241,7 @@
           "name": "title",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "description": {
           "name": "description",
@@ -251,8 +263,12 @@
           "name": "reviews_cafe_id_cafes_id_fk",
           "tableFrom": "reviews",
           "tableTo": "cafes",
-          "columnsFrom": ["cafe_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "cafe_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -260,8 +276,12 @@
           "name": "reviews_user_id_users_id_fk",
           "tableFrom": "reviews",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -349,6 +369,13 @@
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false
+        },
+        "recent_searches": {
+          "name": "recent_searches",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'::jsonb"
         },
         "created_at": {
           "name": "created_at",

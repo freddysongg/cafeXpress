@@ -59,16 +59,7 @@ export async function getUserById(
     const userId = req.params.userId;
 
     // Fetch user details
-    const user = await db
-      .select({
-        username: users.username,
-        email: users.email,
-        description: users.description,
-        createdAt: users.createdAt
-      })
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
+    const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
     if (!user.length) {
       reply.status(404).send({
@@ -81,12 +72,7 @@ export async function getUserById(
     reply.send({
       status: 'success',
       message: 'User data retrieved',
-      data: {
-        username: user[0].username,
-        email: user[0].email,
-        description: user[0].description,
-        createdAt: user[0].createdAt
-      }
+      data: user
     });
   } catch (error) {
     const err = error as Error;
@@ -104,14 +90,7 @@ export async function getUserById(
 export async function getAllUsers(req: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
     // Fetch all users
-    const usersList = await db
-      .select({
-        id: users.id,
-        username: users.username,
-        email: users.email,
-        createdAt: users.createdAt
-      })
-      .from(users);
+    const usersList = await db.select().from(users);
 
     reply.send({
       status: 'success',

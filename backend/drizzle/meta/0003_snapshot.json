@@ -1,6 +1,6 @@
 {
-  "id": "4da06c58-5806-481a-a27e-1e3ea0824e62",
-  "prevId": "c27c8a45-fe2c-4763-ac9d-73a438f6e027",
+  "id": "8770f366-4c14-4570-9397-2057905257c4",
+  "prevId": "bc195011-ee26-4e77-9446-295e5193eb5a",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -119,6 +119,12 @@
           "primaryKey": false,
           "notNull": false,
           "default": 0
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -152,20 +158,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "favorite_cafes": {
-          "name": "favorite_cafes",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "dietary_restrictions": {
-          "name": "dietary_restrictions",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "ambiance": {
-          "name": "ambiance",
+        "preferences": {
+          "name": "preferences",
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false
@@ -350,6 +344,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "recent_searches": {
+          "name": "recent_searches",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'::jsonb"
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -386,3 +387,4 @@
     "tables": {}
   }
 }
+

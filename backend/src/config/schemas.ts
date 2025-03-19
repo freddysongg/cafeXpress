@@ -30,6 +30,9 @@ export const users = pgTable('users', {
     activities: string[];
   }>(),
   favoriteCafes: jsonb('favorite_cafes').$type<string[]>(),
+  recentSearches: jsonb('recent_searches')
+    .$type<Array<{ query: string; timestamp: string }>>()
+    .default(sql`'[]'::jsonb`),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow()
 });
@@ -37,9 +40,14 @@ export const users = pgTable('users', {
 export const preferences = pgTable('preferences', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').references(() => users.id),
-  favoriteCafes: jsonb('favorite_cafes').$type<string[]>(),
-  dietaryRestrictions: jsonb('dietary_restrictions').$type<string[]>(),
-  ambiance: jsonb('ambiance').$type<string[]>(),
+  preferences: jsonb('preferences').$type<{
+    dietary: string[];
+    ambiance: string[];
+    activities: string[];
+    drinks: string[];
+    vibes: string[];
+    coffee: string[];
+  }>(),
   createdAt: timestamp('created_at').defaultNow()
 });
 
@@ -79,7 +87,8 @@ export const cafes = pgTable('cafes', {
     .default(sql`'[]'::jsonb`),
   rating: numeric('rating', { precision: 4, scale: 2 }).default(sql`4.5`),
   status: varchar('status', { length: 20 }).default('open'),
-  numOfRatings: integer('num_of_ratings').default(0)
+  numOfRatings: integer('num_of_ratings').default(0),
+  phone: text('phone')
 });
 
 export const reviews = pgTable('reviews', {
@@ -87,7 +96,7 @@ export const reviews = pgTable('reviews', {
   cafeId: uuid('cafe_id').references(() => cafes.id),
   userId: uuid('user_id').references(() => users.id),
   rating: jsonb('rating').$type<number>().notNull(),
-  title: text('title').notNull(),
+  title: text('title'),
   description: text('description'),
   createdAt: timestamp('created_at').defaultNow()
 });

@@ -15,6 +15,27 @@
       "when": 1739942623181,
       "tag": "0001_pale_exiles",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1740859065690,
+      "tag": "0002_friendly_butterfly",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1741152095575,
+      "tag": "0003_dear_xavin",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1741756891695,
+      "tag": "0004_moaning_rocket_raccoon",
+      "breakpoints": true
     }
   ]
 }

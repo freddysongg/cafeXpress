@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Coffee, Mail, Lock } from 'lucide-react';
+import { Coffee, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { jwtDecode } from "jwt-decode";
+import { jwtDecode } from 'jwt-decode';
 
 interface DecodedToken {
   id: string;
@@ -13,9 +13,19 @@ interface DecodedToken {
 function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const navigate = useNavigate();
   const { login } = useAuth();
+
+  useEffect(() => {
+    const signUpSuccess = localStorage.getItem('signUpSuccess');
+    if (signUpSuccess) {
+      setSuccessMessage('Account created successfully! Please log in.');
+      localStorage.removeItem('signUpSuccess');
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,20 +42,15 @@ function SignIn() {
 
       const data = await response.json();
 
-      console.log('Login Response:', data); // Debugging line
-
       if (response.ok && data.status === 'success') {
-        console.log(data); // This will show the entire response object
         if (data.token) {
           const decoded = jwtDecode<DecodedToken>(data.token);
-          const userId = decoded.id; // Assuming `id` is the field where `userId` is stored
-        
-          console.log("User ID from token:", userId);
+          const userId = decoded.id;
+          console.log('User ID from token:', userId);
         } else {
-          console.log("No token found.");
+          console.log('No token found.');
         }
         const { token, userId } = data.data;
-
         login(userId, token);
         navigate('/');
       } else {
@@ -54,7 +59,7 @@ function SignIn() {
         );
       }
     } catch (error) {
-      console.error('Login Error:', error); // Debugging line
+      console.error('Login Error:', error);
       setError('An error occurred. Please try again later.');
     }
   };
@@ -75,6 +80,12 @@ function SignIn() {
           </h2>
           <p className="mt-2 text-coffee-600">Sign in to your account</p>
         </div>
+
+        {successMessage && (
+          <div className="text-green-600 bg-green-100 p-3 rounded mb-4 text-sm">
+            {successMessage}
+          </div>
+        )}
 
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
@@ -111,38 +122,24 @@ function SignIn() {
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-coffee-400 w-5 h-5" />
               <input
                 id="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="pl-10 w-full px-4 py-2 border border-coffee-200 rounded-lg focus:ring-2 focus:ring-coffee-400 focus:border-transparent"
                 placeholder="Enter your password"
               />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-coffee-500 focus:ring-coffee-400 border-coffee-300 rounded"
-              />
-              <label
-                htmlFor="remember-me"
-                className="ml-2 block text-sm text-coffee-600"
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-coffee-400"
               >
-                Remember me
-              </label>
-            </div>
-
-            <div className="text-sm">
-              <a
-                href="#"
-                className="font-medium text-coffee-500 hover:text-coffee-600"
-              >
-                Forgot password?
-              </a>
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
+              </button>
             </div>
           </div>
 

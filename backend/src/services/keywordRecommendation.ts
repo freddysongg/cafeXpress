@@ -17,6 +17,7 @@ import {
 import * as cafeQueries from '@services/queries/cafeQueries.js';
 import { rankByDistance, rankAndScoreCafes } from '@utils/scoring.js';
 import { createSemanticAnalysisPrompt, createKeywordAnalysisPrompt } from '@utils/prompt.js';
+import { cosineSimilarity } from '@utils/math.js';
 
 /**
  * Service for generating cafe recommendations based on keywords and user preferences.
@@ -47,7 +48,12 @@ class KeywordRecommendationService {
       const location = this.getRequestLocation(request);
       const page = request.page || 1;
 
-      console.log('Search query:', request.query);
+      console.log('Search request:', {
+        query: request.query,
+        userId: request.userId,
+        location,
+        filters: request.filters
+      });
 
       const searchKeywords = request.query ? await this.analyzeQueryKeywords(request.query) : [];
       console.log('Analyzed search keywords:', searchKeywords);
@@ -57,15 +63,16 @@ class KeywordRecommendationService {
 
       if (request.userId) {
         userPrefs = await this.getUserPreferences(request.userId);
-        preferenceKeywords = this.convertPreferencesToKeywords(userPrefs);
+        preferenceKeywords = await this.convertPreferencesToKeywords(userPrefs);
+        console.log('User preference keywords:', preferenceKeywords);
       }
 
-      const combinedKeywords = [
-        ...searchKeywords.map((k) => ({ ...k, confidence: k.confidence * 1.5 })),
-        ...preferenceKeywords
-      ];
+      const combinedKeywords = [...searchKeywords, ...preferenceKeywords];
 
-      if (searchKeywords.length === 0) {
+      console.log('Combined keywords before semantic analysis:', combinedKeywords);
+
+      if (combinedKeywords.length === 0) {
+        console.log('No keywords found, using distance-based ranking');
         const { results: cafes, pagination } = await this.fetchCafesWithKeywords(
           [],
           location,
@@ -74,7 +81,6 @@ class KeywordRecommendationService {
         );
 
         const recommendations = rankByDistance(cafes);
-
         return this.createSuccessResponse(recommendations, pagination, 'location');
       }
 
@@ -82,23 +88,39 @@ class KeywordRecommendationService {
       const cachedScores = await this.cache.get<KeywordMatch[]>(cacheKey);
 
       let semanticScores: KeywordMatch[];
-
       if (cachedScores) {
         semanticScores = cachedScores;
+        console.log('Using cached semantic scores');
       } else {
         const prompt = createSemanticAnalysisPrompt(combinedKeywords);
         const response = await this.geminiClient.generateContent(prompt);
 
-        console.log('Raw response from Gemini:', response.text());
+        try {
+          const responseText = response.text().trim();
+          const jsonStart = responseText.indexOf('{');
+          const jsonEnd = responseText.lastIndexOf('}') + 1;
 
-        const responseText = response
-          .text()
-          .trim()
-          .replace(/```json\n|\n```|```/g, '');
+          if (jsonStart === -1 || jsonEnd === 0) {
+            throw new Error('No valid JSON object found in response');
+          }
 
-        semanticScores = JSON.parse(responseText) as KeywordMatch[];
+          const jsonContent = responseText.slice(jsonStart, jsonEnd);
+          semanticScores = JSON.parse(jsonContent) as KeywordMatch[];
 
-        await this.cache.set(cacheKey, semanticScores, CacheConfig.semanticAnalysisTTL);
+          if (!Array.isArray(semanticScores)) {
+            semanticScores = [semanticScores];
+          }
+
+          console.log('Generated new semantic scores:', semanticScores);
+          await this.cache.set(cacheKey, semanticScores, CacheConfig.semanticAnalysisTTL);
+        } catch (error) {
+          console.error('Failed to parse semantic analysis response:', error);
+          console.log('Raw response:', response.text());
+          semanticScores = combinedKeywords.map((k) => ({
+            ...k,
+            confidence: k.confidence || 0.5
+          }));
+        }
       }
 
       const { results: cafes, pagination } = await this.fetchCafesWithKeywords(
@@ -108,12 +130,24 @@ class KeywordRecommendationService {
         page
       );
 
+      console.log('Fetched cafes count:', cafes.length);
+
       const recommendations = rankAndScoreCafes(
         cafes,
         semanticScores,
-        this.getMatchingKeywords.bind(this),
+        (cafe, kw) => this.getMatchingKeywords(cafe, kw),
         userPrefs,
-        searchKeywords.length > 0
+        !!request.query
+      );
+
+      console.log(
+        'Final recommendations:',
+        recommendations.map((r) => ({
+          id: r.id,
+          name: r.name,
+          matchingKeywords: r.matchingKeywords,
+          score: r.score
+        }))
       );
 
       return this.createSuccessResponse(
@@ -164,20 +198,95 @@ class KeywordRecommendationService {
     }
   }
 
-  private convertPreferencesToKeywords(prefs: UserPreferences): KeywordMatch[] {
+  private async convertPreferencesToKeywords(prefs: UserPreferences): Promise<KeywordMatch[]> {
     const keywords: KeywordMatch[] = [];
+
+    const historicalPreferences = await this.getUserHistoricalPreferences(prefs.userId);
 
     for (const category of ['dietary', 'ambiance', 'activities'] as const) {
       prefs.preferences[category]?.forEach((pref) => {
+        const importance = this.calculateKeywordImportance(pref, category, historicalPreferences);
+
         keywords.push({
           keyword: pref,
           confidence: 1.0,
-          category: category === 'activities' ? 'activity' : category
+          category: category === 'activities' ? 'activity' : category,
+          isNegated: false,
+          importance,
+          context: {
+            isExplicit: true,
+            isHistorical: historicalPreferences.has(pref),
+            isPriority: this.isPriorityKeyword(pref, category),
+            uncertainty: {
+              isUncertain: false,
+              strength: 1.0
+            },
+            matchDetails: {
+              matchedTerms: [],
+              similarityScore: 1.0
+            }
+          }
         });
       });
     }
 
     return keywords;
+  }
+
+  private async getUserHistoricalPreferences(userId: string): Promise<Set<string>> {
+    try {
+      const result = await db
+        .select({ recentSearches: users.recentSearches })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      if (!result?.[0]?.recentSearches) {
+        return new Set();
+      }
+
+      const keywords = new Set<string>();
+      const searches = result[0].recentSearches;
+
+      for (const search of searches) {
+        const extractedKeywords = await this.analyzeQueryKeywords(search.query);
+        extractedKeywords.forEach((k) => keywords.add(k.keyword));
+      }
+
+      return keywords;
+    } catch (error) {
+      console.error('Failed to get historical preferences:', error);
+      return new Set();
+    }
+  }
+
+  private calculateKeywordImportance(
+    keyword: string,
+    category: string,
+    historicalPreferences: Set<string>
+  ): number {
+    let importance = 1.0;
+
+    if (historicalPreferences.has(keyword)) {
+      importance += 0.3;
+    }
+
+    if (this.isPriorityKeyword(keyword, category)) {
+      importance += 0.4;
+    }
+
+    return Math.min(2.0, importance);
+  }
+
+  private isPriorityKeyword(keyword: string, category: string): boolean {
+    const priorityKeywords = {
+      dietary: new Set(['vegan', 'gluten-free', 'halal', 'kosher']),
+      ambiance: new Set(['quiet', 'cozy', 'family-friendly']),
+      activity: new Set(['work', 'study', 'meeting']),
+      general: new Set(['coffee', 'wifi', 'parking'])
+    };
+
+    return priorityKeywords[category as keyof typeof priorityKeywords]?.has(keyword) || false;
   }
 
   private async fetchCafesWithKeywords(
@@ -272,43 +381,204 @@ class KeywordRecommendationService {
   private getMatchingKeywords(cafe: any, keywords: KeywordMatch[]): KeywordMatch[] {
     const matches: KeywordMatch[] = [];
 
-    if (cafe.ambiance) {
-      const ambianceKeywords = keywords.filter((k) => k.category === 'ambiance');
-      ambianceKeywords.forEach((k) => {
-        if (cafe.ambiance.includes(k.keyword)) {
+    const cafeKeywords = new Set<string>(cafe.keywords || []);
+    const cafeAmbiance = Array.isArray(cafe.ambiance)
+      ? cafe.ambiance.map((k: string) => k.toLowerCase())
+      : [];
+    const cafeDietary = Array.isArray(cafe.dietaryOptions)
+      ? cafe.dietaryOptions.map((k: string) => k.toLowerCase())
+      : [];
+
+    console.log('Processing cafe:', cafe.name, {
+      rawAmbiance: cafe.ambiance,
+      rawDietary: cafe.dietaryOptions,
+      parsedAmbiance: cafeAmbiance,
+      parsedDietary: cafeDietary,
+      keywords: Array.from(cafeKeywords)
+    });
+
+    for (const keyword of keywords) {
+      let isMatch = false;
+      let matchedTerms: string[] = [];
+      const searchTerm = keyword.keyword.toLowerCase();
+
+      const matchStrength = keyword.context?.uncertainty?.isUncertain
+        ? Math.max(0.3, keyword.context.uncertainty.strength)
+        : 1.0;
+
+      console.log(`Checking keyword "${keyword.keyword}" for cafe ${cafe.name}:`, {
+        category: keyword.category,
+        isNegated: keyword.isNegated,
+        searchTerm
+      });
+
+      switch (keyword.category) {
+        case 'ambiance':
+          isMatch = cafeAmbiance.includes(searchTerm);
+          console.log('Ambiance match check:', {
+            searchTerm,
+            cafeAmbiance,
+            isMatch
+          });
+          break;
+        case 'dietary':
+          isMatch = cafeDietary.includes(searchTerm);
+          console.log('Dietary match check:', {
+            searchTerm,
+            cafeDietary,
+            isMatch
+          });
+          break;
+        case 'activity':
+        case 'general':
+          isMatch = cafeKeywords.has(searchTerm);
+          console.log('Keyword match check:', {
+            searchTerm,
+            cafeKeywords: Array.from(cafeKeywords),
+            isMatch
+          });
+          break;
+      }
+
+      if (keyword.isNegated) {
+        if (isMatch) {
+          matchedTerms = [keyword.keyword];
+          matchedTerms = [keyword.keyword];
+          const adjustedConfidence = -1.0 * matchStrength * keyword.importance;
+
+          console.log('Processing negated term:', {
+            cafe: cafe.name,
+            keyword: keyword.keyword,
+            isMatch,
+            adjustedConfidence
+          });
+
           matches.push({
-            ...k,
-            confidence: k.confidence
+            ...keyword,
+            confidence: adjustedConfidence,
+            context: {
+              ...keyword.context,
+              uncertainty: {
+                ...keyword.context.uncertainty,
+                strength: matchStrength
+              },
+              matchDetails: {
+                matchedTerms,
+                similarityScore: Math.abs(adjustedConfidence)
+              }
+            }
           });
         }
-      });
+      } else if (isMatch) {
+        matchedTerms = [keyword.keyword];
+        const adjustedConfidence = matchStrength * keyword.importance;
+
+        console.log('Processing regular term:', {
+          cafe: cafe.name,
+          keyword: keyword.keyword,
+          isMatch,
+          adjustedConfidence
+        });
+
+        matches.push({
+          ...keyword,
+          confidence: adjustedConfidence,
+          context: {
+            ...keyword.context,
+            uncertainty: {
+              ...keyword.context.uncertainty,
+              strength: matchStrength
+            },
+            matchDetails: {
+              matchedTerms,
+              similarityScore: adjustedConfidence
+            }
+          }
+        });
+      }
     }
 
-    if (cafe.dietaryOptions) {
-      const dietaryKeywords = keywords.filter((k) => k.category === 'dietary');
-      dietaryKeywords.forEach((k) => {
-        if (cafe.dietaryOptions.includes(k.keyword)) {
-          matches.push({
-            ...k,
-            confidence: k.confidence
-          });
-        }
-      });
-    }
-
-    if (cafe.keywords) {
-      const generalKeywords = keywords.filter((k) => k.category === 'general');
-      generalKeywords.forEach((k) => {
-        if (cafe.keywords.includes(k.keyword)) {
-          matches.push({
-            ...k,
-            confidence: k.confidence
-          });
-        }
-      });
-    }
-
+    console.log('Final matches for cafe:', cafe.name, matches);
     return matches;
+  }
+
+  private getKeywordVector(keywords: string[], category: string): number[] {
+    const categoryKeywords = {
+      ambiance: [
+        'cozy',
+        'quiet',
+        'modern',
+        'rustic',
+        'vibrant',
+        'loud',
+        'peaceful',
+        'trendy',
+        'industrial',
+        'casual',
+        'lively',
+        'minimalist',
+        'bright',
+        'spacious',
+        'traditional',
+        'warm',
+        'bohemian',
+        'eclectic',
+        'artsy',
+        'elegant',
+        'sophisticated',
+        'relaxed'
+      ],
+      dietary: [
+        'vegan',
+        'vegetarian',
+        'gluten-free',
+        'halal',
+        'kosher',
+        'organic',
+        'dairy-free',
+        'pescatarian',
+        'low-carb',
+        'keto',
+        'paleo',
+        'sugar-free',
+        'soy-free',
+        'egg-free',
+        'nut-free',
+        'raw'
+      ],
+      activity: ['work', 'study', 'meeting', 'social', 'date', 'family', 'group', 'private'],
+      general: [
+        'coffee',
+        'tea',
+        'wifi',
+        'parking',
+        'food',
+        'dessert',
+        'breakfast',
+        'lunch',
+        'brunch',
+        'roastery',
+        'bagels',
+        'cafe',
+        'bistro'
+      ]
+    };
+
+    const baseVector = categoryKeywords[category as keyof typeof categoryKeywords] || [];
+    return baseVector.map((k) =>
+      keywords.some((keyword) => keyword.toLowerCase().includes(k.toLowerCase())) ? 1 : 0
+    );
+  }
+
+  private calculateConfidenceScore(
+    cafeKeywords: string[],
+    searchKeyword: string,
+    category: string
+  ): number {
+    const cafeVector = this.getKeywordVector(cafeKeywords, category);
+    const searchVector = this.getKeywordVector([searchKeyword], category);
+
+    return cosineSimilarity(cafeVector, searchVector);
   }
 
   private async getUserPreferences(userId: string): Promise<UserPreferences> {
