@@ -4,57 +4,43 @@ import { Edit3, Star, Bookmark, Coffee, Heart, Search, X, Check } from 'lucide-r
 
 // New user archetype data based on favorites and keyword interests
 const userArchetypes = [
-  // Archetype for users who favorite at least 10 cafes
   {
     id: 1,
     title: "Cafe Aficionado",
     description: "Your love for cafes is unmatched—you've favorited at least 10 spots!",
-    icon: "🌟" // Star icon
+    icon: "🌟"
   },
-  // Combined archetype for ambiance and vibes
   {
     id: 2,
     title: "Ambiance & Vibe Connoisseur",
     description: "You appreciate the perfect setting and mood—whether it's quiet, cozy, study-friendly, or social.",
-    icon: "🎶" // Music note icon
+    icon: "🎶"
   },
   {
     id: 3,
     title: "Dietary Devotee",
     description: "Your unique taste extends to dietary preferences and special menus.",
-    icon: "🥗" // Salad icon
+    icon: "🥗"
   },
   {
     id: 4,
     title: "Feature Fanatic",
     description: "From wifi to live music, you love cafes with standout features.",
-    icon: "🎤" // Microphone icon
+    icon: "🎤"
   },
   {
     id: 5,
     title: "Drink Aficionado",
     description: "Your refined palate seeks everything from tea to craft cocktails.",
-    icon: "🍹" // Cocktail icon
+    icon: "🍹"
   }
 ];
 
-// Simplified coffee themed profile pictures
+// Updated profile picture options: now more cafe themed
 const profilePictures = [
-  {
-    id: 1,
-    name: "Coffee Cup",
-    url: "https://img.icons8.com/color/96/000000/coffee-cup--v1.png"
-  },
-  {
-    id: 2,
-    name: "Coffee Beans",
-    url: "https://img.icons8.com/color/96/000000/coffee-beans--v1.png"
-  },
-  {
-    id: 3,
-    name: "Cafe Building",
-    url: "https://img.icons8.com/color/96/000000/cafe.png"
-  }
+  { id: 1, name: "Coffee Cup", icon: "☕" },
+  { id: 2, name: "Croissant", icon: "🥐" },
+  { id: 3, name: "Donut", icon: "🍩" },
 ];
 
 function Profile() {
@@ -62,7 +48,7 @@ function Profile() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [userArchetype, setUserArchetype] = useState(null); 
+  const [userArchetype, setUserArchetype] = useState(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const navigate = useNavigate();
   
@@ -71,7 +57,8 @@ function Profile() {
   const [editedFirstName, setEditedFirstName] = useState('');
   const [editedLastName, setEditedLastName] = useState('');
   const [showProfilePictureSelector, setShowProfilePictureSelector] = useState(false);
-  const [selectedProfilePicture, setSelectedProfilePicture] = useState('https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png');
+  // Default profile picture now set to an emoji placeholder
+  const [selectedProfilePicture, setSelectedProfilePicture] = useState('👤');
   
   // Number of skeleton cards to show
   const skeletonCount = 3;
@@ -80,11 +67,6 @@ function Profile() {
     const fetchUserProfile = async () => {
       const token = localStorage.getItem('token');
       
-      // if (!token) {
-      //   navigate('/signin');
-      //   return;
-      // }
-
       try {
         const response = await fetch('http://localhost:8000/profile', {
           headers: {
@@ -100,7 +82,6 @@ function Profile() {
         if (response.ok) {
           const data = await response.json();
           setUser(data.data);
-          // Initialize editing states with user data
           setEditedFirstName(data.data.firstName);
           setEditedLastName(data.data.lastName);
           if (data.data.profilePicture) {
@@ -181,89 +162,37 @@ function Profile() {
     setImageLoaded(true);
   };
   
-  // Handle name edit start
   const handleEditNameClick = () => {
     setIsEditingName(true);
   };
   
-  // Handle name save
   const handleSaveName = async () => {
-    // Here you would typically make an API call to update the name
-    // For now, we'll just update the local state
     setUser({
       ...user,
       firstName: editedFirstName,
       lastName: editedLastName
     });
     setIsEditingName(false);
-    
-    // Uncomment to implement actual API call
-    // const token = localStorage.getItem('token');
-    // try {
-    //   const response = await fetch('http://localhost:8000/profile/update', {
-    //     method: 'PUT',
-    //     headers: {
-    //       'Authorization': `Bearer ${token}`,
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify({ 
-    //       firstName: editedFirstName, 
-    //       lastName: editedLastName 
-    //     }),
-    //   });
-    //   if (response.ok) {
-    //     setUser({
-    //       ...user,
-    //       firstName: editedFirstName,
-    //       lastName: editedLastName
-    //     });
-    //   }
-    // } catch (err) {
-    //   console.error('Error updating name:', err);
-    // }
-    // setIsEditingName(false);
   };
   
-  // Handle cancel name edit
   const handleCancelNameEdit = () => {
     setEditedFirstName(user.firstName);
     setEditedLastName(user.lastName);
     setIsEditingName(false);
   };
   
-  // Toggle profile picture selector
   const handleProfilePictureClick = () => {
     setShowProfilePictureSelector(!showProfilePictureSelector);
   };
   
-  // Select new profile picture
-  const handleSelectProfilePicture = async (url) => {
-    setSelectedProfilePicture(url);
+  // When selecting a new profile icon, update immediately and close modal
+  const handleSelectProfilePicture = (icon: string) => {
+    setSelectedProfilePicture(icon);
     setShowProfilePictureSelector(false);
-    
-    // Here you would typically make an API call to update the profile picture
-    // For now, we'll just update the local state
     setUser({
       ...user,
-      profilePicture: url
+      profilePicture: icon
     });
-    
-    // Uncomment to implement actual API call
-    // const token = localStorage.getItem('token');
-    // try {
-    //   const response = await fetch('http://localhost:8000/profile/update', {
-    //     method: 'PUT',
-    //     headers: {
-    //       'Authorization': `Bearer ${token}`,
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify({ 
-    //       profilePicture: url
-    //     }),
-    //   });
-    // } catch (err) {
-    //   console.error('Error updating profile picture:', err);
-    // }
   };
 
   return (
@@ -276,13 +205,22 @@ function Profile() {
             <div className="profile-card p-6 border border-coffee-200 animate-scale-in bg-white rounded-lg shadow-sm">
               <div className="flex flex-col items-center">
                 <div className="relative mb-4">
-                  <img
-                    src={selectedProfilePicture}
-                    alt="User Avatar"
-                    className="w-32 h-32 rounded-full object-cover border-4 border-coffee-100 card-animation cursor-pointer"
-                    onLoad={handleImageLoad}
-                    onClick={handleProfilePictureClick}
-                  />
+                  {selectedProfilePicture.startsWith('http') ? (
+                    <img
+                      src={selectedProfilePicture}
+                      alt="User Avatar"
+                      className="w-32 h-32 rounded-full object-cover border-4 border-coffee-100 card-animation cursor-pointer"
+                      onLoad={handleImageLoad}
+                      onClick={handleProfilePictureClick}
+                    />
+                  ) : (
+                    <div 
+                      className="w-32 h-32 rounded-full border-4 border-coffee-100 flex items-center justify-center text-6xl cursor-pointer"
+                      onClick={handleProfilePictureClick}
+                    >
+                      {selectedProfilePicture}
+                    </div>
+                  )}
                   {!imageLoaded && (
                     <div className="absolute inset-0 w-32 h-32 rounded-full image-loading"></div>
                   )}
@@ -294,12 +232,12 @@ function Profile() {
                   </button>
                 </div>
 
-                {/* Profile Picture Selector Modal - Simplified with fewer options */}
+                {/* Profile Picture Selector Modal - Updated for even selection boxes */}
                 {showProfilePictureSelector && (
                   <div className="absolute z-50 inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                     <div className="bg-white p-6 rounded-lg w-full max-w-md">
                       <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xl font-bold text-coffee-800">Choose Profile Picture</h3>
+                        <h3 className="text-xl font-bold text-coffee-800">Choose Profile Icon</h3>
                         <button 
                           onClick={() => setShowProfilePictureSelector(false)}
                           className="text-coffee-500 hover:text-coffee-700"
@@ -307,38 +245,18 @@ function Profile() {
                           <X className="w-6 h-6" />
                         </button>
                       </div>
-                      <div className="flex justify-center gap-6 mb-4">
+                      <div className="flex justify-center gap-4 mb-4">
                         {profilePictures.map(picture => (
                           <div 
                             key={picture.id} 
-                            className={`p-3 border rounded-lg cursor-pointer hover:bg-coffee-50 
-                              ${selectedProfilePicture === picture.url ? 'border-coffee-500 bg-coffee-50' : 'border-gray-200'}`}
-                            onClick={() => handleSelectProfilePicture(picture.url)}
+                            className={`w-24 h-24 flex flex-col items-center justify-center border rounded-lg cursor-pointer hover:bg-coffee-50 
+                              ${selectedProfilePicture === picture.icon ? 'border-coffee-500 bg-coffee-50' : 'border-gray-200'}`}
+                            onClick={() => handleSelectProfilePicture(picture.icon)}
                           >
-                            <div className="flex flex-col items-center">
-                              <img 
-                                src={picture.url} 
-                                alt={picture.name} 
-                                className="w-16 h-16 object-contain mb-2" 
-                              />
-                              <p className="text-xs text-center text-coffee-700">{picture.name}</p>
-                            </div>
+                            <span className="text-4xl mb-2">{picture.icon}</span>
+                            <p className="text-xs text-center text-coffee-700">{picture.name}</p>
                           </div>
                         ))}
-                      </div>
-                      <div className="flex justify-end">
-                        <button 
-                          onClick={() => setShowProfilePictureSelector(false)}
-                          className="px-4 py-2 border border-coffee-500 text-coffee-500 rounded-lg mr-2 hover:bg-coffee-50"
-                        >
-                          Cancel
-                        </button>
-                        <button 
-                          onClick={() => setShowProfilePictureSelector(false)}
-                          className="px-4 py-2 bg-coffee-600 text-white rounded-lg hover:bg-coffee-700"
-                        >
-                          Done
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -348,7 +266,6 @@ function Profile() {
                   {isEditingName ? (
                     <div className="mb-4">
                       <div className="flex flex-col mb-2">
-                        {/* Smaller input fields that fit within the card */}
                         <div className="flex space-x-1 mb-2">
                           <input
                             type="text"
@@ -416,7 +333,6 @@ function Profile() {
             {/* User Archetype Card */}
             <div className="profile-card p-6 border border-coffee-200 animate-slide-up min-h-[280px] bg-white rounded-lg shadow-sm" style={{ animationDelay: '0.2s' }}>
               <div className="relative h-full flex flex-col items-center">
-                {/* Coffee bean background */}
                 <div className="absolute inset-0 opacity-10 bg-coffee-300 bg-opacity-50 rounded-lg" 
                      style={{
                        backgroundImage: "url('https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&q=80')",
@@ -427,19 +343,16 @@ function Profile() {
                      }}>
                 </div>
 
-                {/* Top label */}
                 <div className="w-full text-left mb-6 relative z-10">
                   <span className="inline-block bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-coffee-800 text-sm font-medium">
                     Based on your favorites
                   </span>
                 </div>
                 
-                {/* Archetype Icon - With proper spacing */}
                 <div className="w-20 h-20 rounded-full bg-coffee-100 flex items-center justify-center relative z-10 mb-8">
                   <span className="text-4xl">{userArchetype.icon}</span>
                 </div>
                 
-                {/* Text content - With improved spacing */}
                 <div className="text-center relative z-10 mt-auto pt-2">
                   <h3 className="text-xl font-semibold text-coffee-800 mb-3">You are a: {userArchetype.title}!</h3>
                   <p className="text-sm text-coffee-600">{userArchetype.description}</p>
@@ -526,14 +439,14 @@ function Profile() {
                       <h3 className="text-xl font-medium text-coffee-600 mb-2">No reviews yet</h3>
                       <p className="text-coffee-400 mb-6">Go write some reviews!</p>
                       <button 
-                        onClick={() => navigate('/explore')} // Redirect to /explore
+                        onClick={() => navigate('/explore')}
                         className="px-6 py-2.5 bg-coffee-600 text-white rounded-full hover:bg-coffee-700 transition-colors flex items-center gap-2">
                         <Search className="w-4 h-4" />
                         <span>Find cafes to review</span>
                       </button>
                     </div>
                     
-                    {/* Sample text review templates instead of colored bars */}
+                    {/* Review Templates */}
                     <h4 className="text-lg font-medium text-coffee-600 mb-4">Review Templates</h4>
                     <div className="space-y-4">
                       {[...Array(skeletonCount)].map((_, index) => (
@@ -545,7 +458,7 @@ function Profile() {
                             <div className="flex-1">
                               <div className="flex justify-between items-start">
                                 <div>
-                                  <h3 className="text-lg font-semibold text-coffee-800">Cafe Mocha</h3>
+                                  <h3 className="text-lg font-semibold text-coffee-800">Cafe Name</h3>
                                   <div className="flex items-center gap-2 mt-1">
                                     <div className="flex">
                                       {[...Array(5)].map((_, i) => (
@@ -555,14 +468,13 @@ function Profile() {
                                         />
                                       ))}
                                     </div>
-                                    <span className="text-coffee-500 text-sm">March 15, 2025</span>
+                                    <span className="text-coffee-500 text-sm">Month Day, Year</span>
                                   </div>
                                 </div>
                                 <Bookmark className="w-5 h-5 text-coffee-200" />
                               </div>
                               <p className="mt-3 text-coffee-600">
-                                Great ambiance and even better coffee! The baristas are friendly and knowledgeable. 
-                                I especially enjoyed their house blend and the cozy seating area perfect for working or chatting with friends.
+                                User written review. 
                               </p>
                             </div>
                           </div>
@@ -607,25 +519,28 @@ function Profile() {
                       <h3 className="text-xl font-medium text-coffee-600 mb-2">No favorites yet</h3>
                       <p className="text-coffee-400 mb-6">Go favorite some cafes!</p>
                       <button 
-                      onClick={() => navigate('/explore')} // Redirect to /explore
-                      className="px-6 py-2.5 bg-coffee-600 text-white rounded-full hover:bg-coffee-700 transition-colors flex items-center gap-2">
+                        onClick={() => navigate('/explore')}
+                        className="px-6 py-2.5 bg-coffee-600 text-white rounded-full hover:bg-coffee-700 transition-colors flex items-center gap-2">
                         <Search className="w-4 h-4" />
                         <span>Discover cafes</span>
                       </button>
                     </div>
                     
-                    {/* Skeleton cards for favorites */}
+                    {/* Favorite Templates with simplified layout */}
                     <h4 className="text-lg font-medium text-coffee-600 mb-4">Favorite Templates</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
                       {[...Array(skeletonCount)].map((_, index) => (
-                        <div key={`favorite-skeleton-${index}`} className="profile-card overflow-hidden group rounded-lg shadow-sm bg-white">
-                          <div className="relative h-48">
-                            <div className="w-full h-full bg-coffee-100"></div>
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-                            <div className="absolute bottom-0 left-0 p-4">
-                              <div className="h-6 w-32 bg-white/70 rounded-md mb-2"></div>
-                              <div className="h-4 w-24 bg-white/50 rounded-md"></div>
-                            </div>
+                        <div key={`favorite-skeleton-${index}`} className="profile-card bg-white rounded-lg shadow-sm p-4 flex items-center gap-4">
+                          <div className="w-20 h-20 rounded-lg bg-coffee-100 overflow-hidden">
+                            <img 
+                              src="https://via.placeholder.com/80" 
+                              alt="Cafe Sample" 
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-lg font-semibold text-coffee-800">Cafe Name</h3>
+                            <p className="text-coffee-600">Desription of cafe / Main keywords.</p>
                           </div>
                         </div>
                       ))}
