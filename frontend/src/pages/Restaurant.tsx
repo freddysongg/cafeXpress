@@ -4,11 +4,10 @@ import {
   Phone,
   MapPin,
   Heart,
-  Share2,
   ArrowLeft,
   ArrowRight,
 } from 'lucide-react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useCafe } from '../hooks/useCafe';
 import { KeywordMatch } from '../services/api';
 import { jwtDecode } from 'jwt-decode';
@@ -36,6 +35,7 @@ interface DecodedToken {
 
 function Restaurant() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { cafe, loading, error } = useCafe(id);
   const [isFavorite, setIsFavorite] = useState(false);
   const [newReview, setNewReview] = useState('');
@@ -43,35 +43,7 @@ function Restaurant() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
-  // const [cafe, setCafe] = useState(null);
   const [reviews, setReviews] = useState<Review[]>([]);
-
-  // const [reviews, setReviews] = useState<Review[]>([
-  //   {
-  //     id: '1',
-  //     userId: 'user1',
-  //     userName: 'Emma Thompson',
-  //     rating: 5,
-  //     text: 'Absolutely loved this café! The ambiance was perfect for working remotely, and their cappuccino was one of the best I\'ve ever had. Will definitely be coming back.',
-  //     date: '2023-10-15T14:22:00Z'
-  //   },
-  //   {
-  //     id: '2',
-  //     userId: 'user2',
-  //     userName: 'Michael Chen',
-  //     rating: 4,
-  //     text: 'Great spot for a casual meeting. The pastries are fresh and delicious, and the staff is very friendly. Only downside is that it gets quite busy in the afternoons.',
-  //     date: '2023-09-28T09:15:00Z'
-  //   },
-  //   {
-  //     id: '3',
-  //     userId: 'user3',
-  //     userName: 'Sophia Rodriguez',
-  //     rating: 3,
-  //     text: 'Nice coffee but the seating was a bit uncomfortable for extended periods. WiFi was reliable, which is a plus.',
-  //     date: '2023-08-05T16:45:00Z'
-  //   }
-  // ]);
 
   useEffect(() => {
     setCurrentImageIndex(0);
@@ -138,7 +110,7 @@ function Restaurant() {
 
     fetchReviews();
   }, [id]);
-
+  
    // Check if the cafe is favorited when the component mounts or `cafeId` changes
    useEffect(() => {
     const checkIfFavorited = async () => {
@@ -182,7 +154,6 @@ function Restaurant() {
 
     checkIfFavorited();
   }, [id]); // Re-run when `cafeId` changes
-
   const toggleFavorite = async () => {
     try {
       // Retrieve token from localStorage
@@ -283,7 +254,13 @@ function Restaurant() {
     setRating(0);
     const token = localStorage.getItem('token');
     if (!token) {
-      throw new Error('User not logged in');
+      navigate('/signin');
+      return;
+    }
+
+    if (rating === 0) {
+      alert('Please select a star rating before submitting your review.');
+      return;
     }
 
     const decoded = jwtDecode<DecodedToken>(token);
@@ -310,7 +287,7 @@ function Restaurant() {
         setNewReview('');
         setRating(0);
       } else {
-        alert('Failed to submit review: ' + data.message);
+        alert(`Failed to submit review: ${data.message}`);
       }
     } catch (error) {
       console.error('Error submitting review:', error);
@@ -386,6 +363,7 @@ function Restaurant() {
     </button>
             <button className="p-2 rounded-full bg-white text-coffee-400 hover:bg-coffee-100 transition-colors">
               <Share2 className="w-6 h-6" />
+
             </button>
           </div>
         </div>
