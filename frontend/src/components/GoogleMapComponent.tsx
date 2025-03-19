@@ -1,10 +1,10 @@
-import { GoogleMap, LoadScript } from "@react-google-maps/api";
-import { useState, useEffect, useRef } from "react";
+import { GoogleMap, LoadScript } from '@react-google-maps/api';
+import { useState, useEffect, useRef } from 'react';
 
 const containerStyle = {
-  width: "100%",
-  height: "100%",
-  borderRadius: "8px",
+  width: '100%',
+  height: '100%',
+  borderRadius: '8px',
 };
 
 interface MapProps {
@@ -21,7 +21,9 @@ const GoogleMapComponent: React.FC<MapProps> = ({ lat, lng }) => {
     lng: lng || -117.1611,
   });
 
-  const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
+  const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(
+    null
+  );
 
   useEffect(() => {
     if (lat && lng) {
@@ -51,7 +53,7 @@ const GoogleMapComponent: React.FC<MapProps> = ({ lat, lng }) => {
   };
 
   return (
-    <LoadScript googleMapsApiKey={apiKey} libraries={["marker"]}>
+    <LoadScript googleMapsApiKey={apiKey} libraries={['marker']}>
       <GoogleMap
         mapContainerStyle={containerStyle}
         center={mapCenter}
