@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const API_BASE_URL = import.meta.env.PROD
   ? 'https://cafexpress-api-production.up.railway.app'
   : 'http://localhost:8000';

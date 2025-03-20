@@ -4,6 +4,13 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { jwtDecode } from 'jwt-decode';
 
+// Define an interface for the decoded JWT
+interface DecodedToken {
+  firstName: string;
+  lastName: string;
+  // Add other properties if needed
+}
+
 const Navbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -19,7 +26,7 @@ const Navbar = () => {
 
   if (token) {
     try {
-      const decoded: any = jwtDecode(token); // Decode JWT
+      const decoded: DecodedToken = jwtDecode(token); // Decode JWT with specified type
       userFirstName = decoded.firstName;
       userLastName = decoded.lastName;
     } catch (error) {
