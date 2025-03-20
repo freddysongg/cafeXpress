@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { sql } from 'drizzle-orm';
 import { db } from '@config/db.js';
-import { users } from '@config/schemas.js';
+import { users, reviews } from '@config/schemas.js';
 import { eq } from 'drizzle-orm';
 import { UserBody } from '@schemas/user.js';
 
@@ -173,6 +173,7 @@ export async function deleteUser(
   try {
     const userId = req.params.userId;
 
+    await db.delete(reviews).where(eq(reviews.userId, userId));
     // Delete user
     const deletedUser = await db.delete(users).where(eq(users.id, userId)).returning({
       id: users.id,

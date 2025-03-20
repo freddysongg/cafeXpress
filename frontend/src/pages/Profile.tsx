@@ -28,9 +28,9 @@ type UserArchetype = {
 const userArchetypes: UserArchetype[] = [
   {
     id: 0,
-    title: 'Regular Cafe Enjoyer',
+    title: 'Cafe Goer',
     description:
-      'A coffee enthusiast who thrives in the cozy ambiance of cafes, savoring every sip of espresso while working, reading, or simply people-watching.',
+      'You enjoy visiting cafes, savoring every sip of espresso while working, socializing, or relaxing.',
     icon: '☕',
   },
   {
