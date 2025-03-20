@@ -5,7 +5,6 @@ import { jwtDecode } from 'jwt-decode';
 import {
   Edit3,
   Star,
-  Bookmark,
   Plus,
   ChevronDown,
   Coffee,
@@ -31,7 +30,7 @@ const userArchetypes: UserArchetype[] = [
     id: 0,
     title: 'Regular Cafe Enjoyer',
     description:
-      "A coffee enthusiast who thrives in the cozy ambiance of cafes, savoring every sip of espresso while working, reading, or simply people-watching.",
+      'A coffee enthusiast who thrives in the cozy ambiance of cafes, savoring every sip of espresso while working, reading, or simply people-watching.',
     icon: '☕',
   },
   {
@@ -105,7 +104,6 @@ function Profile() {
   const [userArchetype, setUserArchetype] = useState<UserArchetype | null>(
     null
   );
-  const [imageLoaded, setImageLoaded] = useState(false);
   const navigate = useNavigate();
   const [showSelectedSummary, setShowSelectedSummary] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -126,9 +124,6 @@ function Profile() {
     useState(false);
   // Default profile picture now set to an emoji placeholder
   const [selectedProfilePicture, setSelectedProfilePicture] = useState('👤');
-
-  // Number of skeleton cards to show
-  const skeletonCount = 3;
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -209,7 +204,9 @@ function Profile() {
           }
         } else {
           console.error('Failed to fetch profile:', profileData);
-          setError(profileData.message || 'Failed to fetch profile. Please try again.');
+          setError(
+            profileData.message || 'Failed to fetch profile. Please try again.'
+          );
         }
 
         if (preferencesResponse.ok && preferencesData.status === 'success') {
@@ -290,7 +287,7 @@ function Profile() {
       setLoading(false);
     }
   };
-  
+
   interface Review {
     id: string;
     cafeId: string;
@@ -299,7 +296,7 @@ function Profile() {
     description: string;
     createdAt: string;
   }
-  
+
   useEffect(() => {
     if (user?.reviews && user.reviews.length > 0) {
       user.reviews.forEach((review: Review) => {
@@ -309,19 +306,7 @@ function Profile() {
         }
       });
     }
-  
-    if (user?.collections && user.collections.length > 0) {
-      user.collections.forEach((collection: any) => {
-        if (!cafes[collection.cafeId]) {
-          // Avoid duplicate fetching
-          fetchCafeDetails(collection.cafeId); // Fetch cafe details for collections as well
-        }
-      });
-    }
-
-    console.log('Cafes: ', cafes)
   }, [user, cafes]);
-  
 
   const handlePreferenceToggle = (
     category: PreferenceCategory,
@@ -566,10 +551,6 @@ function Profile() {
       </div>
     );
   }
-
-  const handleImageLoad = () => {
-    setImageLoaded(true);
-  };
 
   const handleEditNameClick = () => {
     setIsEditingName(true);
@@ -1134,45 +1115,43 @@ function Profile() {
 
             {/* Collections/Favorites */}
             {activeTab === 'collections' && (
-              <div className="animate-fade-in">
-                  {user ? (
-                    console.log("User object:", user) // Log the user object to check if it's populated
-                  ) : null}
-                 {user?.collections ? (
-                    console.log("User collections:", user.collections) // Check if collections exist
-                  ) : null}
-                {user?.collections && user.collections.length > 0 ? (
-                  user.collections.map((collection: any) => {
-                    console.log('Id: ', collection.cafeId);
-                    console.log('cafes: ', cafes);
-                    const cafeDetails = cafes[collection.cafeId]; // Retrieve cafe details from state
-
-                    if (!cafeDetails) {
-                      // In case cafeDetails is not available yet, you can show a loading state or fallback message
-                      return <div key={collection.id}>Loading cafe details...</div>;
-                    }
-
+              <div className="space-y-6 animate-fade-in">
+                {user?.favoriteCafes && user.favoriteCafes.length > 0 ? (
+                  user.favoriteCafes.map((favoriteCafe: any) => {
                     // Safely access the first photo with a fallback
                     const photoUrl =
-                      cafeDetails.data.photos?.[0] ||
+                      favoriteCafe.photos?.[0] ||
                       'https://picsum.photos/400/300'; // Fallback image
 
                     return (
                       <div
-                        key={collection.id}
-                        className="profile-card overflow-hidden group cursor-pointer rounded-lg shadow-sm"
+                        key={favoriteCafe.id}
+                        className="profile-card p-6 bg-white rounded-lg shadow-sm"
                       >
-                        <div className="relative h-48">
+                        <div className="flex items-start gap-4">
                           <img
                             src={photoUrl}
-                            alt={cafeDetails.data.name || 'Cafe Image'}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            alt={favoriteCafe.name || 'Cafe Image'}
+                            className="w-24 h-24 rounded-lg object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src =
+                                'https://picsum.photos/400/300';
+                            }}
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                          <div className="absolute bottom-0 left-0 p-4 text-white">
-                            <h3 className="text-xl font-semibold mb-1">
-                              {cafeDetails.data.name} {/* Cafe title */}
-                            </h3>
+                          <div className="flex-1">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <h3 className="text-lg font-semibold text-coffee-800">
+                                  {favoriteCafe.name}
+                                </h3>
+                                <div className="text-sm text-coffee-500">
+                                  {favoriteCafe.city}, {favoriteCafe.state}
+                                </div>
+                                <div className="text-sm text-coffee-600 mt-1">
+                                  {favoriteCafe.keywords?.join(', ')}
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1195,35 +1174,6 @@ function Profile() {
                         <Search className="w-4 h-4" />
                         <span>Discover cafes</span>
                       </button>
-                    </div>
-
-                    {/* Favorite Templates with simplified layout */}
-                    <h4 className="text-lg font-medium text-coffee-600 mb-4">
-                      Favorite Templates
-                    </h4>
-                    <div className="space-y-4">
-                      {[...Array(skeletonCount)].map((_, index) => (
-                        <div
-                          key={`favorite-skeleton-${index}`}
-                          className="profile-card bg-white rounded-lg shadow-sm p-4 flex items-center gap-4"
-                        >
-                          <div className="w-20 h-20 rounded-lg bg-coffee-100 overflow-hidden">
-                            <img
-                              src="https://via.placeholder.com/80"
-                              alt="Cafe Sample"
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="text-lg font-semibold text-coffee-800">
-                              Cafe Name
-                            </h3>
-                            <p className="text-coffee-600">
-                              Desription of cafe / Main keywords.
-                            </p>
-                          </div>
-                        </div>
-                      ))}
                     </div>
                   </div>
                 )}
