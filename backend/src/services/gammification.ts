@@ -16,19 +16,13 @@ const idKeywords = {
     'community-oriented', 'romantic', 'adventurous', 'playful', 'festive', 'welcoming',
   ],
   id3: [
-    'vegan', 'vegetarian', 'gluten-free', 'dairy-free', 'keto', 'paleo', 'halal', 'kosher',
-    'nut-free', 'low-carb', 'organic', 'farm-to-table', 'sustainable',
+    'study-friendly', 'social', 'intimate', 'artsy', 'luxury', 'casual', 'party',
+    'tranquil', 'bohemian', 'industrial', 'community-oriented', 'romantic', 'adventurous',
+    'playful', 'festive', 'welcoming'
   ],
   id4: [
-    'wifi', 'outdoor seating', 'pet-friendly', 'reservations', 'takeout', 'delivery', 'live music',
-    'board games', 'parking', 'accessible', 'workspace-friendly', 'kid-friendly', 'late-night',
-  ],
-  id5: [
-    'espresso', 'latte', 'cappuccino', 'cold brew', 'pour over', 'french press', 'decaf', 'macchiato',
-    'tea', 'herbal tea', 'green tea', 'chai', 'matcha', 'smoothie', 'milkshake', 'hot chocolate',
-    'lemonade', 'juice', 'kombucha', 'sparkling water', 'mocktail', 'cocktail', 'craft beer', 'wine',
-    'cold tea', 'flavored latte', 'fruit tea', 'bubble tea', 'flat white', 'americano', 'mocha',
-    'nitro brew', 'cortado', 'iced coffee', 'affogato', 'ristretto',
+    'vegan', 'vegetarian', 'gluten-free', 'dairy-free', 'keto', 'paleo', 'halal', 'kosher',
+    'nut-free', 'low-carb', 'organic', 'farm-to-table', 'sustainable',
   ],
 };
 
@@ -115,7 +109,6 @@ export async function determineMostFrequentCategory(
       id2: 0,
       id3: 0,
       id4: 0,
-      id5: 0,
     };
 
     // Count keywords for each ID type
@@ -128,9 +121,6 @@ export async function determineMostFrequentCategory(
       }
       if (idKeywords.id4.includes(keyword)) {
         keywordCounts.id4++;
-      }
-      if (idKeywords.id5.includes(keyword)) {
-        keywordCounts.id5++;
       }
     });
 
@@ -146,9 +136,7 @@ export async function determineMostFrequentCategory(
       selectedId = 'id4';
       maxCount = keywordCounts.id4;
     }
-    if (keywordCounts.id5 > maxCount) {
-      selectedId = 'id5';
-    }
+
 
     // Send the response
     reply.status(200).send({
