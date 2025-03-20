@@ -250,7 +250,6 @@ function Profile() {
     }
   }, [loading, user]);
 
-  //fetchingcafe
   const fetchCafeDetails = async (cafeId: string) => {
     try {
       setLoading(true);
@@ -266,7 +265,7 @@ function Profile() {
       setLoading(false);
     }
   };
-
+  
   interface Review {
     id: string;
     cafeId: string;
@@ -275,7 +274,7 @@ function Profile() {
     description: string;
     createdAt: string;
   }
-
+  
   useEffect(() => {
     if (user?.reviews && user.reviews.length > 0) {
       user.reviews.forEach((review: Review) => {
@@ -285,7 +284,19 @@ function Profile() {
         }
       });
     }
+  
+    if (user?.collections && user.collections.length > 0) {
+      user.collections.forEach((collection: any) => {
+        if (!cafes[collection.cafeId]) {
+          // Avoid duplicate fetching
+          fetchCafeDetails(collection.cafeId); // Fetch cafe details for collections as well
+        }
+      });
+    }
+
+    console.log('Cafes: ', cafes)
   }, [user, cafes]);
+  
 
   const handlePreferenceToggle = (
     category: PreferenceCategory,
@@ -1091,51 +1102,6 @@ function Profile() {
                         <span>Find cafes to review</span>
                       </button>
                     </div>
-
-                    {/* Review Templates */}
-                    <h4 className="text-lg font-medium text-coffee-600 mb-4">
-                      Review Templates
-                    </h4>
-                    <div className="space-y-4">
-                      {[...Array(skeletonCount)].map((_, index) => (
-                        <div
-                          key={`review-skeleton-${index}`}
-                          className="profile-card p-6 bg-white rounded-lg shadow-sm"
-                        >
-                          <div className="flex items-start gap-4">
-                            <div className="w-24 h-24 rounded-lg bg-coffee-100 flex items-center justify-center text-coffee-300">
-                              <Coffee className="w-12 h-12" />
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <h3 className="text-lg font-semibold text-coffee-800">
-                                    Cafe Name
-                                  </h3>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <div className="flex">
-                                      {[...Array(5)].map((_, i) => (
-                                        <Star
-                                          key={i}
-                                          className={`w-4 h-4 ${i < 4 ? 'text-coffee-400 fill-current' : 'text-coffee-200'}`}
-                                        />
-                                      ))}
-                                    </div>
-                                    <span className="text-coffee-500 text-sm">
-                                      Month Day, Year
-                                    </span>
-                                  </div>
-                                </div>
-                                <Bookmark className="w-5 h-5 text-coffee-200" />
-                              </div>
-                              <p className="mt-3 text-coffee-600">
-                                User written review.
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
                   </div>
                 )}
               </div>
@@ -1144,39 +1110,49 @@ function Profile() {
             {/* Collections/Favorites */}
             {activeTab === 'collections' && (
               <div className="animate-fade-in">
-                {user.collections && user.collections.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {user.collections.map((collection: any) => (
+                  {user ? (
+                    console.log("User object:", user) // Log the user object to check if it's populated
+                  ) : null}
+                 {user?.collections ? (
+                    console.log("User collections:", user.collections) // Check if collections exist
+                  ) : null}
+                {user?.collections && user.collections.length > 0 ? (
+                  user.collections.map((collection: any) => {
+                    console.log('Id: ', collection.cafeId);
+                    console.log('cafes: ', cafes);
+                    const cafeDetails = cafes[collection.cafeId]; // Retrieve cafe details from state
+
+                    if (!cafeDetails) {
+                      // In case cafeDetails is not available yet, you can show a loading state or fallback message
+                      return <div key={collection.id}>Loading cafe details...</div>;
+                    }
+
+                    // Safely access the first photo with a fallback
+                    const photoUrl =
+                      cafeDetails.data.photos?.[0] ||
+                      'https://picsum.photos/400/300'; // Fallback image
+
+                    return (
                       <div
                         key={collection.id}
                         className="profile-card overflow-hidden group cursor-pointer rounded-lg shadow-sm"
                       >
                         <div className="relative h-48">
                           <img
-                            src={
-                              collection.image ||
-                              'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&q=80'
-                            }
-                            alt={collection.name}
+                            src={photoUrl}
+                            alt={cafeDetails.data.name || 'Cafe Image'}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            onLoad={handleImageLoad}
                           />
-                          {!imageLoaded && (
-                            <div className="absolute inset-0 w-full h-full image-loading"></div>
-                          )}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                           <div className="absolute bottom-0 left-0 p-4 text-white">
                             <h3 className="text-xl font-semibold mb-1">
-                              {collection.name}
+                              {cafeDetails.data.name} {/* Cafe title */}
                             </h3>
-                            <p className="text-sm opacity-90">
-                              {collection.places} places
-                            </p>
                           </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })
                 ) : (
                   <div>
                     <div className="empty-state bg-white rounded-lg p-8 mb-8 shadow-sm flex flex-col items-center">
