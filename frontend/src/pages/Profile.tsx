@@ -1127,9 +1127,11 @@ function Profile() {
                     return (
                       <div
                         key={favoriteCafe.id}
-                        onClick={() => navigate(`/restaurant/${favoriteCafe.id}`)}
+                        onClick={() =>
+                          navigate(`/restaurant/${favoriteCafe.id}`)
+                        }
                         className="profile-card p-6 bg-white rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-                        >
+                      >
                         <div className="flex items-start gap-4">
                           <img
                             src={photoUrl}

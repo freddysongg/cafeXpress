@@ -102,17 +102,19 @@ function Settings() {
   };
 
   const handleDeleteAccount = async () => {
-    const confirmDelete = window.confirm('Are you sure you want to delete your account? This action cannot be undone.');
-  
+    const confirmDelete = window.confirm(
+      'Are you sure you want to delete your account? This action cannot be undone.'
+    );
+
     if (!confirmDelete) return;
 
     console.log('Deleting user with ID:', userId);
-  
+
     if (!userId) {
       console.error('User ID is missing');
       return;
     }
-  
+
     try {
       const token = localStorage.getItem('token');
       console.log('Using token:', token);
@@ -120,20 +122,20 @@ function Settings() {
         console.error('User not logged in');
         return;
       }
-  
+
       const response = await fetch(`http://localhost:8000/user/${userId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`, // Ensure token is sent for authentication
         },
       });
-  
+
       if (!response.ok) {
         const errorData = await response.json(); // Parse the error response
         console.error('Error response:', errorData);
         throw new Error('Failed to delete account');
       }
-  
+
       const data = await response.json();
       if (data.status === 'success') {
         alert('Account deleted successfully.');
@@ -146,7 +148,7 @@ function Settings() {
       console.error('Error deleting account:', error);
       alert('Failed to delete account. Please try again.');
     }
-  };  
+  };
 
   return (
     <div className="min-h-screen bg-coffee-50 pt-20">
@@ -207,7 +209,9 @@ function Settings() {
           </form>
           {/* Delete Account Button */}
           <div className="mt-6">
-            <h2 className="text-medium font-semibold text-red-800 mb-4">Delete Account</h2>
+            <h2 className="text-medium font-semibold text-red-800 mb-4">
+              Delete Account
+            </h2>
             <button
               onClick={handleDeleteAccount}
               className="w-full px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
