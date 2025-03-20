@@ -2,12 +2,27 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '@config/db.js';
 import { cafes } from '@config/schemas.js';
 import axios from 'axios';
+import { PREDEFINED_KEYWORDS } from '@config/keywords';
 
 const YELP_API_KEY = process.env.YELP_API_KEY as string;
 const GOOGLE_API_KEY = process.env.GOOGLE_CLOUD_API as string;
 const GOOGLE_ENGINE_ID = process.env.GOOGLE_SEARCH_ENGINE_ID as string;
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const BASE_URL = 'https://api.yelp.com/v3/businesses/search';
+
+// Helper function to get random elements from an array
+function getRandomElements(array: string[], count: number): string[] {
+  const shuffled = array.sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
+}
+
+// // Helper function to convert an array of strings into a Record<string, boolean>
+// function arrayToRecord(array: string[]): Record<string, boolean> {
+//   return array.reduce((acc, key) => {
+//     acc[key] = true;
+//     return acc;
+//   }, {} as Record<string, boolean>);
+// }
 
 /**
  * Search for photos using Google Custom Search API
@@ -99,6 +114,17 @@ export async function fetchCafes(
           // Combine Yelp profile photo with Google photos
           const photos = cafe.image_url ? [cafe.image_url, ...googlePhotos] : googlePhotos;
 
+          // Randomly select ambiance, dietary options, and keywords from predefined lists
+          const ambiance = getRandomElements(PREDEFINED_KEYWORDS.ambiance, 2); // Select 3 random ambiance options
+          const dietaryOptions = getRandomElements(PREDEFINED_KEYWORDS.dietary, 3); // Select 3 random dietary options
+          const vibes = getRandomElements(PREDEFINED_KEYWORDS.vibes, 2);
+
+          const newAmbiance = [...ambiance, ...vibes];
+
+          // // Convert arrays to Record<string, boolean> for ambiance and dietaryOptions
+          // const ambianceRecord = arrayToRecord(ambiance);
+          // const dietaryOptionsRecord = arrayToRecord(dietaryOptions);
+
           return {
             name: cafe.name,
             description: cafe.description || null,
@@ -106,8 +132,8 @@ export async function fetchCafes(
             city: cafe.location.city || null,
             state: cafe.location.state || null,
             zipCode: cafe.location.zip_code || null,
-            ambiance: {},
-            dietaryOptions: {},
+            ambiance: newAmbiance,
+            dietaryOptions,
             location: {
               type: 'Point',
               coordinates: [cafe.coordinates.longitude, cafe.coordinates.latitude]
@@ -167,6 +193,8 @@ export async function fetchCafes(
             city: cafe.city,
             state: cafe.state,
             zipCode: cafe.zipCode,
+            ambiance: cafe.ambiance,
+            dietaryOptions: cafe.dietaryOptions,
             location: cafe.location,
             keywords: cafe.keywords,
             photos: cafe.photos,

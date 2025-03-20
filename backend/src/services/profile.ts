@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '@config/db.js';
-import { users, reviews } from '@config/schemas.js';
+import { users, reviews, cafes } from '@config/schemas.js';
 import { eq } from 'drizzle-orm';
 
 /**
@@ -23,7 +23,8 @@ export async function getProfile(req: FastifyRequest, reply: FastifyReply): Prom
         firstName: users.firstName,
         lastName: users.lastName,
         phone: users.phone,
-        location: users.location
+        location: users.location,
+        favoriteCafes: users.favoriteCafes
       })
       .from(users)
       .where(eq(users.id, userId))
@@ -33,6 +34,21 @@ export async function getProfile(req: FastifyRequest, reply: FastifyReply): Prom
       reply.status(404).send({ status: 'error', message: 'User not found.' });
       return;
     }
+    const favoriteCafes = user[0].favoriteCafes || []; // Handle null case
+    const cafeDetails = await Promise.all(
+      favoriteCafes.map((cafeId) =>
+        db
+          .select()
+          .from(cafes)
+          .where(eq(cafes.id, cafeId))
+          .limit(1)
+      )
+    );
+
+    // Flatten the cafe details array and filter out null values
+    const validCafes = cafeDetails
+      .map((cafeArray) => cafeArray[0]) // Extract the first element of each array
+      .filter((cafe) => cafe !== null); // Filter out null values
 
     // Fetch reviews associated with the user
     const userReviews = await db
@@ -52,7 +68,8 @@ export async function getProfile(req: FastifyRequest, reply: FastifyReply): Prom
       message: 'User profile retrieved',
       data: {
         ...user[0],
-        reviews: userReviews
+        reviews: userReviews,
+        favoriteCafes: validCafes
       }
     });
   } catch (error) {

@@ -28,6 +28,13 @@ type UserArchetype = {
 // New user archetype data based on favorites and keyword interests
 const userArchetypes: UserArchetype[] = [
   {
+    id: 0,
+    title: 'Regular Cafe Enjoyer',
+    description:
+      "A coffee enthusiast who thrives in the cozy ambiance of cafes, savoring every sip of espresso while working, reading, or simply people-watching.",
+    icon: '☕',
+  },
+  {
     id: 1,
     title: 'Ultimate Cafe Enthusiast',
     description:
@@ -130,6 +137,9 @@ function Profile() {
         navigate('/signin');
         return;
       }
+      const decoded = jwtDecode<DecodedToken>(token);
+      const userId = decoded.id; // Assuming `id` is the field where `userId` is stored
+      if (!userId) return;
 
       try {
         const [profileResponse, preferencesResponse] = await Promise.all([
@@ -164,27 +174,42 @@ function Profile() {
             setSelectedProfilePicture(profileData.data.profilePicture);
           }
 
-          if (
-            profileData.data.favorites &&
-            profileData.data.favorites.length >= 5
-          ) {
-            const randomIndex = Math.floor(
-              Math.random() * userArchetypes.length
+          // Fetch the user's archetype based on their favorite cafes
+          const archetypeResponse = await fetch(
+            `http://localhost:8000/gammification/${userId}`,
+            {
+              method: 'GET',
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (archetypeResponse.ok) {
+            const archetypeData = await archetypeResponse.json();
+            const idType = archetypeData.idType; // e.g., 'id0', 'id1', 'id2', etc.
+
+            console.log('Backend Response - idType:', idType); // Debugging log
+
+            // Map the idType to a user archetype
+            const archetype = userArchetypes.find(
+              (archetype) => archetype.id === parseInt(idType.replace('id', ''))
             );
-            setUserArchetype(userArchetypes[randomIndex]);
+
+            console.log('Mapped Archetype:', archetype); // Debugging log
+
+            if (archetype) {
+              setUserArchetype(archetype);
+            } else {
+              setUserArchetype(userArchetypes[0]); // Default archetype
+            }
           } else {
-            setUserArchetype({
-              id: 0,
-              title: 'Hello Cafe Goer!',
-              description: 'Get a Cafe Personality by favoriting more cafes!',
-              icon: '⭐',
-            });
+            console.error('Failed to fetch archetype:', archetypeResponse);
+            setUserArchetype(userArchetypes[0]); // Default archetype
           }
         } else {
           console.error('Failed to fetch profile:', profileData);
-          setError(
-            profileData.message || 'Failed to fetch profile. Please try again.'
-          );
+          setError(profileData.message || 'Failed to fetch profile. Please try again.');
         }
 
         if (preferencesResponse.ok && preferencesData.status === 'success') {
