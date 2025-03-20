@@ -36,6 +36,13 @@
       "when": 1741756891695,
       "tag": "0004_moaning_rocket_raccoon",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1742323155352,
+      "tag": "0005_chief_stranger",
+      "breakpoints": true
     }
   ]
 }
