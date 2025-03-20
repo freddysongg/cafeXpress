@@ -798,9 +798,9 @@ function Profile() {
                     </div>
                     <div className="text-center">
                       <p className="text-2xl font-bold text-coffee-800">
-                        {user.collections?.length || 0}
+                        {user.favoriteCafes?.length || 0}
                       </p>
-                      <p className="text-coffee-600">Collections</p>
+                      <p className="text-coffee-600">Favorites</p>
                     </div>
                   </div>
                 </div>
@@ -1046,7 +1046,8 @@ function Profile() {
                     return (
                       <div
                         key={review.id}
-                        className="profile-card p-6 bg-white rounded-lg shadow-sm"
+                        onClick={() => navigate(`/restaurant/${review.cafeId}`)}
+                        className="profile-card p-6 bg-white rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow"
                       >
                         <div className="flex items-start gap-4">
                           <img
@@ -1126,7 +1127,10 @@ function Profile() {
                     return (
                       <div
                         key={favoriteCafe.id}
-                        className="profile-card p-6 bg-white rounded-lg shadow-sm"
+                        onClick={() =>
+                          navigate(`/restaurant/${favoriteCafe.id}`)
+                        }
+                        className="profile-card p-6 bg-white rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow"
                       >
                         <div className="flex items-start gap-4">
                           <img
