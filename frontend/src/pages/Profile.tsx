@@ -4,37 +4,31 @@ import { useNavigate } from 'react-router-dom';
 import { Edit3, Star, Bookmark, Plus, ChevronDown, Coffee, Heart, Search, X, Check, RefreshCw } from 'lucide-react';
 import { PREDEFINED_KEYWORDS } from '../../../backend/src/config/keywords';
 
-// New user archetype data based on favorites and keyword interests
+//User archetypes after favoriting cafes
 const userArchetypes = [
   {
     id: 1,
-    title: "Cafe Aficionado",
-    description: "Your love for cafes is unmatched—you've favorited at least 10 spots!",
+    title: "Ultimate Cafe Enthusiast",
+    description: "You're a true cafe connoisseur! With so many favorites, you've truly mastered the art of cafe exploration.",
     icon: "🌟"
   },
   {
     id: 2,
-    title: "Ambiance & Vibe Connoisseur",
-    description: "You appreciate the perfect setting and mood—whether it's quiet, cozy, study-friendly, or social.",
-    icon: "🎶"
+    title: "Ambiance Appreciator",
+    description: "You have a keen eye for atmosphere—whether it's quiet, cozy, or minimalist.",
+    icon: "✨"
   },
   {
     id: 3,
-    title: "Dietary Devotee",
-    description: "Your unique taste extends to dietary preferences and special menus.",
-    icon: "🥗"
+    title: "Vibe Seeker",
+    description: "You're drawn to the perfect cafe energy, ranging from social to casual.",
+    icon: "🎵"
   },
   {
     id: 4,
-    title: "Feature Fanatic",
-    description: "From wifi to live music, you love cafes with standout features.",
-    icon: "🎤"
-  },
-  {
-    id: 5,
-    title: "Drink Aficionado",
-    description: "Your refined palate seeks everything from tea to craft cocktails.",
-    icon: "🍹"
+    title: "Dietary Explorer",
+    description: "You value inclusive menus with multiple options such as vegan or dairy free.",
+    icon: "🥗"
   }
 ];
 
@@ -144,8 +138,8 @@ function Profile() {
             setUserArchetype(userArchetypes[randomIndex]);
           } else {
             setUserArchetype({
-              title: "Discover Your Cafe Personality!",
-              description: "Get your Cafe Personality by favoriting 5 cafes!",
+              title: "Cafe Goer",
+              description: "Unlock your cafe persona by favoriting more cafes!",
               icon: "⭐"
             });
           }
