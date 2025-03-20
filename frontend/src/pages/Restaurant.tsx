@@ -361,6 +361,9 @@ function Restaurant() {
                 stroke="currentColor" // Ensure the stroke matches the text color
               />
             </button>
+            {/* <button className="p-2 rounded-full bg-white text-coffee-400 hover:bg-coffee-100 transition-colors">
+              <Share2 className="w-6 h-6" />
+            </button> */}
           </div>
         </div>
 

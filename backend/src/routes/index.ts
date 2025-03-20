@@ -9,6 +9,7 @@ import { yelpRoutes } from './yelp.js';
 import { profileRoutes } from './profile.js';
 import { generateRoutes } from './generateReview.js';
 import { favoriteCafeRoutes } from './favoriteCafe.js';
+import { gammifcationRoute } from './gammifation.js';
 
 const routes = async (app: FastifyInstance) => {
   app.get('/', async (request: FastifyRequest, reply: FastifyReply) => {
@@ -24,6 +25,7 @@ const routes = async (app: FastifyInstance) => {
   app.register(recommendationRoutes, { prefix: '/recommendations' });
   app.register(generateRoutes, { prefix: '/generateReviews' });
   app.register(favoriteCafeRoutes, { prefix: '/favoriteCafe' });
+  app.register(gammifcationRoute, {prefix: '/gammification'});
 };
 
 export default routes;
