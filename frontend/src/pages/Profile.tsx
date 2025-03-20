@@ -283,6 +283,7 @@ function Profile() {
       setCafes((prevCafes) => ({ ...prevCafes, [cafeId]: data as CafeReview })); // Store fetched cafe by cafeId
       setLoading(false);
     } catch (err) {
+      console.error(err);
       setError('Failed to fetch cafe details.');
       setLoading(false);
     }

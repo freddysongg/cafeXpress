@@ -83,7 +83,8 @@ function Restaurant() {
                 } else {
                   return review; // If no user data is found or status is not success
                 }
-              } catch (error) {
+              } catch (err) {
+                console.error('Error fetching user data:', err);
                 return review;
               }
             })
