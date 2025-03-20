@@ -119,12 +119,14 @@ export async function updateUser(
 ): Promise<void> {
   try {
     const userId = req.params.userId;
-    const { email, location, password } = req.body;
+    const { firstName, lastName, email, location, password } = req.body;
 
     // Update user
     const updatedUser = await db
       .update(users)
       .set({
+        firstName,
+        lastName,
         email,
         password,
         location: location ? sql`${JSON.stringify(location)}` : null
@@ -132,9 +134,9 @@ export async function updateUser(
       .where(eq(users.id, userId))
       .returning({
         id: users.id,
-        username: users.username,
+        firstName: users.firstName,
+        lastName: users.lastName,
         email: users.email,
-        description: users.description,
         location: users.location
       });
 

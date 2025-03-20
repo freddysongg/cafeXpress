@@ -80,6 +80,10 @@ export interface CafeRecommendation {
   };
 }
 
+export interface CafeReview {
+  data: any;
+}
+
 export interface RecommendationResponse {
   status: 'success' | 'error';
   data: CafeRecommendation[];

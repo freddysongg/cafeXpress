@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Coffee, Mail, Lock, User } from 'lucide-react';
+import {
+  Coffee,
+  Mail,
+  Lock,
+  User,
+  Eye,
+  EyeOff,
+  CheckCircle,
+} from 'lucide-react';
 
 const SignUp = () => {
   const [firstName, setFirstName] = useState('');
@@ -8,10 +16,30 @@ const SignUp = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+
+  const isPasswordValid = (password: string) => {
+    return {
+      length: password.length >= 8,
+      number: /\d/.test(password),
+      specialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    };
+  };
+
+  const passwordRequirements = isPasswordValid(password);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (
+      !passwordRequirements.length ||
+      !passwordRequirements.number ||
+      !passwordRequirements.specialChar
+    ) {
+      alert('Please ensure your password meets all requirements.');
+      return;
+    }
 
     const userData = { firstName, lastName, username, email, password };
 
@@ -23,11 +51,20 @@ const SignUp = () => {
       });
 
       if (response.ok) {
-        navigate('/signin'); // Redirect user upon successful signup
+        localStorage.setItem('signUpSuccess', 'true');
+        navigate('/signin');
       }
     } catch (error) {
       console.error('Signup error:', error);
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setPasswordVisible(!passwordVisible);
+  };
+
+  const navigateToSignIn = () => {
+    navigate('/signin');
   };
 
   return (
@@ -109,6 +146,9 @@ const SignUp = () => {
                 placeholder="Choose a username"
               />
             </div>
+            <p className="mt-1 text-xs text-coffee-500">
+              Numbers and special characters allowed.
+            </p>
           </div>
 
           <div>
@@ -130,6 +170,9 @@ const SignUp = () => {
                 placeholder="Enter your email"
               />
             </div>
+            <p className="mt-1 text-xs text-coffee-500">
+              You will use this email to sign in.
+            </p>
           </div>
 
           <div>
@@ -143,13 +186,51 @@ const SignUp = () => {
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-coffee-400 w-5 h-5" />
               <input
                 id="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 w-full px-4 py-2 border border-coffee-200 rounded-lg focus:ring-2 focus:ring-coffee-400 focus:border-transparent"
+                className="pl-10 pr-10 w-full px-4 py-2 border border-coffee-200 rounded-lg focus:ring-2 focus:ring-coffee-400 focus:border-transparent"
                 placeholder="Create a password"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-coffee-400"
+              >
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
+              </button>
+            </div>
+
+            <div className="mt-3 space-y-1 text-sm">
+              <div className="flex items-center gap-2">
+                {passwordRequirements.length ? (
+                  <CheckCircle className="text-green-500 w-4 h-4" />
+                ) : (
+                  <CheckCircle className="text-coffee-400 w-4 h-4" />
+                )}
+                <span>Password must be at least 8 characters long</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {passwordRequirements.number ? (
+                  <CheckCircle className="text-green-500 w-4 h-4" />
+                ) : (
+                  <CheckCircle className="text-coffee-400 w-4 h-4" />
+                )}
+                <span>Contains at least one number</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {passwordRequirements.specialChar ? (
+                  <CheckCircle className="text-green-500 w-4 h-4" />
+                ) : (
+                  <CheckCircle className="text-coffee-400 w-4 h-4" />
+                )}
+                <span>Contains at least one special character</span>
+              </div>
             </div>
           </div>
 
@@ -159,6 +240,18 @@ const SignUp = () => {
           >
             Create account
           </button>
+
+          <div className="text-center mt-4">
+            <p className="text-sm text-coffee-600">
+              Already have an account?{' '}
+              <button
+                onClick={() => navigate('/signin')} // Redirect to sign in page
+                className="font-medium text-coffee-600 hover:underline"
+              >
+                Sign in
+              </button>
+            </p>
+          </div>
         </form>
       </div>
     </div>
