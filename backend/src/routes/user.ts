@@ -47,11 +47,10 @@ export const usersRoutes = async (app: FastifyInstance) => {
     };
 
     Body: Partial<{
-      username: string;
       firstName: string;
       lastName: string;
       email: string;
-      description: string;
+      password: string;
     }>;
   }>('/:userId', { preHandler: authenticate }, async (req, reply) => {
     try {

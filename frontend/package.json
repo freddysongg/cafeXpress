@@ -18,6 +18,8 @@
     "@react-google-maps/api": "^2.20.6",
     "@types/lodash.debounce": "^4.0.9",
     "@vercel/analytics": "^1.4.1",
+    "bcrypt": "^5.1.1",
+    "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
     "date-fns": "^4.1.0",
     "jwt-decode": "^4.0.0",
