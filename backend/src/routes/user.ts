@@ -47,6 +47,8 @@ export const usersRoutes = async (app: FastifyInstance) => {
     };
 
     Body: Partial<{
+      firstName: string;
+      lastName: string;
       email: string;
       password: string;
     }>;

@@ -41,7 +41,8 @@ export async function getProfile(req: FastifyRequest, reply: FastifyReply): Prom
         cafeId: reviews.cafeId,
         rating: reviews.rating,
         description: reviews.description,
-        title: reviews.title
+        title: reviews.title,
+        createdAt: reviews.createdAt
       })
       .from(reviews)
       .where(eq(reviews.userId, userId));
