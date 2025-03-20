@@ -1,21 +1,153 @@
 import React, { useState } from 'react';
-import { Moon, Sun } from 'lucide-react';
+import { jwtDecode } from 'jwt-decode';
 
 function Settings() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [notifications, setNotifications] = useState(true);
-  const [email, setEmail] = useState('sarah.johnson@example.com');
+  const [email, setEmail] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const handleUpdateEmail = (e: React.FormEvent) => {
+  // Get user ID from token on component mount
+  React.useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const decoded = jwtDecode<{ id: string }>(token);
+      setUserId(decoded.id); // Set the user ID from the token
+    } else {
+      console.error('User not logged in');
+    }
+  }, []);
+
+  const handleUpdateEmail = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement email update logic
+
+    if (!userId) {
+      console.error('User ID is missing');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('User not logged in');
+        return;
+      }
+
+      const response = await fetch(`http://localhost:8000/user/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ email }), // Send only the new email
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update email');
+      }
+
+      alert('Email updated successfully!');
+      setEmail(''); // Clear the email input field
+    } catch (error) {
+      console.error('Error updating email:', error);
+      alert('Failed to update email. Please try again.');
+    }
   };
 
-  const handleUpdatePassword = (e: React.FormEvent) => {
+  const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement password update logic
+
+    if (!userId) {
+      console.error('User ID is missing');
+      return;
+    }
+
+    if (!currentPassword || !newPassword) {
+      alert('Please fill in both current and new passwords.');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('User not logged in');
+        return;
+      }
+
+      // Send both current and new passwords to the backend
+      const response = await fetch(
+        `http://localhost:8000/auth/updatePassword/${userId}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ currentPassword, newPassword }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update password');
+      }
+
+      alert('Password updated successfully!');
+      setCurrentPassword(''); // Clear the current password field
+      setNewPassword(''); // Clear the new password field
+    } catch (error) {
+      console.error('Error updating password:', error);
+      alert('Current password incorrect');
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    const confirmDelete = window.confirm(
+      'Are you sure you want to delete your account? This action cannot be undone.'
+    );
+
+    if (!confirmDelete) return;
+
+    console.log('Deleting user with ID:', userId);
+
+    if (!userId) {
+      console.error('User ID is missing');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      console.log('Using token:', token);
+      if (!token) {
+        console.error('User not logged in');
+        return;
+      }
+
+      const response = await fetch(`http://localhost:8000/user/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`, // Ensure token is sent for authentication
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json(); // Parse the error response
+        console.error('Error response:', errorData);
+        throw new Error('Failed to delete account');
+      }
+
+      const data = await response.json();
+      if (data.status === 'success') {
+        alert('Account deleted successfully.');
+        localStorage.removeItem('token'); // Remove the token after account deletion
+        window.location.href = '/signin'; // Redirect to login page
+      } else {
+        alert('Failed to delete account. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      alert('Failed to delete account. Please try again.');
+    }
   };
 
   return (
@@ -23,33 +155,8 @@ function Settings() {
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold text-coffee-800 mb-8">Settings</h1>
 
-        {/* Theme Toggle */}
+        {/* Settings */}
         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <h2 className="text-xl font-semibold text-coffee-800 mb-4">
-            Appearance
-          </h2>
-          <div className="flex items-center justify-between">
-            <span className="text-coffee-600">Theme</span>
-            <button
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-coffee-100 hover:bg-coffee-200 transition-colors"
-            >
-              {isDarkMode ? (
-                <Moon className="w-4 h-4" />
-              ) : (
-                <Sun className="w-4 h-4" />
-              )}
-              <span>{isDarkMode ? 'Dark' : 'Light'}</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Account Settings */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <h2 className="text-xl font-semibold text-coffee-800 mb-4">
-            Account Settings
-          </h2>
-
           {/* Email Update */}
           <form onSubmit={handleUpdateEmail} className="mb-6">
             <label className="block text-sm font-medium text-coffee-700 mb-2">
@@ -58,6 +165,7 @@ function Settings() {
             <div className="flex gap-4">
               <input
                 type="email"
+                placeholder="New email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="flex-1 px-4 py-2 border border-coffee-200 rounded-lg focus:ring-2 focus:ring-coffee-400 focus:border-transparent"
@@ -99,26 +207,16 @@ function Settings() {
               </button>
             </div>
           </form>
-        </div>
-
-        {/* Notification Settings */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h2 className="text-xl font-semibold text-coffee-800 mb-4">
-            Notifications
-          </h2>
-          <div className="flex items-center justify-between">
-            <span className="text-coffee-600">Enable Notifications</span>
+          {/* Delete Account Button */}
+          <div className="mt-6">
+            <h2 className="text-medium font-semibold text-red-800 mb-4">
+              Delete Account
+            </h2>
             <button
-              onClick={() => setNotifications(!notifications)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                notifications ? 'bg-coffee-500' : 'bg-coffee-200'
-              }`}
+              onClick={handleDeleteAccount}
+              className="w-full px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
             >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  notifications ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
+              Delete Account
             </button>
           </div>
         </div>

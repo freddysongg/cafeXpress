@@ -19,7 +19,7 @@ export const usersRoutes = async (app: FastifyInstance) => {
     Params: {
       userId: string;
     };
-  }>('/:userId', { preHandler: authenticate }, async (req, reply) => {
+  }>('/:userId', async (req, reply) => {
     try {
       const response = await getUserById(req, reply);
       reply.send(response);
@@ -47,9 +47,10 @@ export const usersRoutes = async (app: FastifyInstance) => {
     };
 
     Body: Partial<{
-      username: string;
+      firstName: string;
+      lastName: string;
       email: string;
-      description: string;
+      password: string;
     }>;
   }>('/:userId', { preHandler: authenticate }, async (req, reply) => {
     try {

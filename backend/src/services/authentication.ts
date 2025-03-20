@@ -122,3 +122,77 @@ export async function loginUser(
     });
   }
 }
+
+/**
+ * Update User Password
+ */
+export async function updateUserPassword(
+  req: FastifyRequest<{
+    Params: { userId: string };
+    Body: { currentPassword: string; newPassword: string };
+  }>,
+  reply: FastifyReply
+): Promise<void> {
+  try {
+    const userId = req.params.userId;
+    const { currentPassword, newPassword } = req.body;
+
+    // Fetch the user from the database
+    const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+
+    if (!user.length) {
+      reply.status(404).send({
+        status: 'error',
+        message: 'User not found.'
+      });
+      return;
+    }
+
+    // Validate the current password
+    const isPasswordValid = await bcrypt.compare(currentPassword, user[0].password);
+    if (!isPasswordValid) {
+      reply.status(401).send({
+        status: 'error',
+        message: 'Current password is incorrect.'
+      });
+      return;
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update the user's password in the database
+    const updatedUser = await db
+      .update(users)
+      .set({ password: hashedPassword })
+      .where(eq(users.id, userId))
+      .returning({
+        id: users.id,
+        username: users.username,
+        email: users.email,
+        description: users.description,
+        location: users.location
+      });
+
+    if (!updatedUser.length) {
+      reply.status(404).send({
+        status: 'error',
+        message: 'User not found.'
+      });
+      return;
+    }
+
+    reply.send({
+      status: 'success',
+      message: 'Password updated successfully',
+      data: updatedUser[0]
+    });
+  } catch (error) {
+    const err = error as Error;
+    console.error('Error updating password:', err.message);
+    reply.status(500).send({
+      status: 'error',
+      message: err.message
+    });
+  }
+}

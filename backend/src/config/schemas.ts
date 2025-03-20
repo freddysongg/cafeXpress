@@ -40,9 +40,14 @@ export const users = pgTable('users', {
 export const preferences = pgTable('preferences', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').references(() => users.id),
-  favoriteCafes: jsonb('favorite_cafes').$type<string[]>(),
-  dietaryRestrictions: jsonb('dietary_restrictions').$type<string[]>(),
-  ambiance: jsonb('ambiance').$type<string[]>(),
+  preferences: jsonb('preferences').$type<{
+    dietary: string[];
+    ambiance: string[];
+    activities: string[];
+    drinks: string[];
+    vibes: string[];
+    coffee: string[];
+  }>(),
   createdAt: timestamp('created_at').defaultNow()
 });
 
@@ -91,7 +96,7 @@ export const reviews = pgTable('reviews', {
   cafeId: uuid('cafe_id').references(() => cafes.id),
   userId: uuid('user_id').references(() => users.id),
   rating: jsonb('rating').$type<number>().notNull(),
-  title: text('title').notNull(),
+  title: text('title'),
   description: text('description'),
   createdAt: timestamp('created_at').defaultNow()
 });

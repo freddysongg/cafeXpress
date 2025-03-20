@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { sql } from 'drizzle-orm';
 import { db } from '@config/db.js';
-import { users } from '@config/schemas.js';
+import { users, reviews } from '@config/schemas.js';
 import { eq } from 'drizzle-orm';
 import { UserBody } from '@schemas/user.js';
 
@@ -72,12 +72,7 @@ export async function getUserById(
     reply.send({
       status: 'success',
       message: 'User data retrieved',
-      data: {
-        username: user[0].username,
-        email: user[0].email,
-        description: user[0].description,
-        createdAt: user[0].createdAt
-      }
+      data: user
     });
   } catch (error) {
     const err = error as Error;
@@ -124,23 +119,24 @@ export async function updateUser(
 ): Promise<void> {
   try {
     const userId = req.params.userId;
-    const { username, email, description, location } = req.body;
+    const { firstName, lastName, email, location, password } = req.body;
 
     // Update user
     const updatedUser = await db
       .update(users)
       .set({
-        username,
+        firstName,
+        lastName,
         email,
-        description,
+        password,
         location: location ? sql`${JSON.stringify(location)}` : null
       })
       .where(eq(users.id, userId))
       .returning({
         id: users.id,
-        username: users.username,
+        firstName: users.firstName,
+        lastName: users.lastName,
         email: users.email,
-        description: users.description,
         location: users.location
       });
 
@@ -177,6 +173,7 @@ export async function deleteUser(
   try {
     const userId = req.params.userId;
 
+    await db.delete(reviews).where(eq(reviews.userId, userId));
     // Delete user
     const deletedUser = await db.delete(users).where(eq(users.id, userId)).returning({
       id: users.id,

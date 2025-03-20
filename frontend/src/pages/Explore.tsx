@@ -1,8 +1,9 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
 import { Button } from '../components/ui/button';
 import { ChevronDown } from 'lucide-react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,26 +70,31 @@ function getKeywordStyle(keyword: KeywordMatch) {
 }
 
 function Explore() {
+  const location = useLocation();
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [cafes, setCafes] = useState<CafeRecommendation[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [cafes, setCafes] = useState<CafeRecommendation[]>(
+    location.state?.cafes || []
+  );
+  const [loading, setLoading] = useState(!location.state?.cafes);
   const [error, setError] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<Location | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedFilters, setSelectedFilters] = useState<
     Record<string, string>
-  >({});
+  >(location.state?.filters || {});
   const [markers, setMarkers] = useState<
     google.maps.marker.AdvancedMarkerElement[]
   >([]);
   const [infoWindows, setInfoWindows] = useState<google.maps.InfoWindow[]>([]);
-  const [matchingKeywords, setMatchingKeywords] = useState<KeywordMatch[]>([]);
+  const [matchingKeywords, setMatchingKeywords] = useState<KeywordMatch[]>(
+    location.state?.keywords || []
+  );
   const [filterOptions, setFilterOptions] = useState(DEFAULT_FILTER_OPTIONS);
   const navigate = useNavigate();
-
-  // Add this state for persisting search results
-  const [lastSearchQuery, setLastSearchQuery] = useState<string | null>(null);
+  const [lastSearchQuery, setLastSearchQuery] = useState<string | null>(
+    location.state?.lastQuery || searchParams.get('q') || null
+  );
 
   const updateFilterOptions = useCallback((keywords: KeywordMatch[]) => {
     const analyzedKeywords = new Set(
@@ -346,7 +352,7 @@ function Explore() {
                       .join('')}
                   </div>
                   <button 
-                    onclick="window.location.href='/restaurant/${cafe.id}'"
+                    onclick="window.dispatchEvent(new CustomEvent('navigateToCafe', { detail: '${cafe.id}' }))"
                     style="
                       width: 100%;
                       background: #4A2C1C;
@@ -416,7 +422,7 @@ function Explore() {
     };
 
     updateMarkers();
-  }, [map, cafes, navigate, markers, infoWindows]);
+  }, [map, cafes, navigate]);
 
   useEffect(() => {
     const searchQuery = searchParams.get('q');
@@ -453,13 +459,7 @@ function Explore() {
         }
       );
     }
-  }, [
-    searchParams,
-    lastSearchQuery,
-    cafes.length,
-    handleSearch,
-    searchFilters,
-  ]);
+  }, [searchParams, lastSearchQuery, cafes.length]);
 
   const handleFilterSelect = (category: string, value: string) => {
     setSelectedFilters((prev) => {
@@ -627,6 +627,34 @@ function Explore() {
     return `${(absConfidence * 100).toFixed(0)}%`;
   };
 
+  // Update the cafe card click handler
+  const handleCafeClick = (cafeId: string) => {
+    navigate(`/restaurant/${cafeId}`, {
+      state: {
+        returnTo: 'explore',
+        cafes,
+        keywords: matchingKeywords,
+        filters: selectedFilters,
+        lastQuery: lastSearchQuery,
+      },
+    });
+  };
+
+  // Add event listener for custom navigation
+  useEffect(() => {
+    const handleNavigate = (event: CustomEvent<string>) => {
+      handleCafeClick(event.detail);
+    };
+
+    window.addEventListener('navigateToCafe', handleNavigate as EventListener);
+    return () => {
+      window.removeEventListener(
+        'navigateToCafe',
+        handleNavigate as EventListener
+      );
+    };
+  }, [cafes, matchingKeywords, selectedFilters, lastSearchQuery]);
+
   return (
     <div className="flex h-screen pt-16">
       {/* Map Section */}
@@ -724,7 +752,7 @@ function Explore() {
                 <div
                   key={cafe.id}
                   className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200 cursor-pointer"
-                  onClick={() => navigate(`/restaurant/${cafe.id}`)}
+                  onClick={() => handleCafeClick(cafe.id)}
                 >
                   <div className="flex">
                     <div className="w-48 h-48 flex-shrink-0">

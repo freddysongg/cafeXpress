@@ -48,8 +48,8 @@ export interface CafeRecommendation {
   city?: string;
   state?: string;
   zipCode?: string;
-  ambiance?: string[];
-  dietaryOptions?: string[];
+  ambiance?: string[] | string;
+  dietaryOptions?: string[] | string;
   location: {
     coordinates: [number, number];
     type: 'Point';
@@ -78,6 +78,10 @@ export interface CafeRecommendation {
     };
     photos?: string[];
   };
+}
+
+export interface CafeReview {
+  data: any;
 }
 
 export interface RecommendationResponse {
