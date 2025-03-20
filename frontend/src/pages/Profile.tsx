@@ -1,11 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode';
 import { Edit3, Star, Bookmark, Plus, ChevronDown, Coffee, Heart, Search, X, Check, RefreshCw } from 'lucide-react';
 import { PREDEFINED_KEYWORDS } from '../../../backend/src/config/keywords';
+import { CafeReview } from '../services/api'; 
+
+type UserArchetype = {
+  id: number;
+  title: string;
+  description: string;
+  icon: string;
+};
 
 // New user archetype data based on favorites and keyword interests
-const userArchetypes = [
+const userArchetypes: UserArchetype[] = [
   {
     id: 1,
     title: "Cafe Aficionado",
@@ -58,6 +67,7 @@ function Profile() {
     'preferences' | 'reviews' | 'collections'
   >('preferences');
   const [user, setUser] = useState<any>(null);
+  const [cafes, setCafes] = useState<{ [cafeId: string]: CafeReview }>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [preferences, setPreferences] = useState<{
@@ -75,7 +85,7 @@ function Profile() {
     vibes: [],
     coffee: [],
   });
-  const [userArchetype, setUserArchetype] = useState(null);
+  const [userArchetype, setUserArchetype] = useState<UserArchetype | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const navigate = useNavigate();
   const [showSelectedSummary, setShowSelectedSummary] = useState(false);
@@ -130,20 +140,23 @@ function Profile() {
           return;
         }
 
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data.data);
-          setEditedFirstName(data.data.firstName);
-          setEditedLastName(data.data.lastName);
-          if (data.data.profilePicture) {
-            setSelectedProfilePicture(data.data.profilePicture);
+        const profileData = await profileResponse.json();
+        const preferencesData = await preferencesResponse.json();
+
+        if (profileResponse.ok && profileData.status === 'success') {
+          setUser(profileData.data);
+          setEditedFirstName(profileData.data.firstName);
+          setEditedLastName(profileData.data.lastName);
+          if (profileData.data.profilePicture) {
+            setSelectedProfilePicture(profileData.data.profilePicture);
           }
           
-          if (data.data.favorites && data.data.favorites.length >= 5) {
+          if (profileData.data.favorites && profileData.data.favorites.length >= 5) {
             const randomIndex = Math.floor(Math.random() * userArchetypes.length);
             setUserArchetype(userArchetypes[randomIndex]);
           } else {
             setUserArchetype({
+              id: 0,
               title: "Discover Your Cafe Personality!",
               description: "Get your Cafe Personality by favoriting 5 cafes!",
               icon: "⭐"
@@ -218,6 +231,43 @@ function Profile() {
       setLoading(false);
     }
   }, [loading, user]);
+
+  //fetchingcafe
+  const fetchCafeDetails = async (cafeId: string) => {
+    try {
+      setLoading(true);
+      const url = `http://localhost:8000/cafe/${cafeId}`;
+      const response = await fetch(url, {
+        method: 'GET', // Explicitly using GET request
+      });
+      const data = await response.json();
+      setCafes((prevCafes) => ({ ...prevCafes, [cafeId]: data as CafeReview })); // Store fetched cafe by cafeId
+      setLoading(false);
+    } catch (err) {
+      setError('Failed to fetch cafe details.');
+      setLoading(false);
+    }
+  };
+
+  interface Review {
+    id: string;
+    cafeId: string;
+    rating: number;
+    date: string;
+    description: string;
+    createdAt: string;
+  }  
+
+  useEffect(() => {
+    if (user?.reviews && user.reviews.length > 0) {
+      user.reviews.forEach((review: Review) => {
+        if (!cafes[review.cafeId]) {
+          // Avoid duplicate fetching
+          fetchCafeDetails(review.cafeId);
+        }
+      });
+    }
+  }, [user, cafes]);
 
   const handlePreferenceToggle = (
     category: PreferenceCategory,
@@ -468,15 +518,59 @@ function Profile() {
   const handleEditNameClick = () => {
     setIsEditingName(true);
   };
+
+  interface DecodedToken {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: string;
+  }
   
   const handleSaveName = async () => {
-    setUser({
-      ...user,
-      firstName: editedFirstName,
-      lastName: editedLastName
-    });
-    setIsEditingName(false);
-  };
+    try {
+      // Make a request to the backend API
+      const token = localStorage.getItem('token');
+      const decoded = jwtDecode<DecodedToken>(token!);
+      const userId = decoded.id;
+      if (!token) {
+        navigate('/signin');
+        return;
+      }
+      const response = await fetch(`http://localhost:8000/user/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          username: user.username,
+          firstName: editedFirstName,
+          lastName: editedLastName,
+          email: user.email,
+          description: user.description,
+          location: user.location,
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok && data.status === 'success') {
+        // Update the user state with the new data
+        setUser({
+          ...user,
+          firstName: editedFirstName,
+          lastName: editedLastName,
+        });
+        setIsEditingName(false);
+        console.log('User updated successfully:', data.data);
+      } else {
+        console.error('Error updating user:', data.message);
+      }
+    } catch (error) {
+      console.error('Error making the request:', error);
+    }
+  };  
   
   const handleCancelNameEdit = () => {
     setEditedFirstName(user.firstName);
@@ -484,9 +578,9 @@ function Profile() {
     setIsEditingName(false);
   };
   
-  const handleProfilePictureClick = () => {
-    setShowProfilePictureSelector(!showProfilePictureSelector);
-  };
+  // const handleProfilePictureClick = () => {
+  //   setShowProfilePictureSelector(!showProfilePictureSelector);
+  // };
   
   // When selecting a new profile icon, update immediately and close modal
   const handleSelectProfilePicture = (icon: string) => {
@@ -497,6 +591,7 @@ function Profile() {
       profilePicture: icon
     });
   };
+  
 
   return (
     <div className="min-h-screen bg-coffee-50 pt-20 pb-32">
@@ -556,31 +651,11 @@ function Profile() {
             <div className="profile-card p-6 border border-coffee-200 animate-scale-in bg-white rounded-lg shadow-sm">
               <div className="flex flex-col items-center">
                 <div className="relative mb-4">
-                  {selectedProfilePicture.startsWith('http') ? (
-                    <img
-                      src={selectedProfilePicture}
-                      alt="User Avatar"
-                      className="w-32 h-32 rounded-full object-cover border-4 border-coffee-100 card-animation cursor-pointer"
-                      onLoad={handleImageLoad}
-                      onClick={handleProfilePictureClick}
-                    />
-                  ) : (
-                    <div 
-                      className="w-32 h-32 rounded-full border-4 border-coffee-100 flex items-center justify-center text-6xl cursor-pointer"
-                      onClick={handleProfilePictureClick}
-                    >
-                      {selectedProfilePicture}
-                    </div>
-                  )}
-                  {!imageLoaded && (
-                    <div className="absolute inset-0 w-32 h-32 rounded-full image-loading"></div>
-                  )}
-                  <button 
-                    className="absolute bottom-0 right-0 bg-coffee-500 text-white p-1 rounded-full hover:bg-coffee-600 transition-colors"
-                    onClick={handleProfilePictureClick}
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
+                <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png" // Using a default avatar image
+                    alt="Default User Avatar"
+                    className="w-32 h-32 rounded-full object-cover border-4 border-coffee-100"
+                  />
                 </div>
 
                 {/* Profile Picture Selector Modal */}
@@ -705,12 +780,12 @@ function Profile() {
                 </div>
                 
                 <div className="w-20 h-20 rounded-full bg-coffee-100 flex items-center justify-center relative z-10 mb-8">
-                  <span className="text-4xl">{userArchetype.icon}</span>
+                  <span className="text-4xl">{userArchetype?.icon}</span>
                 </div>
                 
                 <div className="text-center relative z-10 mt-auto pt-2">
-                  <h3 className="text-xl font-semibold text-coffee-800 mb-3">You are a: {userArchetype.title}!</h3>
-                  <p className="text-sm text-coffee-600">{userArchetype.description}</p>
+                  <h3 className="text-xl font-semibold text-coffee-800 mb-3">You are a: {userArchetype?.title}!</h3>
+                  <p className="text-sm text-coffee-600">{userArchetype?.description}</p>
                 </div>
               </div>
             </div>
@@ -867,7 +942,7 @@ function Profile() {
                 )}
 
                 {/* Save Button */}
-                <div className="fixed bottom-0 left-0 right-0 bg-coffee-50 bg-opacity-90 backdrop-blur-sm py-6 px-8 border-t border-coffee-200">
+                <div className="fixed bottom-0 left-0 right-0 bg-coffee-50 bg-opacity-90 backdrop-blur-sm py-6 px-8 border-t border-coffee-200 z-50">
                   <div className="max-w-7xl mx-auto flex justify-end">
                     <button
                       onClick={savePreferences}
@@ -898,49 +973,54 @@ function Profile() {
             {/* Reviews */}
             {activeTab === 'reviews' && (
               <div className="space-y-6 animate-fade-in">
-                {user.reviews && user.reviews.length > 0 ? (
-                  user.reviews.map((review: any) => (
-                    <div key={review.id} className="profile-card p-6 bg-white rounded-lg shadow-sm">
+                {user?.reviews && user.reviews.length > 0 ? (
+                  user.reviews.map((review: Review) => {
+                    const cafeDetails = cafes[review.cafeId] as CafeReview; // Retrieve cafe details from state
+
+                    if (!cafeDetails) {
+                      // In case cafeDetails is not available yet, you can show a loading state or fallback message
+                      return <div key={review.id}>Loading cafe details...</div>;
+                    }
+
+                    // Safely access the first photo with a fallback
+                    const photoUrl = cafeDetails.data.photos?.[0] || 'https://picsum.photos/400/300';
+
+                    return (
+                      <div key={review.id} className="profile-card p-6 bg-white rounded-lg shadow-sm">
                       <div className="flex items-start gap-4">
                         <img
-                          src={review.image || 'https://via.placeholder.com/150'}
-                          alt={review.cafeName}
+                          src={photoUrl}
+                          alt={cafeDetails.data.name || 'Cafe Image'}
                           className="w-24 h-24 rounded-lg object-cover"
-                          onLoad={handleImageLoad}
+                          onError={(e) => {
+                            e.currentTarget.src = 'https://picsum.photos/400/300'; // Fallback image
+                          }}
                         />
-                        {!imageLoaded && (
-                          <div className="w-24 h-24 rounded-lg image-loading"></div>
-                        )}
                         <div className="flex-1">
                           <div className="flex justify-between items-start">
-                            <div>
-                              <h3 className="text-lg font-semibold text-coffee-800">{review.cafeName}</h3>
-                              <div className="flex items-center gap-2 mt-1">
-                                <div className="flex">
-                                  {[...Array(5)].map((_, i) => (
-                                    <Star
-                                      key={i}
-                                      className={`w-4 h-4 ${
-                                        i < review.rating
-                                          ? 'text-coffee-400 fill-current'
-                                          : 'text-coffee-200'
-                                      }`}
-                                    />
-                                  ))}
-                                </div>
-                                <span className="text-coffee-500 text-sm">{review.date}</span>
-                              </div>
-
+                            <div className="flex-1">
+                              <h3 className="text-lg font-semibold text-coffee-800">{cafeDetails.data.name}</h3> {/* Cafe name */}
                             </div>
-                            <button className="text-coffee-400 hover:text-coffee-500 card-animation">
-                              <Bookmark className="w-5 h-5" />
-                            </button>
+                            <span className="text-sm text-coffee-600">
+                              {new Date(review.createdAt).toLocaleDateString()}
+                            </span>
                           </div>
-                          <p className="mt-3 text-coffee-600">{review.review}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <div className="flex">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`w-4 h-4 ${i < review.rating ? 'text-coffee-400 fill-current' : 'text-coffee-200'}`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          <p className="mt-3 text-coffee-600">{review.description}</p>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    </div>                    
+                    );
+                  })
                 ) : (
                   <div>
                     <div className="empty-state bg-white rounded-lg p-8 mb-8 shadow-sm flex flex-col items-center">

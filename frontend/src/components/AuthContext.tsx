@@ -1,4 +1,5 @@
 import { createContext, useState, useEffect, ReactNode } from 'react';
+import { jwtDecode } from 'jwt-decode';
 
 interface User {
   // location: string;
@@ -15,6 +16,14 @@ interface AuthContextType {
   logout: () => void;
 }
 
+interface DecodedToken {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+}
+
 export const AuthContext = createContext<AuthContextType | undefined>(
   undefined
 );
@@ -26,7 +35,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
 
   // Fetch user data from API
-  const fetchUserData = async (userId: string, token: string) => {
+  const fetchUserData = async (token: string) => {
+    const decoded = jwtDecode<DecodedToken>(token!);
+    const userId = decoded.id;
     try {
       const response = await fetch(`http://localhost:8000/user/${userId}`, {
         method: 'GET',
@@ -67,7 +78,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     // localStorage.setItem('userId', userId);
     localStorage.setItem('token', token);
     setIsAuthenticated(true);
-    fetchUserData(userId, token);
+    fetchUserData(token);
   };
 
   const logout = () => {
