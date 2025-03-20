@@ -110,9 +110,9 @@ function Restaurant() {
 
     fetchReviews();
   }, [id]);
-  
-   // Check if the cafe is favorited when the component mounts or `cafeId` changes
-   useEffect(() => {
+
+  // Check if the cafe is favorited when the component mounts or `cafeId` changes
+  useEffect(() => {
     const checkIfFavorited = async () => {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -351,20 +351,19 @@ function Restaurant() {
                 className={`w-6 h-6 ${isFavorite ? 'fill-current' : ''}`}
               />
             </button> */}
-                <button
-      onClick={toggleFavorite}
-      className={`p-2 rounded-full ${isFavorite ? 'bg-coffee-100 text-coffee-600' : 'bg-white text-coffee-400'} hover:bg-coffee-100 transition-colors`}
-    >
-      <Heart
-        className="w-6 h-6"
-        fill={isFavorite ? 'currentColor' : 'none'} // Explicitly set fill
-        stroke="currentColor" // Ensure the stroke matches the text color
-      />
-    </button>
-            <button className="p-2 rounded-full bg-white text-coffee-400 hover:bg-coffee-100 transition-colors">
-              <Share2 className="w-6 h-6" />
-
+            <button
+              onClick={toggleFavorite}
+              className={`p-2 rounded-full ${isFavorite ? 'bg-coffee-100 text-coffee-600' : 'bg-white text-coffee-400'} hover:bg-coffee-100 transition-colors`}
+            >
+              <Heart
+                className="w-6 h-6"
+                fill={isFavorite ? 'currentColor' : 'none'} // Explicitly set fill
+                stroke="currentColor" // Ensure the stroke matches the text color
+              />
             </button>
+            {/* <button className="p-2 rounded-full bg-white text-coffee-400 hover:bg-coffee-100 transition-colors">
+              <Share2 className="w-6 h-6" />
+            </button> */}
           </div>
         </div>
 

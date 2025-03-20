@@ -78,14 +78,17 @@ function Settings() {
       }
 
       // Send both current and new passwords to the backend
-      const response = await fetch(`http://localhost:8000/auth/updatePassword/${userId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ currentPassword, newPassword }),
-      });
+      const response = await fetch(
+        `http://localhost:8000/auth/updatePassword/${userId}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ currentPassword, newPassword }),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
