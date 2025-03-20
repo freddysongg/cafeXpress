@@ -798,9 +798,9 @@ function Profile() {
                     </div>
                     <div className="text-center">
                       <p className="text-2xl font-bold text-coffee-800">
-                        {user.collections?.length || 0}
+                        {user.favoriteCafes?.length || 0}
                       </p>
-                      <p className="text-coffee-600">Collections</p>
+                      <p className="text-coffee-600">Favorites</p>
                     </div>
                   </div>
                 </div>

@@ -105,6 +105,8 @@ function Settings() {
     const confirmDelete = window.confirm('Are you sure you want to delete your account? This action cannot be undone.');
   
     if (!confirmDelete) return;
+
+    console.log('Deleting user with ID:', userId);
   
     if (!userId) {
       console.error('User ID is missing');
@@ -113,6 +115,7 @@ function Settings() {
   
     try {
       const token = localStorage.getItem('token');
+      console.log('Using token:', token);
       if (!token) {
         console.error('User not logged in');
         return;
@@ -121,24 +124,29 @@ function Settings() {
       const response = await fetch(`http://localhost:8000/user/${userId}`, {
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`, // Ensure token is sent for authentication
         },
       });
   
       if (!response.ok) {
+        const errorData = await response.json(); // Parse the error response
+        console.error('Error response:', errorData);
         throw new Error('Failed to delete account');
       }
   
-      alert('Account deleted successfully.');
-      localStorage.removeItem('token'); // Remove the token after account deletion
-      window.location.href = '/login'; // Redirect to login page
+      const data = await response.json();
+      if (data.status === 'success') {
+        alert('Account deleted successfully.');
+        localStorage.removeItem('token'); // Remove the token after account deletion
+        window.location.href = '/signin'; // Redirect to login page
+      } else {
+        alert('Failed to delete account. Please try again.');
+      }
     } catch (error) {
       console.error('Error deleting account:', error);
       alert('Failed to delete account. Please try again.');
     }
-  };
-  
+  };  
 
   return (
     <div className="min-h-screen bg-coffee-50 pt-20">
