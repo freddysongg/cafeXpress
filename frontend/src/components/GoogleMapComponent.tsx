@@ -24,7 +24,9 @@ const GoogleMapComponent: React.FC<MapProps> = ({ lat, lng }) => {
     lng: lng || -117.1611,
   });
 
-  const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
+  const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(
+    null
+  );
   const mapRef = useRef<google.maps.Map | null>(null);
 
   // Use the useJsApiLoader hook to load the Google Maps API
@@ -32,13 +34,13 @@ const GoogleMapComponent: React.FC<MapProps> = ({ lat, lng }) => {
     id: 'google-map-script',
     googleMapsApiKey: apiKey,
     libraries,
-    version: 'beta' // For advanced markers
+    version: 'beta', // For advanced markers
   });
 
   useEffect(() => {
     if (lat && lng) {
       setMapCenter({ lat, lng });
-      
+
       // Update marker position if map is already loaded
       if (mapRef.current && markerRef.current) {
         markerRef.current.position = new google.maps.LatLng(lat, lng);
@@ -48,7 +50,7 @@ const GoogleMapComponent: React.FC<MapProps> = ({ lat, lng }) => {
 
   const handleLoad = (map: google.maps.Map) => {
     mapRef.current = map;
-    
+
     // Set map options
     map.setOptions({
       mapId: mapId,
@@ -56,7 +58,7 @@ const GoogleMapComponent: React.FC<MapProps> = ({ lat, lng }) => {
       streetViewControl: false,
       fullscreenControl: false,
       zoomControl: true,
-      scrollwheel: false
+      scrollwheel: false,
     });
 
     // Create marker only if coordinates are available
@@ -67,7 +69,7 @@ const GoogleMapComponent: React.FC<MapProps> = ({ lat, lng }) => {
           map: map,
         });
       } catch (error) {
-        console.error("Error creating advanced marker:", error);
+        console.error('Error creating advanced marker:', error);
         // Fallback to standard marker if advanced marker fails
         new google.maps.Marker({
           position: new google.maps.LatLng(lat, lng),
@@ -87,7 +89,9 @@ const GoogleMapComponent: React.FC<MapProps> = ({ lat, lng }) => {
       <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
         <div className="text-center p-4">
           <p className="text-red-600 font-medium">Error loading map</p>
-          <p className="text-sm text-gray-600 mt-1">Please check your connection and try again</p>
+          <p className="text-sm text-gray-600 mt-1">
+            Please check your connection and try again
+          </p>
         </div>
       </div>
     );
@@ -106,7 +110,7 @@ const GoogleMapComponent: React.FC<MapProps> = ({ lat, lng }) => {
         streetViewControl: false,
         fullscreenControl: false,
         zoomControl: true,
-        scrollwheel: false
+        scrollwheel: false,
       }}
     />
   ) : (
