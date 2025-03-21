@@ -2,6 +2,7 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '@config/db.js';
 import { cafes, users } from '@config/schemas'; // Import your predefined schema
 import { eq } from 'drizzle-orm';
+import { all } from 'axios';
 
 // Define the Cafe type based on the schema
 type Cafe = typeof cafes.$inferSelect;
@@ -11,7 +12,7 @@ const idKeywords = {
   id2: [
     'quiet', 'loud', 'cozy', 'modern', 'traditional', 'romantic', 'family-friendly', 'hipster',
     'minimalist', 'luxurious', 'rustic', 'artistic', 'casual', 'vibrant', 'relaxed', 'bright',
-    'dimly lit', 'chic', 'energetic', 'calm', 'elegant', 'nostalgic', 'study-friendly', 'social',
+    'dimly lit', 'chic', 'energetic', 'calm', 'elegant', 'nostalgic', 'study-friendly',
     'intimate', 'artsy', 'luxury', 'casual', 'party', 'tranquil', 'bohemian', 'industrial',
     'community-oriented', 'romantic', 'adventurous', 'playful', 'festive', 'welcoming',
   ],
@@ -92,11 +93,11 @@ export async function determineMostFrequentCategory(
       .map((cafeArray) => cafeArray[0]) // Extract the first element of each array
       .filter((cafe) => cafe !== null) as Cafe[]; // Filter out null values
 
-    // Transform Record<string, boolean> into string[]
-    const transformRecordToArray = (record: Record<string, boolean> | null): string[] => {
-      if (!record) return [];
-      return Object.keys(record).filter((key) => record[key]);
-    };
+      const transformRecordToArray = (data: string[] | Record<string, boolean> | null): string[] => {
+        if (!data) return [];
+        if (Array.isArray(data)) return data; // If it's already an array, return it
+        return Object.keys(data).filter((key) => data[key]); // If it's a record, transform it
+      };
 
     // Combine all ambiance and dietary options into a single list
     const allKeywords = validCafes.flatMap((cafe) => [
@@ -124,6 +125,14 @@ export async function determineMostFrequentCategory(
       }
     });
 
+    // Log the counts for each ID type
+    console.log('Keyword Counts:', {
+      id2: keywordCounts.id2,
+      id3: keywordCounts.id3,
+      id4: keywordCounts.id4,
+    });
+
+
     // Determine the ID type with the highest keyword count
     let selectedId = 'id2'; // Default to ID 2
     let maxCount = keywordCounts.id2;
@@ -142,7 +151,11 @@ export async function determineMostFrequentCategory(
     reply.status(200).send({
       status: 'success',
       message: 'Category determined successfully',
+      allKeywords,
       idType: selectedId,
+      id2: keywordCounts.id2,
+      id3: keywordCounts.id3,
+      id4: keywordCounts.id4,
     });
   } catch (error) {
     const err = error as Error;
