@@ -63,6 +63,15 @@ const userArchetypes: UserArchetype[] = [
   },
 ];
 
+// Mapping of archetype IDs to unique border colors
+const archetypeBorderColors: { [key: number]: string } = {
+  0: 'border-blue-500',
+  1: 'border-green-500',
+  2: 'border-purple-500',
+  3: 'border-yellow-500',
+  4: 'border-red-500',
+};
+
 // Updated profile picture options: now more cafe themed
 const profilePictures = [
   { id: 1, name: 'Coffee Cup', icon: '☕' },
@@ -612,10 +621,6 @@ function Profile() {
     setIsEditingName(false);
   };
 
-  // const handleProfilePictureClick = () => {
-  //   setShowProfilePictureSelector(!showProfilePictureSelector);
-  // };
-
   // When selecting a new profile icon, update immediately and close modal
   const handleSelectProfilePicture = (icon: string) => {
     setSelectedProfilePicture(icon);
@@ -810,7 +815,11 @@ function Profile() {
 
             {/* User Archetype Card */}
             <div
-              className="profile-card p-6 border border-coffee-200 animate-slide-up min-h-[280px] bg-white rounded-lg shadow-sm"
+              className={`profile-card p-6 border ${
+                userArchetype
+                  ? archetypeBorderColors[userArchetype.id]
+                  : 'border-coffee-200'
+              } animate-slide-up min-h-[280px] bg-white rounded-lg shadow-sm`}
               style={{ animationDelay: '0.2s' }}
             >
               <div className="relative h-full flex flex-col items-center">
