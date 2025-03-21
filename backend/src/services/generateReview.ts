@@ -230,10 +230,9 @@ async function generateFakeReview(coffeeShopName: string, location: string) {
   const prompt = `Write a realistic and ${Math.random() > 0.3 ? 'positive' : 'negative'} review for a coffee shop named ${coffeeShopName} located in ${location}. 
     The review should be from the perspective of ${randomPerspective} and formatted as follows:
     Rating: [a number between 1 and 5, e.g., 2 or 4]
-    Title: [a short, catchy, and unique title. Do not use bolding in the title. Examples: ${exampleTitles.join(', ')}]
-    Description: [2-3 sentences describing the ${randomAmbiance} ambiance, ${randomCoffee} coffee quality, and ${randomService} service, e.g., "The cozy ambiance makes this place perfect for relaxing. The rich coffee is a delight, and the friendly service adds to the wonderful experience."]
+    Description: [1 sentences describing the ${randomAmbiance} ambiance, ${randomCoffee} coffee quality, and ${randomService} service, e.g., "The cozy ambiance makes this place perfect for relaxing. The rich coffee is a delight, and the friendly service adds to the wonderful experience."]
 
-    Do not repeat the same title, be creative and unique. Do not deviate from this format.`;
+    Do not deviate from this format.`;
 
   try {
     console.log('Sending prompt to Gemini API:', prompt);
@@ -265,21 +264,21 @@ async function generateFakeReview(coffeeShopName: string, location: string) {
 
     // Flexible regex patterns
     const ratingRegex = /Rating:\s*(\d(?:\.\d)?)/i; // Case-insensitive, allows for optional spaces
-    const titleRegex = /Title:\s*(.+?)\s*(?=\n|Description:|$)/i; // Case-insensitive, stops at newline or "Description:"
+    //const titleRegex = /Title:\s*(.+?)\s*(?=\n|Description:|$)/i; // Case-insensitive, stops at newline or "Description:"
     const descriptionRegex = /Description:\s*([\s\S]+?)\s*(?=\n|$)/i; // Case-insensitive, captures multi-line descriptions
 
     // Extract structured data
     const ratingMatch = reviewText.match(ratingRegex);
-    const titleMatch = reviewText.match(titleRegex);
+    //const titleMatch = reviewText.match(titleRegex);
     const descriptionMatch = reviewText.match(descriptionRegex);
 
-    if (!ratingMatch || !titleMatch || !descriptionMatch) {
+    if (!ratingMatch || !descriptionMatch) {
       throw new Error('Failed to extract review data from API response.');
     }
 
     return {
       rating: ratingMatch[1],
-      title: titleMatch[1],
+      //title: titleMatch[1],
       description: descriptionMatch[1].trim()
     };
   } catch (error) {
@@ -298,7 +297,7 @@ export async function generateReviewsForCafe(cafe: typeof cafes.$inferSelect) {
     return;
   }
 
-  const numReviews = Math.floor(Math.random() * 5) + 6; // Generate 6-10 reviews
+  const numReviews = Math.floor(Math.random() * 4) + 3;
 
   for (let i = 0; i < numReviews; i++) {
     const randomUser = allUsers[Math.floor(Math.random() * allUsers.length)]; // Select a random user
@@ -312,7 +311,7 @@ export async function generateReviewsForCafe(cafe: typeof cafes.$inferSelect) {
         cafeId: cafe.id,
         userId: randomUser.id,
         rating: parseFloat(fakeReview.rating), // Convert rating to number
-        title: fakeReview.title,
+        title: "",
         description: fakeReview.description
       });
     }
