@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { addFavoriteCafe, removeFavoriteCafe, isFavorited } from '@services/favoriteCafe';
+import { addFavoriteCafe, removeFavoriteCafe, isFavorited } from '@services/favoriteCafe.js';
 
 interface RouteParams {
   userId: string;

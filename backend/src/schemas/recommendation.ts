@@ -120,9 +120,9 @@ export const CacheKeys = {
 };
 
 export const RateLimitConfig = {
-  requestsPerSecond: 10,
-  maxRetries: 3,
-  retryDelay: 1000
+  requestsPerSecond: 50,
+  maxRetries: 50,
+  retryDelay: 10
 };
 
 export const DEFAULT_LOCATION = {

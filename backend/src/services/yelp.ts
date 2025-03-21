@@ -2,7 +2,7 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '@config/db.js';
 import { cafes } from '@config/schemas.js';
 import axios from 'axios';
-import { PREDEFINED_KEYWORDS } from '@config/keywords';
+import { PREDEFINED_KEYWORDS } from '@config/keywords.js';
 
 const YELP_API_KEY = process.env.YELP_API_KEY as string;
 const GOOGLE_API_KEY = process.env.GOOGLE_CLOUD_API as string;

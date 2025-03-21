@@ -162,11 +162,7 @@ function Explore() {
 
   const handleSearch = useCallback(
     (query: string, searchFilters?: SearchFilters) => {
-      // Don't search if it's the same query and we have results
-      if (query === lastSearchQuery && cafes.length > 0) {
-        return;
-      }
-
+      // Always set loading to true immediately when search is initiated
       setLoading(true);
       setError(null);
       setLastSearchQuery(query);
@@ -185,13 +181,17 @@ function Explore() {
           ? parseFloat(selectedFilters.distance)
           : undefined,
       };
-      debouncedSearchFn(query, filters, userLocation, {
-        setCafes,
-        setMatchingKeywords,
-        setSearchParams,
-        setError,
-        setLoading,
-      });
+      
+      // Use a slight delay to ensure loading state is rendered
+      setTimeout(() => {
+        debouncedSearchFn(query, filters, userLocation, {
+          setCafes,
+          setMatchingKeywords,
+          setSearchParams,
+          setError,
+          setLoading,
+        });
+      }, 100);
     },
     [
       selectedFilters,
@@ -484,23 +484,28 @@ function Explore() {
 
       const searchQuery = searchParams.get('q');
       if (searchQuery) {
+        // Always show loading indicator
         setLoading(true);
-        debouncedSearchFn(
-          searchQuery,
-          {
-            dietary: newFilters.dietary ? [newFilters.dietary] : undefined,
-            ambiance: newFilters.ambiance ? [newFilters.ambiance] : undefined,
-            radius: undefined,
-          },
-          userLocation,
-          {
-            setCafes,
-            setMatchingKeywords,
-            setSearchParams,
-            setError,
-            setLoading,
-          }
-        );
+        
+        // Use a slight delay to ensure loading state is rendered
+        setTimeout(() => {
+          debouncedSearchFn(
+            searchQuery,
+            {
+              dietary: newFilters.dietary ? [newFilters.dietary] : undefined,
+              ambiance: newFilters.ambiance ? [newFilters.ambiance] : undefined,
+              radius: undefined,
+            },
+            userLocation,
+            {
+              setCafes,
+              setMatchingKeywords,
+              setSearchParams,
+              setError,
+              setLoading,
+            }
+          );
+        }, 100);
       }
 
       return newFilters;
@@ -659,6 +664,14 @@ function Explore() {
     <div className="flex h-screen pt-16">
       {/* Map Section */}
       <div className="w-1/2 h-full relative">
+        {loading ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+            <div className="text-center p-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-coffee-700 mb-4 mx-auto"></div>
+              <p className="text-coffee-800 font-medium">Loading Map...</p>
+            </div>
+          </div>
+        ) : null}
         <div
           ref={mapRef}
           style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
@@ -668,7 +681,7 @@ function Explore() {
       <div className="w-1/2 h-full overflow-y-auto bg-coffee-50 p-6">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-2xl font-bold mb-6 text-coffee-800">
-            Nearby Cafés
+            Cafés
           </h2>
           <SearchBar
             initialQuery={searchParams.get('q') || ''}
@@ -702,7 +715,7 @@ function Explore() {
             </div>
           )}
           {/* Matching Keywords Section */}
-          {matchingKeywords.length > 0 && (
+          {!loading && matchingKeywords.length > 0 && (
             <div className="mb-6 bg-white/50 rounded-lg p-4 backdrop-blur-sm">
               <h3 className="text-sm font-medium text-coffee-700 mb-2">
                 Matching Preferences
@@ -729,23 +742,39 @@ function Explore() {
               </div>
             </div>
           )}
-          {/* Loading and Error States */}
+          
+          {/* Loading animation - make sure it always shows when loading */}
           {loading && (
-            <div className="text-center py-8">
-              <p>Loading cafes...</p>
+            <div className="flex flex-col items-center justify-center py-10">
+              <div className="relative w-20 h-20 mb-4">
+                <div className="absolute top-0 left-0 w-full h-full border-4 border-coffee-100 rounded-full"></div>
+                <div className="absolute top-0 left-0 w-full h-full border-4 border-t-coffee-600 rounded-full animate-spin"></div>
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                  <svg className="w-8 h-8 text-coffee-800" fill="none" viewBox="0 0 24 24">
+                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                  </svg>
+                </div>
+              </div>
+              <p className="text-coffee-800 font-medium">Finding the perfect cafés for you...</p>
+              <p className="text-coffee-500 text-sm mt-1">This might take a moment</p>
             </div>
           )}
-          {error && (
+          
+          {/* Only display error when not loading */}
+          {!loading && error && (
             <div className="text-center py-8 text-red-600">
               <p>{error}</p>
             </div>
           )}
-          {/* Café Cards */}
+          
+          {/* Only display "no cafes found" when not loading and no cafes */}
           {!loading && !error && cafes.length === 0 && (
             <div className="text-center py-8 text-coffee-600">
               <p>No cafes found matching your search criteria</p>
             </div>
           )}
+          
+          {/* Only display cafe list when not loading and has cafes */}
           {!loading && !error && cafes.length > 0 && (
             <div className="space-y-6">
               {cafes.map((cafe) => (

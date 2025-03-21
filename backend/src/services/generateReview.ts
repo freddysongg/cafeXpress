@@ -1,6 +1,6 @@
 import { db } from '@config/db.js';
 import { cafes, reviews, users } from '@config/schemas.js';
-import { GeminiReviewResponse } from '@schemas/gemini';
+import { GeminiReviewResponse } from '@schemas/gemini.js';
 import axios from 'axios';
 
 const GEMINI_API_KEY = process.env.GOOGLE_CLOUD_API as string;
@@ -190,29 +190,6 @@ async function generateFakeReview(coffeeShopName: string, location: string) {
     'unprepared',
     'unreliable',
     'frustrating'
-  ];
-
-  const exampleTitles = [
-    'A Cozy Haven for Coffee Lovers',
-    'Overpriced but Worth It',
-    'Perfect for Remote Work',
-    'Great Coffee, Poor Service',
-    'Hidden Gem in the City',
-    'A Must-Visit for Coffee Enthusiasts',
-    'Charming Ambiance, Average Coffee',
-    'The Best Latte in Town',
-    'Disappointing Experience',
-    'A Quiet Escape from the City',
-    'Friendly Staff, Mediocre Coffee',
-    "A Coffee Lover's Paradise",
-    'Overrated and Overpriced',
-    'A Great Spot for Breakfast',
-    'The Coffee Was Good, but the Service...',
-    'A Little Pricey, but Delicious',
-    'Perfect for a Quick Coffee Break',
-    'Not What I Expected',
-    'A Hidden Gem with Amazing Coffee',
-    'Great Atmosphere, but Coffee Could Be Better'
   ];
 
   const randomAmbiance = isPositive

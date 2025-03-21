@@ -1,8 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '@config/db.js';
-import { cafes, users } from '@config/schemas'; // Import your predefined schema
+import { cafes, users } from '@config/schemas.js'; // Import your predefined schema
 import { eq } from 'drizzle-orm';
-import { all } from 'axios';
 
 // Define the Cafe type based on the schema
 type Cafe = typeof cafes.$inferSelect;
